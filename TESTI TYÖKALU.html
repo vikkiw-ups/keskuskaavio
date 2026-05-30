@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sähkökeskuksen Suunnittelutyökalu PRO</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estetään tyhjien sivujen tulostuminen ja pakotetaan siisti sivujako */
+        @media print {
+            html, body {
+                background: white;
+                color: black;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-shadow-none {
+                box-shadow: none !important;
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            /* Ensimmäinen sivu (Sijoituskaavio) */
+            .print-page-1 {
+                page-break-after: always;
+                page-break-inside: avoid;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: 95vh;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            /* Toinen sivu (Ryhmäluettelo) */
+            .print-page-2 {
+                page-break-before: always;
+                page-break-inside: avoid;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding-top: 1.5cm !important;
+            }
+            /* Varmistetaan, ettei rivejä puoliteta */
+            tr {
+                page-break-inside: avoid;
+            }
+            /* Poistetaan syöttökenttien muokkausreunukset tulostuksesta */
+            input, textarea, select {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                resize: none !important;
+            }
+            /* Piilotetaan select-valinnat ja korvataan ne pelkällä tekstillä */
+            .print-select-wrapper select {
+                display: none !important;
+            }
+            .print-select-wrapper .print-only-value {
+                display: block !important;
+            }
+            /* Varmistetaan värien ja taustojen säilyminen tulosteessa */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            /* Lukitaan kojeiden suhde tulosteessa realistiseksi */
+            .print-module-mcb {
+                width: 32px !important;
+                min-width: 32px !important;
+                max-width: 32px !important;
+            }
+            .print-module-vvsk-2 {
+                width: 64px !important;
+                min-width: 64px !important;
+                max-width: 64px !important;
+            }
+            .print-module-vvsk-4 {
+                width: 128px !important;
+                min-width: 128px !important;
+                max-width: 128px !important;
+            }
+            .print-module-empty-1 {
+                width: 32px !important;
+                min-width: 32px !important;
+                max-width: 32px !important;
+            }
+            .print-module-empty-2 {
+                width: 64px !important;
+                min-width: 64px !important;
+                max-width: 64px !important;
+            }
+            .print-module-empty-3 {
+                width: 96px !important;
+                min-width: 96px !important;
+                max-width: 96px !important;
+            }
+            .print-module-empty-4 {
+                width: 128px !important;
+                min-width: 128px !important;
+                max-width: 128px !important;
+            }
+            .print-rail-flex {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                justify-content: flex-start !important;
+            }
+        }
+        /* Ruutunäkymän oletustyylit */
+        .print-only-value {
+            display: none;
+        }
+        /* DIN-kiskon metallinen taustagradientti */
+        .din-rail-bg {
+            background: linear-gradient(to bottom, #cbd5e1 0%, #94a3b8 30%, #cbd5e1 70%, #64748b 100%);
+        }
+        .din-rail-bg-vertical {
+            background: linear-gradient(to right, #cbd5e1 0%, #94a3b8 30%, #cbd5e1 70%, #64748b 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen pb-12">
+
+    <!-- Ohjauspaneeli (Leveä ja vierekkäin asettelu, Ei tulostu) -->
+    <header class="bg-slate-900 text-white shadow-md mb-8 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex flex-col gap-4">
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide flex items-center gap-2">
+                        <span class="inline-block w-3 h-3 rounded-full bg-amber-400"></span>
+                        Sähkökeskuksen Suunnittelutyökalu PRO
+                    </h1>
+                    <p class="text-xs text-slate-400 font-medium">Luo, muokkaa ja tulosta asennuskuvat ja ryhmäluettelot ammattitason standardeilla</p>
+                </div>
+                
+                <!-- Hallintarivi jossa kaikki vierekkäin järkevässä järjestyksessä -->
+                <div class="flex flex-wrap items-center gap-4 bg-slate-800 p-3 rounded-lg border border-slate-700">
+                    <!-- 1. Keskustyypin valinta -->
+                    <div class="flex flex-col gap-1 min-w-[150px]">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">1. Keskustyyppi</span>
+                        <select id="centerTypeSelect" onchange="changeCenterType(this.value)" class="bg-slate-950 text-white font-semibold text-xs rounded border border-slate-700 px-2 py-1.5 focus:outline-none">
+                            <option value="tulppa">Tulppasulakekeskus (Kierre)</option>
+                            <option value="automaatti" selected>Johdonsuojakeskus (DIN-kisko)</option>
+                        </select>
+                    </div>
+
+                    <div class="h-8 w-px bg-slate-700 hidden sm:block"></div>
+
+                    <!-- 2. Keskuksen suunta (Vain automaattikeskukselle) -->
+                    <div id="directionControl" class="flex flex-col gap-1 min-w-[120px]">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">2. Kiskon suunta</span>
+                        <select id="railDirectionSelect" onchange="changeRailDirection(this.value)" class="bg-slate-950 text-white font-semibold text-xs rounded border border-slate-700 px-2 py-1.5 focus:outline-none">
+                            <option value="vaaka" selected>Vaaka (Normaali)</option>
+                            <option value="pysty">Pysty (Kapea)</option>
+                        </select>
+                    </div>
+
+                    <div class="h-8 w-px bg-slate-700 hidden sm:block"></div>
+
+                    <!-- 3. Ryhmien määrä (Siirretty ennen määrää per rivi) -->
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">3. Ryhmien määrä (Max 60)</span>
+                        <div class="flex items-center bg-slate-950 rounded border border-slate-700 overflow-hidden h-8">
+                            <button onclick="adjustFuseCount(-1)" class="px-3 py-1 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-sm">-</button>
+                            <input type="number" id="fuseCountInput" value="12" min="1" max="60" onchange="onFuseCountInputChange(this.value)" class="w-10 bg-transparent text-center text-white font-bold text-xs focus:outline-none">
+                            <button onclick="adjustFuseCount(1)" class="px-3 py-1 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-sm">+</button>
+                        </div>
+                    </div>
+
+                    <div class="h-8 w-px bg-slate-700 hidden sm:block"></div>
+
+                    <!-- 4. Määrä per rivi -->
+                    <div class="flex flex-col gap-1">
+                        <span id="rowLimitLabel" class="text-[10px] font-bold text-slate-400 uppercase">4. Kojeet per rivi (2–30)</span>
+                        <div class="flex items-center bg-slate-950 rounded border border-slate-700 overflow-hidden h-8">
+                            <button onclick="adjustRowLimit(-1)" class="px-3 py-1 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-sm">-</button>
+                            <input type="number" id="rowLimitInput" value="12" min="2" max="30" onchange="onRowLimitInputChange(this.value)" class="w-10 bg-transparent text-center text-white font-bold text-xs focus:outline-none">
+                            <button onclick="adjustRowLimit(1)" class="px-3 py-1 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-sm">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8 print-shadow-none">
+        
+        <!-- SIVU 1 TULOSTUKSESSA: Keskuksen sijoituskaavio -->
+        <section class="lg:col-span-5 bg-white p-6 rounded-xl shadow-md border border-slate-200 print-shadow-none flex flex-col items-center print-page-1">
+            <h2 class="text-lg font-bold text-slate-900 border-b pb-2 mb-6 w-full text-center">
+                Sähkökeskuksen sijoituskaavio
+            </h2>
+            
+            <!-- FYYSINEN KESKUSLAATIKKO -->
+            <div id="physicalCabinet" class="w-full max-w-full md:max-w-[480px] lg:max-w-[560px] bg-slate-100 border-4 border-slate-300 rounded-lg p-4 shadow-inner relative flex flex-col gap-6">
+                
+                <!-- Yläosa: MUOKATTAVA LAITETILA (Nyt lista keskuksen perustiedoista) -->
+                <div class="grid grid-cols-12 gap-3 bg-slate-200 p-3 rounded border border-slate-300">
+                    
+                    <!-- Keskuksen perustiedot -lista -->
+                    <div class="col-span-7 bg-white border border-slate-350 rounded p-2 h-28 flex flex-col justify-between text-[8px] font-sans">
+                        <div class="font-bold text-slate-700 border-b pb-0.5 mb-1 text-center uppercase tracking-wide text-[7.5px]">Keskuksen Perustiedot</div>
+                        <div class="grid grid-cols-2 gap-x-2 gap-y-1">
+                            <div class="flex items-center gap-0.5">
+                                <span class="text-slate-500 font-bold">Keskus:</span>
+                                <input type="text" value="PK1" class="bg-transparent border-b border-slate-200 focus:border-amber-500 w-full focus:outline-none p-0 text-slate-800 font-semibold" placeholder="Keskus">
+                            </div>
+                            <div class="flex items-center gap-0.5">
+                                <span class="text-slate-500 font-bold">Kohde:</span>
+                                <input type="text" value="Mökki" class="bg-transparent border-b border-slate-200 focus:border-amber-500 w-full focus:outline-none p-0 text-slate-800 font-semibold" placeholder="Kohde">
+                            </div>
+                            <div class="flex items-center gap-0.5">
+                                <span class="text-slate-500 font-bold">Asentaja:</span>
+                                <input type="text" value="Sähköasennus Oy" class="bg-transparent border-b border-slate-200 focus:border-amber-500 w-full focus:outline-none p-0 text-slate-800 font-semibold" placeholder="Asentaja">
+                            </div>
+                            <div class="flex items-center gap-0.5">
+                                <span class="text-slate-500 font-bold">Pvm:</span>
+                                <input type="text" value="26.05.2026" class="bg-transparent border-b border-slate-200 focus:border-amber-500 w-full focus:outline-none p-0 text-slate-800 font-semibold" placeholder="Päivämäärä">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-0.5 mt-1 border-t pt-1">
+                            <span class="text-slate-500 font-bold">Lisätieto:</span>
+                            <input type="text" value="Elenia-mittausalue" class="bg-transparent border-b border-slate-200 focus:border-amber-500 w-full focus:outline-none p-0 text-slate-800 font-semibold" placeholder="Lisätiedot">
+                        </div>
+                    </div>
+                    
+                    <!-- Pääsulakkeet (Suurennettu ja värikkäät) ja suuri Pääkytkin oikealla -->
+                    <div class="col-span-5 flex flex-col justify-between items-center h-28 py-0.5">
+                        <div class="flex flex-col gap-0.5 items-center">
+                            <div class="text-[8px] font-bold uppercase text-slate-600">Pääsulakkeet</div>
+                            <div class="flex gap-1">
+                                <!-- 25A on sähköalan värikoodilla keltainen (suuri pyöreä tulppa) -->
+                                <input type="text" value="25" class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-yellow-600 text-center text-xs font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-600" title="Pääsulake L1 (Keltainen = 25A)">
+                                <input type="text" value="25" class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-yellow-600 text-center text-xs font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-600" title="Pääsulake L2 (Keltainen = 25A)">
+                                <input type="text" value="25" class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-yellow-600 text-center text-xs font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-600" title="Pääsulake L3 (Keltainen = 25A)">
+                            </div>
+                        </div>
+                        
+                        <!-- Suurennettu, realistisempi Pääkytkin punaisella rockerilla -->
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-11 bg-slate-800 border-2 border-slate-600 rounded flex flex-col items-center justify-between p-1 text-[7px] font-mono font-bold text-white shadow-md relative" title="Pääkytkin">
+                                <div class="text-[5.5px] text-red-500 leading-none font-bold">PÄÄKYTKIN</div>
+                                <div class="flex justify-between items-center w-full px-1">
+                                    <span class="text-[7px] text-slate-400">0</span>
+                                    <div class="w-4 h-6 bg-red-600 border border-red-800 rounded p-0.5 flex flex-col justify-start">
+                                        <div class="w-full h-2 bg-red-800 rounded-sm"></div>
+                                    </div>
+                                    <span class="text-[7px] text-white">I</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alaosa: Ryhmätilan dynaaminen piirto -->
+                <div id="breakerAreaContainer" class="bg-slate-200 p-4 rounded border border-slate-300 overflow-hidden">
+                    <!-- Generoidaan dynaamisesti JS:llä -->
+                </div>
+
+                <!-- Alareunan opasteteksti -->
+                <div id="fuseColorGuide" class="text-[9px] text-slate-500 flex justify-between px-1 pt-1 border-t border-slate-250">
+                    <!-- JS päivittää dynaamisesti -->
+                </div>
+            </div>
+
+            <div class="text-[10px] text-slate-400 mt-4 text-center no-print">
+                <p>💡 Voit muokata ryhmien tunnuksia suoraan sijoituskaavion kojeiden päältä!</p>
+            </div>
+        </section>
+
+        <!-- SIVU 2 TULOSTUKSESSA: Ryhmäluettelo -->
+        <section class="lg:col-span-7 bg-white p-6 rounded-xl shadow-md border border-slate-200 print-shadow-none print-page-2">
+            
+            <!-- Otsikkotiedot -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-6 gap-2">
+                <div class="w-full">
+                    <input type="text" value="RYHMÄLUETTELO" class="text-xl font-bold text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-500 focus:outline-none w-full" placeholder="Keskuksen nimi">
+                    <div class="flex gap-2 mt-1">
+                        <input type="text" value="Pääkeskus: PK1 Mökki" class="text-sm text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-500 focus:outline-none w-1/2" placeholder="Keskustiedot">
+                        <input type="text" value="Pääsulakkeet: 3x25A" class="text-sm text-slate-500 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-amber-500 focus:outline-none w-1/2 text-right" placeholder="Pääsulakekoko">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ryhmätaulukko muokattavilla arvoilla -->
+            <div class="overflow-x-auto rounded-lg border border-slate-200 mb-6">
+                <table class="min-w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-3 w-16 text-center">Ryhmä</th>
+                            <th class="py-3 px-3 w-48 text-center">Tyyppi / Sulake</th>
+                            <th class="py-3 px-4">Käyttökohde / Tyhjän moduulin vapaa nimi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="groupTableBody" class="divide-y divide-slate-100 text-sm">
+                        <!-- Generoidaan dynaamisesti JS:llä -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Vapaa huomautusalue -->
+            <div class="border-t border-slate-200 pt-4 mb-6">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Huomautukset & Merkinnät</label>
+                <textarea rows="3" placeholder="Yleiset asennushuomiot, kytkentäpäivämäärä tai asentajan tiedot..." class="w-full p-3 border border-slate-200 rounded-lg text-sm bg-slate-50/50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition placeholder-slate-300"></textarea>
+            </div>
+
+            <!-- Järkevästi sijoitettu tulostuspainike alareunassa (Ei tulostu) -->
+            <div class="mt-8 pt-4 border-t border-slate-100 flex justify-end no-print">
+                <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-8 py-3 rounded-lg shadow-lg transition duration-200 flex items-center gap-2 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4" />
+                    </svg>
+                    TULOSTA SÄHKÖKESKUSKORTTI
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="max-w-7xl mx-auto px-4 mt-8 pt-4 border-t border-slate-200 text-center text-xs text-slate-400 no-print">
+        Dynaaminen sähkökeskustyökalu PRO • Optimoitu tulostumaan kahdelle itsenäiselle A4-sivulle.
+    </footer>
+
+    <script>
+        // Globaali tila
+        let currentCenterType = 'automaatti'; // 'tulppa' tai 'automaatti'
+        let railDirection = 'vaaka'; // 'vaaka' tai 'pysty'
+        let fuseCount = 12; // Ryhmien kokonaismäärä
+        let rowLimit = 12; // Ryhmät tai moduulit per rivi / kisko
+        const fusesData = {};
+
+        // Ampeerikoot
+        const availableAmps = [6, 10, 13, 16, 20, 25, 32, 35, 63];
+
+        // Sähköalan standardoidut tulppa- ja automaattivärit
+        const fuseColors = {
+            0: { mcb: 'bg-white border-slate-400 text-slate-700', text: 'Tyhjä', dot: 'bg-slate-350' },
+            6: { mcb: 'bg-emerald-600 border-emerald-700 text-white', text: 'C6', dot: 'bg-emerald-400' },
+            10: { mcb: 'bg-red-600 border-red-700 text-white', text: 'C10', dot: 'bg-red-400' },
+            13: { mcb: 'bg-purple-600 border-purple-700 text-white', text: 'C13', dot: 'bg-purple-400' },
+            16: { mcb: 'bg-zinc-500 border-zinc-600 text-white', text: 'C16', dot: 'bg-zinc-300' },
+            20: { mcb: 'bg-blue-600 border-blue-700 text-white', text: 'C20', dot: 'bg-blue-400' },
+            25: { mcb: 'bg-amber-500 border-amber-600 text-slate-950', text: 'C25', dot: 'bg-amber-300' },
+            32: { mcb: 'bg-fuchsia-600 border-fuchsia-700 text-white', text: 'C32', dot: 'bg-fuchsia-400' },
+            35: { mcb: 'bg-stone-700 border-stone-800 text-white', text: 'C35', dot: 'bg-stone-500' },
+            63: { mcb: 'bg-orange-600 border-orange-700 text-white', text: 'C63', dot: 'bg-orange-400' }
+        };
+
+        // Alustetaan oletustiedot täysin tyhjänä kuvausteksteiltään
+        function initData() {
+            for (let i = 1; i <= 60; i++) {
+                if (!fusesData[i]) {
+                    fusesData[i] = {
+                        value: 16, // oletus
+                        label: i.toString(), // ryhmätunnus
+                        description: "", // tyhjä pohja
+                        type: "mcb", // 'mcb', 'vvsk-2-25', etc.
+                        customName: "",
+                        phase: getPhaseLabel(i) // oletusvaihe
+                    };
+                }
+            }
+        }
+
+        function changeCenterType(type) {
+            currentCenterType = type;
+            const dirCtrl = document.getElementById('directionControl');
+            if (type === 'tulppa') {
+                dirCtrl.classList.add('no-print', 'opacity-30', 'pointer-events-none');
+            } else {
+                dirCtrl.classList.remove('no-print', 'opacity-30', 'pointer-events-none');
+            }
+            renderApp();
+        }
+
+        function changeRailDirection(direction) {
+            railDirection = direction;
+            const labelEl = document.getElementById('rowLimitLabel');
+            if (direction === 'pysty') {
+                labelEl.innerText = "4. Pystykiskojen määrä (2-30)";
+            } else {
+                labelEl.innerText = "4. Kojeet per rivi (2-30)";
+            }
+            renderApp();
+        }
+
+        function adjustRowLimit(amount) {
+            const newVal = rowLimit + amount;
+            if (newVal >= 2 && newVal <= 30) {
+                rowLimit = newVal;
+                document.getElementById('rowLimitInput').value = rowLimit;
+                renderApp();
+            }
+        }
+
+        function onRowLimitInputChange(val) {
+            let num = parseInt(val);
+            if (isNaN(num) || num < 2) num = 2;
+            if (num > 30) num = 30;
+            rowLimit = num;
+            document.getElementById('rowLimitInput').value = rowLimit;
+            renderApp();
+        }
+
+        function adjustFuseCount(amount) {
+            const newVal = fuseCount + amount;
+            if (newVal >= 1 && newVal <= 60) {
+                fuseCount = newVal;
+                document.getElementById('fuseCountInput').value = fuseCount;
+                renderApp();
+            }
+        }
+
+        function onFuseCountInputChange(val) {
+            let num = parseInt(val);
+            if (isNaN(num) || num < 1) num = 1;
+            if (num > 60) num = 60;
+            fuseCount = num;
+            document.getElementById('fuseCountInput').value = fuseCount;
+            renderApp();
+        }
+
+        function handleTableTypeChange(id, typeValue) {
+            const currentItem = fusesData[id];
+            if (typeValue.startsWith('empty-')) {
+                currentItem.type = typeValue;
+                currentItem.value = 0;
+            } else if (typeValue.startsWith('vvsk-')) {
+                currentItem.type = typeValue;
+                currentItem.value = parseInt(typeValue.split('-')[2]);
+            } else {
+                currentItem.type = 'mcb';
+                currentItem.value = parseInt(typeValue);
+            }
+            renderApp();
+        }
+
+        function updateGroupLabel(id, value) {
+            fusesData[id].label = value;
+            // Päivitetään heti visuaaliseen sijoituskaavioon jottei kohdistus/fokus katoa
+            const els = document.querySelectorAll(`.visual-fuse-label-${id}`);
+            els.forEach(el => {
+                if (el.tagName === 'INPUT') el.value = value;
+                else el.innerText = value;
+            });
+        }
+
+        function saveDescription(id, text) {
+            fusesData[id].description = text;
+        }
+
+        function saveCustomName(id, text) {
+            fusesData[id].customName = text;
+            const targetVisualSpan = document.getElementById(`visual-custom-label-${id}`);
+            if (targetVisualSpan) {
+                targetVisualSpan.innerText = text || 'Vapaa';
+            }
+        }
+
+        function updatePhaseLabel(id, value) {
+            fusesData[id].phase = value;
+            const visualPhases = document.querySelectorAll(`.visual-phase-label-${id}`);
+            visualPhases.forEach(el => el.innerText = value);
+        }
+
+        function getPrintText(item) {
+            if (item.type === 'empty-1') return item.customName ? `${item.customName} (1 DIN)` : 'Tyhjä tila 1 mod';
+            if (item.type === 'empty-2') return item.customName ? `${item.customName} (2 DIN)` : 'Tyhjä tila 2 mod';
+            if (item.type === 'empty-3') return item.customName ? `${item.customName} (3 DIN)` : 'Tyhjä tila 3 mod';
+            if (item.type === 'empty-4') return item.customName ? `${item.customName} (4 DIN)` : 'Tyhjä tila 4 mod';
+            
+            if (item.type === 'vvsk-2-25') return 'VVSK 2p 25A 30mA';
+            if (item.type === 'vvsk-2-40') return 'VVSK 2p 40A 30mA';
+            if (item.type === 'vvsk-4-25') return 'VVSK 4p 25A 30mA';
+            if (item.type === 'vvsk-4-40') return 'VVSK 4p 40A 30mA';
+            
+            return `Johdonsuoja ${item.value} A`;
+        }
+
+        function getPhaseLabel(index) {
+            const phases = ["L1", "L2", "L3"];
+            return phases[(index - 1) % 3];
+        }
+
+        // RENDERÖINTIFUNKTIO
+        function renderApp() {
+            const container = document.getElementById('breakerAreaContainer');
+            const tableBody = document.getElementById('groupTableBody');
+            const colorGuide = document.getElementById('fuseColorGuide');
+            
+            let containerHtml = "";
+            let tableHtml = "";
+
+            // Dynaamiset fonttikoot skaalautumaan asetetun kiskoleveyden (rowLimit) mukaan
+            let labelFontSize = "text-[9px]";
+            let unitFontSize = "text-[8px]";
+            let ampBadgeSize = "text-[7.5px] px-0.5 py-0.2";
+            let emptyLabelSize = "text-[6.5px]";
+            let vvskTitleSize = "text-[6px]";
+            let vvskSubSize = "text-[5px]";
+            let leverWidth = "w-2.5 h-5.5";
+            let leverInner = "h-2";
+            let testBtnSize = "w-3.5 h-3.5 text-[7px]";
+
+            if (rowLimit >= 12) {
+                labelFontSize = "text-[8px]";
+                unitFontSize = "text-[7px]";
+                ampBadgeSize = "text-[6.5px] px-0.5 py-0.1";
+                emptyLabelSize = "text-[5.5px]";
+                vvskTitleSize = "text-[5.5px]";
+                vvskSubSize = "text-[4.5px]";
+                leverWidth = "w-2.5 h-5";
+                leverInner = "h-1.5";
+                testBtnSize = "w-3 h-3 text-[6px]";
+            }
+            if (rowLimit >= 16) {
+                labelFontSize = "text-[7.5px]";
+                unitFontSize = "text-[6px]";
+                ampBadgeSize = "text-[5.5px] px-0.3 py-0";
+                emptyLabelSize = "text-[5px]";
+                vvskTitleSize = "text-[5px]";
+                vvskSubSize = "text-[4px]";
+                leverWidth = "w-2 h-4.5";
+                leverInner = "h-1.2";
+                testBtnSize = "w-2.5 h-2.5 text-[5px]";
+            }
+            if (rowLimit >= 22) {
+                labelFontSize = "text-[6.5px]";
+                unitFontSize = "text-[5px]";
+                ampBadgeSize = "text-[4.5px] px-[1px] py-0";
+                emptyLabelSize = "text-[4px]";
+                vvskTitleSize = "text-[4px]";
+                vvskSubSize = "text-[3.5px]";
+                leverWidth = "w-1.5 h-4";
+                leverInner = "h-1";
+                testBtnSize = "w-2 h-2 text-[4px]";
+            }
+            if (rowLimit >= 26) {
+                labelFontSize = "text-[5px]";
+                unitFontSize = "text-[4px]";
+                ampBadgeSize = "text-[3.8px] px-0 py-0";
+                emptyLabelSize = "text-[3.5px]";
+                vvskTitleSize = "text-[3.5px]";
+                vvskSubSize = "text-[3px]";
+                leverWidth = "w-1 h-3.5";
+                leverInner = "h-0.8";
+                testBtnSize = "w-1.5 h-1.5 text-[3.5px]";
+            }
+
+            if (currentCenterType === 'tulppa') {
+                // 1. TULPPASULAKEKESKUS LAYOUT (Aina pyöreät ja selkeät pohjat)
+                colorGuide.innerHTML = `
+                    <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full bg-red-600"></span> Pun 10A</span>
+                    <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full bg-zinc-500"></span> Har 16A</span>
+                    <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-600"></span> Sin 20A</span>
+                    <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500"></span> Kelt 25A</span>
+                `;
+
+                containerHtml = `<div class="text-center text-xs font-bold text-slate-600 mb-3 uppercase tracking-wider">Sulakeryhmät (Tulpat)</div>`;
+                containerHtml += `<div class="grid gap-y-4 gap-x-2 justify-items-center" style="grid-template-columns: repeat(${rowLimit}, minmax(0, 1fr))">`;
+                
+                for (let i = 1; i <= fuseCount; i++) {
+                    const item = fusesData[i];
+                    if (item.type.startsWith('vvsk-') || item.type.startsWith('empty-')) {
+                        item.type = 'mcb';
+                    }
+                    const config = fuseColors[item.value] || fuseColors[10];
+                    
+                    containerHtml += `
+                        <div class="group flex flex-col items-center justify-center p-1 bg-white border border-slate-350 rounded-lg transition w-full h-20 shadow-sm overflow-hidden">
+                            <!-- Ryhmätunnuksen muokkaus suoraan keskuskuvasta -->
+                            <input type="text" value="${item.label}" oninput="updateGroupLabel(${i}, this.value)" class="visual-fuse-label-${i} w-full text-center text-[10px] font-bold text-slate-700 bg-transparent focus:outline-none focus:bg-amber-50 leading-none mb-1 text-center">
+                            
+                            <!-- Täysin pyöreä sulakekansi -->
+                            <div onclick="handleElementClick(${i})" class="w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-400 flex items-center justify-center cursor-pointer shadow-inner hover:bg-slate-50 transition relative">
+                                <div class="w-7 h-7 rounded-full ${config.mcb} flex items-center justify-center text-[10px] font-black border shadow-sm">
+                                    ${item.value || ''}
+                                </div>
+                            </div>
+                            <span class="text-[8px] font-bold text-slate-500 mt-1">${item.value ? item.value + ' A' : '-'}</span>
+                        </div>
+                    `;
+                }
+                containerHtml += `</div>`;
+
+            } else {
+                // 2. MODERNISOITU JOHDONSUOJAKESKUS (DIN-kiskot vaaka- tai pystysuunnassa)
+                const isVertical = railDirection === 'pysty';
+                
+                // Jaetaan moduulit kiskoille (Säilytetään dynaamisen sarakeraaka-algoritmin loogisuus molemmissa suunnissa)
+                let rails = [[]];
+                let currentRailIndex = 0;
+                let currentRailWidth = 0;
+                const maxModulesPerRail = 12; // Kiskon oletus korkeusraja pystytilassa
+
+                for (let i = 1; i <= fuseCount; i++) {
+                    const item = fusesData[i];
+                    let width = 1;
+                    if (item.type.startsWith('empty-')) width = parseInt(item.type.split('-')[1]);
+                    if (item.type.startsWith('vvsk-2-')) width = 2;
+                    if (item.type.startsWith('vvsk-4-')) width = 4;
+
+                    // Pystytilassa kiskon leveysrajana toimii maxModulesPerRail, vaakatilassa rowLimit
+                    const limit = isVertical ? maxModulesPerRail : rowLimit;
+
+                    if (currentRailWidth + width > limit) {
+                        const remaining = limit - currentRailWidth;
+                        for (let k = 0; k < remaining; k++) {
+                            rails[currentRailIndex].push({ type: 'spacer', width: 1 });
+                        }
+                        currentRailIndex++;
+                        rails[currentRailIndex] = [];
+                        currentRailWidth = 0;
+                    }
+
+                    rails[currentRailIndex].push({ id: i, ...item, width });
+                    currentRailWidth += width;
+                }
+                
+                // Täytetään viimeisen kiskorivin / pystykiskon loppuosa spacer-levyillä
+                const limit = isVertical ? maxModulesPerRail : rowLimit;
+                if (currentRailWidth < limit && currentRailWidth > 0) {
+                    const remaining = limit - currentRailWidth;
+                    for (let k = 0; k < remaining; k++) {
+                        rails[currentRailIndex].push({ type: 'spacer', width: 1 });
+                    }
+                }
+
+                // Luodaan kiskorakenteet
+                if (isVertical) {
+                    // PYSTYASENNUS (DIN-kiskot ovat pystyssä, kojeet poikittain päällekkäin)
+                    containerHtml = `<div class="text-center text-xs font-bold text-slate-600 mb-3 uppercase tracking-wider">Pysty-moduulikojeet (Pystykiskot)</div>`;
+                    
+                    // Järjestetään pystykiskot siististi vierekkäisiksi sarakkeiksi (Määrä per rivi asettaa suoraan pystykiskojen määrän)
+                    containerHtml += `<div class="grid gap-4 w-full justify-items-center" style="grid-template-columns: repeat(${rowLimit}, minmax(0, 1fr))">`;
+                    
+                    // Piirretään pystysuorassa asennuksessa kiskot sarakkeina
+                    for (let cIdx = 0; cIdx < rowLimit; cIdx++) {
+                        const rail = rails[cIdx] || [];
+                        containerHtml += `
+                            <div class="relative py-1 px-2 rounded border border-slate-350 bg-slate-300/40 shadow-inner flex flex-col items-center w-full min-h-[360px]">
+                                <!-- Pysty-DIN-kisko takana -->
+                                <div class="din-rail-bg-vertical w-6 absolute top-0 bottom-0 left-1/2 -translate-x-1/2 border-x border-slate-400 z-0"></div>
+                                
+                                <!-- Kojeet pystykiskolla päällekkäin pinottuina -->
+                                <div class="flex flex-col gap-1 w-full z-10">
+                        `;
+
+                        rail.forEach((item) => {
+                            if (item.type === 'spacer') {
+                                containerHtml += `
+                                    <div class="h-8 bg-slate-200 border border-slate-300 rounded-sm shadow flex justify-center items-center opacity-40">
+                                        <div class="w-6 h-px bg-slate-350"></div>
+                                    </div>
+                                `;
+                            } else if (item.type.startsWith('empty-')) {
+                                const labelName = item.customName || 'Vapaa';
+                                const hClass = item.width === 1 ? 'h-8' : (item.width === 2 ? 'h-16' : (item.width === 3 ? 'h-24' : 'h-32'));
+                                containerHtml += `
+                                    <div class="w-full ${hClass} bg-slate-50 border-2 border-slate-350 rounded shadow flex flex-col justify-between p-1 transition overflow-hidden">
+                                        <input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" class="visual-fuse-label-${item.id} w-full text-center text-[9px] font-bold text-slate-800 bg-transparent focus:outline-none focus:bg-amber-50 leading-none">
+                                        <div onclick="handleElementClick(${item.id})" class="h-4 border-y border-dashed border-slate-300 flex items-center justify-center cursor-pointer">
+                                            <div class="w-4 h-px bg-slate-300"></div>
+                                        </div>
+                                        <span id="visual-custom-label-${item.id}" class="text-[7px] text-slate-500 font-bold text-center uppercase leading-none truncate">${labelName}</span>
+                                    </div>
+                                `;
+                            } else if (item.type.startsWith('vvsk-2-')) {
+                                const ampValue = item.value || 25;
+                                containerHtml += `
+                                    <div class="w-full h-16 bg-gradient-to-r from-slate-50 to-slate-100 border-2 border-amber-500 rounded-md shadow-md flex flex-col justify-between p-1 transition overflow-hidden">
+                                        <div class="flex justify-between items-center leading-none">
+                                            <input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" class="visual-fuse-label-${item.id} w-6 text-center text-[9px] font-bold text-slate-800 bg-transparent focus:outline-none focus:bg-amber-100 rounded leading-none">
+                                            <span class="text-[7px] text-amber-700 font-extrabold">VVSK 2p</span>
+                                        </div>
+                                        
+                                        <div onclick="handleElementClick(${item.id})" class="flex justify-around items-center py-0.5 cursor-pointer">
+                                            <div class="w-3.5 h-3.5 rounded-full bg-blue-600 text-white font-extrabold text-[7.5px] flex items-center justify-center shadow">T</div>
+                                            <!-- Vaakasuuntainen kytkin pystytilassa -->
+                                            <div class="w-6 h-3.5 bg-slate-200 border border-slate-400 rounded p-0.5 flex justify-start items-center">
+                                                <div class="h-full w-2.5 bg-slate-800 rounded-sm"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center leading-none bg-amber-50 rounded-sm py-0.5">
+                                            <div class="text-[7px] font-black text-amber-800 leading-none">${ampValue}A 30mA</div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else if (item.type.startsWith('vvsk-4-')) {
+                                const ampValue = item.value || 40;
+                                containerHtml += `
+                                    <div class="w-full h-32 bg-gradient-to-r from-slate-50 to-slate-100 border-2 border-amber-600 rounded-md shadow-md flex flex-col justify-between p-1 transition overflow-hidden">
+                                        <div class="flex justify-between items-center leading-none">
+                                            <input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" class="visual-fuse-label-${item.id} w-8 text-center text-[9px] font-bold text-slate-800 bg-transparent focus:outline-none focus:bg-amber-100 rounded leading-none">
+                                            <span class="text-[7px] text-amber-800 font-extrabold">VVSK 4p</span>
+                                        </div>
+                                        
+                                        <div onclick="handleElementClick(${item.id})" class="flex justify-between items-center px-1.5 py-0.5 cursor-pointer">
+                                            <div class="w-3.5 h-3.5 rounded-full bg-blue-600 text-white font-extrabold text-[7.5px] flex items-center justify-center shadow">T</div>
+                                            <div class="w-10 h-3.5 bg-slate-200 border border-slate-400 rounded p-0.5 flex justify-start items-center">
+                                                <div class="h-full w-4 bg-slate-800 rounded-sm"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center leading-none bg-amber-100/50 rounded-sm py-0.5">
+                                            <div class="text-[7px] font-black text-amber-900 leading-none">3~ ${ampValue}A 30mA</div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                // POIKITTAINEN JOHDONSUOJAKOJE (Pystykiskossa)
+                                const config = fuseColors[item.value] || fuseColors[16];
+                                const phase = item.phase;
+                                containerHtml += `
+                                    <div class="w-full h-8 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-400 rounded shadow flex flex-row justify-between items-center p-1 transition overflow-hidden">
+                                        <div class="flex flex-col text-left leading-none justify-center">
+                                            <input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" class="visual-fuse-label-${item.id} w-6 text-left text-[9px] font-bold text-slate-850 bg-transparent focus:outline-none focus:bg-amber-100 rounded leading-none">
+                                            <span class="visual-phase-label-${item.id} text-[6px] text-slate-500 font-bold leading-none">${phase}</span>
+                                        </div>
+                                        
+                                        <div onclick="handleElementClick(${item.id})" class="w-6 h-3 bg-slate-200 border border-slate-400 rounded p-0.5 flex justify-start items-center cursor-pointer">
+                                            <div class="h-full w-2.5 bg-slate-800 rounded-sm"></div>
+                                        </div>
+
+                                        <div class="text-right">
+                                            <span class="text-[7.5px] text-white font-extrabold rounded-sm ${config.mcb} px-1 leading-tight block border shadow-sm">
+                                                ${item.value}A
+                                            </span>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        containerHtml += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                    containerHtml += `</div>`;
+
+                } else {
+                    // VAAKA-ASENNUS (DIN-kiskot kulkevat vaakasuunnassa, kojieta kiskolla rinnakkain)
+                    containerHtml = `<div class="text-center text-xs font-bold text-slate-600 mb-3 uppercase tracking-wider">Moduulikojeet (DIN-kisko)</div>`;
+                    containerHtml += `<div class="flex flex-col gap-4 w-full">`;
+                    
+                    rails.forEach((rail, rIdx) => {
+                        containerHtml += `
+                            <div class="relative py-2 px-1 rounded border border-slate-350 bg-slate-300/40 shadow-inner flex items-center din-rail-bg w-full h-24 flex-row print-rail-flex">
+                                <div class="din-rail-bg h-6 absolute left-0 right-0 top-1/2 -translate-y-1/2 border-y border-slate-400 z-0"></div>
+                                <div class="grid gap-0.5 w-full z-10 px-1 items-stretch" style="grid-template-columns: repeat(${rowLimit}, minmax(0, 1fr))">
+                        `;
+
+                        rail.forEach((item) => {
+                            let printClass = `print-module-${item.type}`;
+                            
+                            if (item.type === 'spacer') {
+                                containerHtml += `
+                                    <div class="col-span-1 h-20 bg-slate-200 border border-slate-300 rounded-sm shadow-sm flex flex-col justify-center items-center opacity-40">
+                                        <div class="w-px h-6 bg-slate-300"></div>
+                                    </div>
+                                `;
+                            } else if (item.type.startsWith('empty-')) {
+                                const labelName = item.customName || 'Vapaa';
+                                containerHtml += `
+                                    <div class="col-span-${item.width} h-20 bg-slate-50 border-2 border-slate-350 rounded shadow flex flex-col justify-between p-1 transition overflow-hidden ${printClass}">
+                                        <input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" class="visual-fuse-label-${item.id} w-full text-center text-[9px] font-bold text-slate-800 bg-transparent focus:outline-none focus:bg-amber-50 leading-none">
+                                        <div onclick="handleElementClick(${item.id})" class="h-8 border-y border-dashed border-slate-300 flex items-center justify-center cursor-pointer">
+                                            <div class="w-px h-4 bg-slate-300"></div>
+                                        </div>
+                                        <span id="visual-custom-label-${item.id}" class="text-[7px] text-slate-500 font-bold text-center uppercase leading-none truncate">${labelName}</span>
+                                    </div>
+                                `;
+                            } else if (item.type.startsWith('vvsk-2-')) {
+                                const ampValue = item.value || 25;
+                                containerHtml += `
+                                    <div class="col-span-2 h-20 bg-gradient-to-b from-slate-50 to-slate-100 border-2 border-amber-500 rounded-md shadow-md flex flex-col justify-between p-1 transition overflow-hidden ${printClass}">
+                                        <div class="flex justify-between items-center leading-none">
+                                            <input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" class="visual-fuse-label-${item.id} w-6 text-center text-[9px] font-bold text-slate-800 bg-transparent focus:outline-none focus:bg-amber-100 rounded leading-none">
+                                            <span class="text-[7px] text-amber-700 font-extrabold">VVSK</span>
+                                        </div>
+                                        
+                                        <div onclick="handleElementClick(${item.id})" class="flex justify-around items-center py-0.5 cursor-pointer">
+                                            <div class="w-3.5 h-3.5 rounded-full bg-blue-600 text-white font-extrabold text-[7.5px] flex items-center justify-center shadow">T</div>
+                                            <div class="w-3.5 h-6 bg-slate-200 border border-slate-400 rounded p-0.5 flex flex-col justify-start">
+                                                <div class="w-full h-2.5 bg-slate-800 rounded-sm"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center leading-none bg-amber-50 rounded-sm py-0.5">
+                                            <div class="text-[7px] font-black text-amber-800 leading-none">${ampValue}A 30mA</div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else if (item.type.startsWith('vvsk-4-')) {
+                                const ampValue = item.value || 40;
+                                containerHtml += `
+                                    <div class="col-span-4 h-20 bg-gradient-to-b from-slate-50 to-slate-100 border-2 border-amber-600 rounded-md shadow-md flex flex-col justify-between p-1 transition overflow-hidden ${printClass}">
+                                        <div class="flex justify-between items-center leading-none">
+                                            <input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" class="visual-fuse-label-${item.id} w-8 text-center text-[9px] font-bold text-slate-800 bg-transparent focus:outline-none focus:bg-amber-100 rounded leading-none">
+                                            <span class="text-[7px] text-amber-800 font-extrabold">VVSK 3~</span>
+                                        </div>
+                                        
+                                        <div onclick="handleElementClick(${item.id})" class="flex justify-between items-center px-1.5 py-0.5 cursor-pointer">
+                                            <div class="w-3.5 h-3.5 rounded-full bg-blue-600 text-white font-extrabold text-[7.5px] flex items-center justify-center shadow">T</div>
+                                            <div class="w-6 h-6 bg-slate-200 border border-slate-400 rounded p-0.5 flex flex-col justify-start">
+                                                <div class="w-full h-2.5 bg-slate-800 rounded-sm"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center leading-none bg-amber-100/50 rounded-sm py-0.5">
+                                            <div class="text-[7px] font-black text-amber-900 leading-none">4-nap / ${ampValue}A</div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                const config = fuseColors[item.value] || fuseColors[16];
+                                const phase = item.phase;
+                                
+                                containerHtml += `
+                                    <div class="col-span-1 h-20 bg-gradient-to-b from-slate-50 to-slate-100 border-2 border-slate-400 rounded shadow-md flex flex-col justify-between p-0.5 transition overflow-hidden ${printClass}">
+                                        <div class="text-center flex flex-col gap-0.5">
+                                            <input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" class="visual-fuse-label-${item.id} w-full text-center text-[9px] font-bold text-slate-850 bg-transparent focus:outline-none focus:bg-amber-100 rounded leading-none">
+                                            <span class="visual-phase-label-${item.id} text-[6px] text-slate-500 font-bold leading-none">${phase}</span>
+                                        </div>
+                                        
+                                        <div onclick="handleElementClick(${item.id})" class="flex justify-center my-0.5 cursor-pointer">
+                                            <div class="w-3 h-5.5 bg-slate-200 border border-slate-400 rounded p-0.5 flex flex-col justify-start">
+                                                <div class="w-full h-2 bg-slate-800 rounded-sm"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-center">
+                                            <span class="text-[7.5px] text-white font-extrabold rounded-sm ${config.mcb} px-1 leading-tight block w-fit mx-auto border shadow-sm">
+                                                ${item.value}A
+                                            </span>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        });
+
+                        containerHtml += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                    containerHtml += `</div>`;
+                }
+            }
+
+            // 3. TAULUKKORIVIEN GENERUUNTI
+            for (let i = 1; i <= fuseCount; i++) {
+                const item = fusesData[i];
+                
+                let selectOptions = "";
+                if (currentCenterType === 'tulppa') {
+                    selectOptions = `
+                        <option value="empty-1" ${item.value === 0 ? 'selected' : ''}>Tyhjä tila</option>
+                        ${availableAmps.map(amp => `<option value="${amp}" ${item.value === amp ? 'selected' : ''}>Tulppasulake ${amp} A</option>`).join('')}
+                    `;
+                } else {
+                    selectOptions = `
+                        <option value="empty-1" ${item.type === 'empty-1' ? 'selected' : ''}>Tyhjä moduuli (1 DIN)</option>
+                        <option value="empty-2" ${item.type === 'empty-2' ? 'selected' : ''}>Tyhjä moduuli (2 DIN)</option>
+                        <option value="empty-3" ${item.type === 'empty-3' ? 'selected' : ''}>Tyhjä moduuli (3 DIN)</option>
+                        <option value="empty-4" ${item.type === 'empty-4' ? 'selected' : ''}>Tyhjä moduuli (4 DIN)</option>
+                        
+                        ${availableAmps.map(amp => `<option value="${amp}" ${item.type === 'mcb' && item.value === amp ? 'selected' : ''}>Johdonsuoja ${amp} A</option>`).join('')}
+                        
+                        <option value="vvsk-2-25" ${item.type === 'vvsk-2-25' ? 'selected' : ''}>VVSK 2-napainen 25 A</option>
+                        <option value="vvsk-2-40" ${item.type === 'vvsk-2-40' ? 'selected' : ''}>VVSK 2-napainen 40 A</option>
+                        <option value="vvsk-4-25" ${item.type === 'vvsk-4-25' ? 'selected' : ''}>VVSK 4-napainen 25 A</option>
+                        <option value="vvsk-4-40" ${item.type === 'vvsk-4-40' ? 'selected' : ''}>VVSK 4-napainen 40 A</option>
+                    `;
+                }
+
+                const isPlaceholderType = item.type.startsWith('empty-');
+                const descriptionValue = isPlaceholderType ? item.customName : item.description;
+                const descriptionPlaceholder = isPlaceholderType 
+                    ? "Anna tälle vapaalle tilalle vapaa nimi (esim. Kellokytkin)..." 
+                    : "Kirjoita ryhmän käyttökohde tähän...";
+
+                const onInputChangeEvent = isPlaceholderType 
+                    ? `saveCustomName(${i}, this.value)` 
+                    : `saveDescription(${i}, this.value)`;
+
+                // MUOKATTAVA VAIHE- JA VAIHTOEHTO-ELEMENTTI
+                const phaseInput = currentCenterType === 'automaatti'
+                    ? `<input type="text" value="${item.phase}" oninput="updatePhaseLabel(${i}, this.value)" class="visual-phase-label-${i} w-8 text-center text-[10px] font-bold border border-slate-200 rounded text-slate-600 bg-slate-50 focus:outline-none focus:bg-amber-50 py-0.5">`
+                    : '';
+
+                tableHtml += `
+                    <tr class="hover:bg-slate-50/50 transition">
+                        <!-- Muokattava ryhmän nimi/numero -->
+                        <td class="py-1 px-2 text-center bg-slate-50/50">
+                            <input type="text" value="${item.label}" oninput="updateGroupLabel(${i}, this.value)" class="visual-fuse-label-${i} w-full text-center font-bold text-slate-950 bg-transparent border-b border-dashed border-slate-200 focus:border-amber-500 focus:outline-none py-1">
+                        </td>
+                        
+                        <!-- Laitetyypin dynaaminen select ja print-vastine -->
+                        <td class="py-1 px-3 text-center print-select-wrapper">
+                            <select onchange="handleTableTypeChange(${i}, this.value)" id="select-fuse-${i}" class="no-print w-full text-center bg-white border border-slate-300 rounded px-1.5 py-1 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500">
+                                ${selectOptions}
+                            </select>
+                            <span class="print-only-value font-bold text-slate-900 text-xs">${getPrintText(item)}</span>
+                        </td>
+                        
+                        <!-- Kuvausteksti / Vapaasti nimettävä tyhjä paikka + muokattava vaihemerkintä -->
+                        <td class="py-1 px-4 flex items-center justify-between gap-2 min-h-[40px]">
+                            <input type="text" value="${descriptionValue}" oninput="${onInputChangeEvent}" placeholder="${descriptionPlaceholder}" class="flex-grow bg-transparent border-b border-slate-200 hover:border-slate-350 focus:border-amber-500 focus:outline-none py-1 text-slate-800 placeholder-slate-300 font-sans ${isPlaceholderType ? 'italic font-medium text-amber-900' : ''}">
+                            ${phaseInput}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            container.innerHTML = containerHtml;
+            tableBody.innerHTML = tableHtml;
+        }
+
+        window.onload = function() {
+            initData();
+            renderApp();
+        };
+    </script>
+</body>
+</html>
