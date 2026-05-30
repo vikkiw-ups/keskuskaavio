@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="fi" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sähkökeskuksen Suunnittelutyökalu PRO</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        /* Tulostuksen pakotukset (Aina vaalea tila ja tarkat värit) */
+        @media print {
+            html, body { background: white !important; color: black !important; margin: 0; padding: 0; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            .no-print { display: none !important; }
+            .print-shadow-none { box-shadow: none !important; border: none !important; background: transparent !important; padding: 0 !important; margin: 0 !important; }
+            .print-page-1 { page-break-after: always; page-break-inside: avoid; width: 100% !important; min-height: 95vh; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; background: white !important; }
+            .print-page-2 { page-break-before: always; page-break-inside: avoid; width: 100% !important; padding-top: 1.5cm !important; background: white !important; }
+            tr { page-break-inside: avoid; }
+            input, textarea, select { border: none !important; background: transparent !important; box-shadow: none !important; resize: none !important; color: black !important; }
+            .print-select-wrapper select { display: none !important; }
+            .print-select-wrapper .print-only-value { display: block !important; color: black !important; }
+            /* Pakotetaan tumman tilan värit pois tulostuksesta */
+            .dark\:bg-slate-800, .dark\:bg-slate-900, .dark\:bg-slate-950 { background-color: transparent !important; }
+            .dark\:text-white, .dark\:text-slate-200 { color: black !important; }
+            .dark\:border-slate-700 { border-color: #e2e8f0 !important; }
+        }
+        
+        .print-only-value { display: none; }
+        
+        /* DIN-kiskon metalliset gradientit */
+        .din-rail-horizontal { background: linear-gradient(to bottom, #cbd5e1 0%, #94a3b8 30%, #cbd5e1 70%, #64748b 100%); }
+        .din-rail-vertical { background: linear-gradient(to right, #cbd5e1 0%, #94a3b8 30%, #cbd5e1 70%, #64748b 100%); }
+        
+        /* Poistetaan selaimen omat nuolet numerokentistä */
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        
+        /* Raahaus kursorit */
+        .grab-cursor { cursor: grab; }
+        .grab-cursor:active { cursor: grabbing; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans min-h-screen pb-12 transition-colors duration-300">
+
+    <!-- Ohjauspaneeli -->
+    <header class="bg-slate-900 dark:bg-black text-white shadow-lg mb-8 no-print border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 py-8 flex flex-col gap-8">
+            
+            <!-- Otsikko ja Tumman tilan kytkin -->
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-center md:text-left">
+                    <h1 class="text-3xl font-black tracking-wide flex items-center justify-center md:justify-start gap-3 text-white">
+                        <span class="inline-block w-5 h-5 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)]"></span>
+                        Sähkökeskus PRO
+                    </h1>
+                    <p class="text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">Dynaaminen Sijoituskaavio ja Luettelo</p>
+                </div>
+                <button onclick="toggleDarkMode()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2 px-5 rounded-full border border-slate-600 shadow-md transition flex items-center gap-2">
+                    <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                    </svg>
+                    <span id="themeText">Tumma Tila</span>
+                </button>
+            </div>
+            
+            <!-- Asetusvalikot (Suurennettu ja keskitetty) -->
+            <div class="flex flex-wrap justify-center items-center gap-6 bg-slate-800 dark:bg-slate-900 p-5 rounded-2xl border border-slate-700 w-full shadow-2xl">
+                
+                <div class="flex flex-col gap-2 items-center">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Keskustyyppi</span>
+                    <select id="centerTypeSelect" onchange="renderApp()" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
+                        <option value="tulppa">Tulppasulake (Kierre)</option>
+                        <option value="automaatti" selected>Johdonsuoja (DIN)</option>
+                    </select>
+                </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
+
+                <div class="flex flex-col gap-2 items-center">
+                    <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">1. Ryhmiä</span>
+                    <div class="flex items-center bg-slate-950 rounded-lg border border-slate-600 overflow-hidden shadow-inner">
+                        <button onclick="adjustValue('fuseCount', -1, 1, 60)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
+                        <input type="number" id="fuseCountInput" value="12" onchange="onValueChange('fuseCount', this.value, 1, 60)" class="w-14 bg-transparent text-center text-white font-black text-base focus:outline-none">
+                        <button onclick="adjustValue('fuseCount', 1, 1, 60)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
+                    </div>
+                </div>
+
+                <div id="railCountDivider" class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
+
+                <div id="railCountContainer" class="flex flex-col gap-2 items-center">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">2. Kiskoja</span>
+                    <div class="flex items-center bg-slate-950 rounded-lg border border-slate-600 overflow-hidden shadow-inner">
+                        <button onclick="adjustValue('railCount', -1, 1, 4)" class="px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
+                        <input type="number" id="railCountInput" value="1" onchange="onValueChange('railCount', this.value, 1, 4)" class="w-10 bg-transparent text-center text-white font-black text-base focus:outline-none">
+                        <button onclick="adjustValue('railCount', 1, 1, 4)" class="px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
+                    </div>
+                </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
+
+                <div class="flex flex-col gap-2 items-center">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">3. Moduulia / Rivi</span>
+                    <div class="flex items-center bg-slate-950 rounded-lg border border-slate-600 overflow-hidden shadow-inner">
+                        <button onclick="adjustValue('rowLimit', -1, 2, 60)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
+                        <input type="number" id="rowLimitInput" value="12" onchange="onValueChange('rowLimit', this.value, 2, 60)" class="w-14 bg-transparent text-center text-white font-black text-base focus:outline-none">
+                        <button onclick="adjustValue('rowLimit', 1, 2, 60)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
+                    </div>
+                </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
+
+                <div class="flex flex-col gap-2 items-center">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Asettelu</span>
+                    <select id="layoutModeSelect" onchange="renderApp()" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
+                        <option value="horizontal" selected>Vaaka (Rinnakkain)</option>
+                        <option value="vertical">Pysty (Allekkain)</option>
+                    </select>
+                </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
+
+                <div class="flex flex-col gap-2 items-center justify-center h-full pt-1">
+                    <label class="flex items-center gap-3 cursor-pointer text-sm font-black text-slate-300 hover:text-white bg-slate-950 px-6 py-3 rounded-lg border border-slate-600 transition shadow-inner">
+                        <input type="checkbox" id="showTopToggle" checked onchange="toggleTopSection(this.checked)" class="w-5 h-5 accent-amber-500 cursor-pointer">
+                        Näytä Yläosa
+                    </label>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8 print-shadow-none">
+        
+        <!-- SIVU 1: Keskuksen sijoituskaavio -->
+        <section class="lg:col-span-12 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none flex flex-col items-center print-page-1 transition-colors duration-300">
+            <h2 class="text-2xl font-black text-slate-900 dark:text-white border-b-2 border-slate-100 dark:border-slate-800 pb-4 mb-8 w-full text-center tracking-wide">
+                Sähkökeskuksen sijoituskaavio
+            </h2>
+            
+            <!-- Jos Yläosa piilotetaan, Keskuksen perustiedot siirtyvät tänne omaan lohkoonsa! -->
+            <div id="standaloneInfoContainer" class="w-full max-w-[700px] mx-auto mb-8 hidden"></div>
+
+            <div id="physicalCabinet" class="bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-fit mx-auto transition-all">
+                
+                <!-- Yläosa: Tietokenttä ja Pääsulakkeet (Piilotettavissa kytkimellä) -->
+                <div id="topSection" class="grid grid-cols-12 gap-8 bg-slate-200 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 w-full min-w-[650px] shadow-sm transition-colors">
+                    
+                    <!-- Keskuksen perustiedot lomake -->
+                    <div id="perustiedotBlock" class="col-span-7 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl p-5 flex flex-col justify-between shadow-sm transition-colors">
+                        <span class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block no-print mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">Keskuksen perustiedot:</span>
+                        <div class="grid grid-cols-2 gap-x-8 gap-y-5 text-left w-full h-full">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Keskuksen tunnus</span>
+                                <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" value="PK1 Mökki">
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Malli/Tyyppi</span>
+                                <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" value="Pinta-asennus">
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Piirtäjä / Asentaja</span>
+                                <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" placeholder="Nimi...">
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Päivämäärä</span>
+                                <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" placeholder="PP.KK.VVVV">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pääsulakkeet ja Kytkin -->
+                    <div id="paasulakeBlock" class="col-span-5 flex flex-col justify-between items-center py-1">
+                        <div class="flex flex-col gap-2 items-center">
+                            <div class="text-sm font-black uppercase text-slate-600 dark:text-slate-300 tracking-widest">Pääsulakkeet</div>
+                            <div class="flex gap-3 bg-slate-300 dark:bg-slate-800 p-3 rounded-xl border border-slate-400 dark:border-slate-600 shadow-inner">
+                                <div class="flex flex-col items-center gap-1">
+                                    <input type="text" value="25" class="w-14 h-14 rounded-full bg-white border-[5px] border-yellow-500 text-center text-lg font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-400" title="Pääsulake L1">
+                                    <span class="text-[10px] font-bold text-slate-500">L1</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1">
+                                    <input type="text" value="25" class="w-14 h-14 rounded-full bg-white border-[5px] border-yellow-500 text-center text-lg font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-400" title="Pääsulake L2">
+                                    <span class="text-[10px] font-bold text-slate-500">L2</span>
+                                </div>
+                                <div class="flex flex-col items-center gap-1">
+                                    <input type="text" value="25" class="w-14 h-14 rounded-full bg-white border-[5px] border-yellow-500 text-center text-lg font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-400" title="Pääsulake L3">
+                                    <span class="text-[10px] font-bold text-slate-500">L3</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ryhmätilan dynaaminen piirto -->
+                <div id="breakerAreaContainer" class="bg-slate-200 dark:bg-slate-700 p-8 rounded-xl border border-slate-300 dark:border-slate-600 overflow-hidden w-full flex flex-col items-center shadow-inner transition-colors">
+                    <!-- Javascript generoi sisällön tähän -->
+                </div>
+                
+                <!-- Lisää ryhmä painike (Ei tulostu) -->
+                <button onclick="adjustValue('fuseCount', 1, 1, 60)" class="no-print mx-auto -mt-4 mb-2 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-700 hover:border-amber-400 dark:hover:bg-amber-900 dark:hover:text-amber-300 rounded-full w-14 h-14 flex items-center justify-center font-bold text-4xl shadow-lg transition-all" title="Lisää uusi ryhmä">+</button>
+
+                <!-- Väriohjekartta -->
+                <div id="fuseColorGuide" class="text-xs font-bold text-slate-600 dark:text-slate-400 flex flex-wrap justify-center gap-5 px-2 pt-4 border-t-2 border-slate-300 dark:border-slate-600 w-full transition-colors"></div>
+            </div>
+            
+            <div class="text-sm text-slate-400 dark:text-slate-500 mt-6 text-center no-print">
+                <p>💡 Voit <b>raahata (drag & drop)</b> kojeita vaihtaaksesi niiden paikkaa keskenään. Klikkaa kojetta muuttaaksesi sen tyyppiä.</p>
+            </div>
+        </section>
+
+        <!-- SIVU 2: Ryhmäluettelo -->
+        <section class="lg:col-span-12 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none print-page-2 transition-colors duration-300">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-100 dark:border-slate-800 pb-5 mb-8 gap-4">
+                <div class="w-full">
+                    <input type="text" value="RYHMÄLUETTELO" class="text-3xl font-black text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-amber-500 focus:outline-none w-full" placeholder="Keskuksen nimi">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 mb-8 shadow-sm">
+                <table class="min-w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-black uppercase tracking-widest border-b-2 border-slate-200 dark:border-slate-700 transition-colors">
+                            <th class="py-4 px-4 w-20 text-center">Nro</th>
+                            <th class="py-4 px-4 w-60 text-center">Tyyppi / Sulake</th>
+                            <th class="py-4 px-5">Käyttökohde / Tyhjän moduulin nimi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="groupTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-base">
+                        <!-- Generoidaan JS:llä -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="border-t-2 border-slate-100 dark:border-slate-800 pt-6">
+                <label class="block text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Huomautukset & Merkinnät</label>
+                <textarea rows="4" placeholder="Yleiset asennushuomiot..." class="w-full p-4 border border-slate-200 dark:border-slate-700 rounded-xl text-base bg-slate-50/50 dark:bg-slate-950/50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition placeholder-slate-400 dark:placeholder-slate-600 text-slate-800 dark:text-slate-200"></textarea>
+            </div>
+
+            <!-- TULOSTUS KESKELLE SIVUN LOPPUUN -->
+            <div class="mt-12 flex justify-center no-print">
+                <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-10 py-4 rounded-xl shadow-lg transition duration-250 flex items-center gap-3 text-lg hover:scale-105 transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4" /></svg>
+                    TULOSTA KAAVIO JA LUETTELO (2 Sivua)
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- TUMMA TILA LOGIIKKA ---
+        // Varmistetaan että tulostus on vaalea riippumatta teemasta
+        let wasDarkBeforePrint = false;
+        window.addEventListener('beforeprint', () => {
+            wasDarkBeforePrint = document.documentElement.classList.contains('dark');
+            document.documentElement.classList.remove('dark');
+        });
+        window.addEventListener('afterprint', () => {
+            if (wasDarkBeforePrint) document.documentElement.classList.add('dark');
+        });
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textEl = document.getElementById('themeText');
+            const iconEl = document.getElementById('themeIcon');
+            
+            if (isDark) {
+                textEl.innerText = "Vaalea Tila";
+                iconEl.innerHTML = `<path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.22 4.22a1 1 0 011.415 0l.708.708a1 1 0 01-1.414 1.414l-.708-.708a1 1 0 010-1.414zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM15.636 15.636a1 1 0 010 1.415l-.708.708a1 1 0 01-1.414-1.414l.708-.708a1 1 0 011.414 0zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-4.22-4.22a1 1 0 010 1.415l-.708.708a1 1 0 01-1.414-1.414l.708-.708a1 1 0 011.414 0zM4 10a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zM5.778 5.778a1 1 0 011.414 0l.708.708a1 1 0 01-1.414 1.414l-.708-.708a1 1 0 010-1.414zM10 5a5 5 0 100 10 5 5 0 000-10z" clip-rule="evenodd" />`;
+            } else {
+                textEl.innerText = "Tumma Tila";
+                iconEl.innerHTML = `<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />`;
+            }
+        }
+
+        // --- SOVELLUKSEN TILA ---
+        let state = { fuseCount: 12, railCount: 1, rowLimit: 12, showTop: true };
+        const fusesData = {};
+        const availableAmps = [6, 10, 13, 16, 20, 25, 32, 35, 63];
+        const MOD_BASE = 40; 
+        const MOD_GAP = 2;   
+
+        // Alustetaan oletustiedot tyhjinä (Oikeilla ID:illä ja Vaiheilla)
+        function initData() {
+            for (let i = 1; i <= 100; i++) {
+                if (!fusesData[i]) {
+                    const phases = ["L1", "L2", "L3"];
+                    fusesData[i] = {
+                        id: i, // ID tarvitaan dynaamista linkitystä varten!
+                        value: 16,
+                        label: i.toString(),
+                        description: "",
+                        type: "mcb", 
+                        customName: "",
+                        phase: phases[(i - 1) % 3]
+                    };
+                }
+            }
+        }
+
+        // Kiskojen ohjauksen näkyvyys
+        function updateControls() {
+            const centerType = document.getElementById('centerTypeSelect').value;
+            const layoutMode = document.getElementById('layoutModeSelect').value;
+            const rCont = document.getElementById('railCountContainer');
+            const rDiv = document.getElementById('railCountDivider');
+            
+            if (centerType === 'tulppa' || layoutMode === 'horizontal') {
+                rCont.style.display = 'none';
+                if(rDiv) rDiv.style.display = 'none';
+            } else {
+                rCont.style.display = 'flex';
+                if(rDiv) rDiv.style.display = 'block';
+            }
+        }
+
+        function adjustValue(key, amount, min, max) {
+            let newVal = state[key] + amount;
+            if (newVal >= min && newVal <= max) {
+                state[key] = newVal;
+                document.getElementById(key + 'Input').value = state[key];
+                renderApp();
+            }
+        }
+
+        function onValueChange(key, val, min, max) {
+            let num = parseInt(val);
+            if (isNaN(num) || num < min) num = min;
+            if (num > max) num = max;
+            state[key] = num;
+            document.getElementById(key + 'Input').value = state[key];
+            renderApp();
+        }
+
+        function toggleTopSection(show) {
+            state.showTop = show;
+            const topSec = document.getElementById('topSection');
+            const standalone = document.getElementById('standaloneInfoContainer');
+            const infoBlock = document.getElementById('perustiedotBlock');
+            const paasulake = document.getElementById('paasulakeBlock');
+            
+            if (show) {
+                topSec.classList.remove('hidden');
+                standalone.classList.add('hidden');
+                topSec.insertBefore(infoBlock, paasulake);
+                infoBlock.classList.replace('col-span-12', 'col-span-7');
+                infoBlock.classList.remove('shadow-md', 'mb-6', 'w-full');
+            } else {
+                topSec.classList.add('hidden');
+                standalone.classList.remove('hidden');
+                standalone.appendChild(infoBlock);
+                infoBlock.classList.replace('col-span-7', 'col-span-12');
+                infoBlock.classList.add('shadow-md', 'mb-6', 'w-full');
+            }
+        }
+
+        // --- VÄRITYKSET (Toimivat printissä ja tummassa tilassa) ---
+        function getAmpConfig(val) {
+            switch(parseInt(val)) {
+                case 6: return { bg: "bg-green-500", text: "text-white" };
+                case 10: return { bg: "bg-red-500", text: "text-white" };
+                case 13: return { bg: "bg-purple-600", text: "text-white" };
+                case 16: return { bg: "bg-slate-400 dark:bg-slate-500", text: "text-white" };
+                case 20: return { bg: "bg-blue-500", text: "text-white" };
+                case 25: return { bg: "bg-yellow-400", text: "text-slate-900 font-black" };
+                case 32: return { bg: "bg-fuchsia-600", text: "text-white" };
+                case 35: return { bg: "bg-stone-700", text: "text-white" };
+                case 63: return { bg: "bg-orange-500", text: "text-white" };
+                case 0: return { bg: "bg-slate-200 dark:bg-slate-700", text: "text-transparent" };
+                default: return { bg: "bg-slate-400", text: "text-white" };
+            }
+        }
+
+        // --- DRAG AND DROP ---
+        let draggedId = null;
+        function handleDragStart(e, id) {
+            draggedId = id;
+            e.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => e.target.classList.add('opacity-40', 'scale-95'), 10);
+        }
+        function handleDragEnd(e) {
+            e.target.classList.remove('opacity-40', 'scale-95');
+            draggedId = null;
+        }
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('ring-4', 'ring-amber-500', 'z-20', 'scale-105');
+        }
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('ring-4', 'ring-amber-500', 'z-20', 'scale-105');
+        }
+        function handleDrop(e, targetId) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('ring-4', 'ring-amber-500', 'z-20', 'scale-105');
+            if (draggedId && draggedId !== targetId) {
+                // Vaihdetaan sisällöt turvallisesti kopioimalla data ja säilyttäen alkuperäiset ID:t ja sijaintien nimet.
+                let temp = { ...fusesData[draggedId] };
+                fusesData[draggedId] = { ...fusesData[targetId], id: draggedId, label: fusesData[draggedId].label };
+                fusesData[targetId] = { ...temp, id: targetId, label: fusesData[targetId].label };
+                
+                renderApp();
+            }
+        }
+
+        // --- KOMPONENTTIEN MUOKKAUS ---
+        function handleElementClick(e, id) {
+            if (!id) return;
+            // Estetään jos osutaan input kenttään
+            if (e.target.tagName.toLowerCase() === 'input') return;
+
+            const item = fusesData[id];
+            const centerType = document.getElementById('centerTypeSelect').value;
+            
+            if (centerType === 'tulppa') {
+                const amps = [0, 6, 10, 13, 16, 20, 25, 32, 35, 63];
+                let idx = amps.indexOf(item.value);
+                let nextVal = amps[(idx + 1) % amps.length];
+                item.value = nextVal;
+                item.type = nextVal === 0 ? 'empty-1' : 'mcb';
+            } else {
+                // Älykäs kierto automaateille
+                if (item.type.startsWith('empty-')) {
+                    let w = parseInt(item.type.split('-')[1]);
+                    if (w < 4) item.type = `empty-${w+1}`;
+                    else { item.type = 'mcb'; item.value = 10; }
+                } else if (item.type === 'mcb') {
+                    const amps = [10, 13, 16, 20, 25, 32, 35, 63];
+                    let idx = amps.indexOf(item.value);
+                    if (idx < amps.length - 1) item.value = amps[idx + 1];
+                    else { item.type = 'mcb-3p'; item.value = 16; }
+                } else if (item.type === 'mcb-3p') {
+                    const amps = [16, 20, 25, 32, 63];
+                    let idx = amps.indexOf(item.value);
+                    if (idx < amps.length - 1) item.value = amps[idx + 1];
+                    else { item.type = 'vvsk-2-25'; item.value = 25; }
+                } else if (item.type.startsWith('vvsk-2-')) {
+                    if (item.value === 25) { item.type = 'vvsk-2-40'; item.value = 40; }
+                    else { item.type = 'vvsk-4-25'; item.value = 25; }
+                } else if (item.type.startsWith('vvsk-4-')) {
+                    if (item.value === 25) { item.type = 'vvsk-4-40'; item.value = 40; }
+                    else { item.type = 'empty-1'; item.value = 0; }
+                }
+            }
+            renderApp();
+        }
+
+        function handleTableTypeChange(id, typeValue) {
+            const item = fusesData[id];
+            if (typeValue.startsWith('empty-')) { item.type = typeValue; item.value = 0; } 
+            else if (typeValue.startsWith('vvsk-')) { item.type = typeValue; item.value = parseInt(typeValue.split('-')[2]); } 
+            else if (typeValue.startsWith('mcb-3p')) { item.type = 'mcb-3p'; item.value = parseInt(typeValue.split('-')[2]); } 
+            else { item.type = 'mcb'; item.value = parseInt(typeValue); }
+            renderApp();
+        }
+
+        // Tekstien synkronointi (Ei re-renderöintiä ettei näppäimistö katoa mobiilissa)
+        function updateLabel(id, val) {
+            fusesData[id].label = val;
+            const diag = document.getElementById(`diagram-label-${id}`);
+            const tab = document.getElementById(`table-label-${id}`);
+            if (diag && diag !== document.activeElement) diag.value = val;
+            if (tab && tab !== document.activeElement) tab.value = val;
+        }
+
+        function updatePhase(id, val) {
+            fusesData[id].phase = val;
+            const diag = document.getElementById(`diagram-phase-${id}`);
+            const tab = document.getElementById(`table-phase-${id}`);
+            if (diag && diag !== document.activeElement) diag.value = val;
+            if (tab && tab !== document.activeElement) tab.value = val;
+        }
+
+        function updateDesc(id, val) {
+            fusesData[id].description = val;
+            const tab = document.getElementById(`table-desc-${id}`);
+            if (tab && tab !== document.activeElement) tab.value = val;
+        }
+
+        function updateCustomName(id, val) {
+            fusesData[id].customName = val;
+            const diag = document.getElementById(`diagram-custom-${id}`);
+            const tab = document.getElementById(`table-desc-${id}`);
+            
+            let printVal = val ? `<span class="no-print">${val}</span><span class="print-only-value">${val}</span>` : `<span class="no-print">Tyhjä</span>`;
+            if (diag) diag.innerHTML = printVal;
+            if (tab && tab !== document.activeElement) tab.value = val;
+        }
+
+        function getPrintText(item) {
+            if (item.type.startsWith('empty-')) return item.customName || '';
+            if (item.type === 'mcb-3p') return `3v Johdonsuoja ${item.value}A`;
+            if (item.type === 'vvsk-2-25') return 'VVSK 2-nap 25A 30mA';
+            if (item.type === 'vvsk-2-40') return 'VVSK 2-nap 40A 30mA';
+            if (item.type === 'vvsk-4-25') return 'VVSK 4-nap 25A 30mA';
+            if (item.type === 'vvsk-4-40') return 'VVSK 4-nap 40A 30mA';
+            return `Johdonsuoja ${item.value} A`;
+        }
+
+        function getBoxStyle(widthUnits, isVertical) {
+            const size = widthUnits * MOD_BASE + (widthUnits - 1) * MOD_GAP;
+            if (isVertical) return `width: 100px; height: ${size}px;`;
+            return `width: ${size}px; height: 100px;`;
+        }
+
+        // --- PÄÄRENDERÖINTI ---
+        function renderApp() {
+            updateControls();
+            const centerType = document.getElementById('centerTypeSelect').value;
+            const layoutMode = document.getElementById('layoutModeSelect').value;
+            const isVerticalLayout = (layoutMode === 'vertical');
+            const isAutoRail = (centerType === 'tulppa' || layoutMode === 'horizontal');
+            
+            const container = document.getElementById('breakerAreaContainer');
+            const tableBody = document.getElementById('groupTableBody');
+            const colorGuide = document.getElementById('fuseColorGuide');
+            
+            let containerHtml = "";
+            let tableHtml = "";
+
+            // --- PYSTYMALLIN AUTOMAATTINEN LAAJENNUS ---
+            // Jos kiinteä kiskomäärä (Pystymalli) ja kojeet ei mahdu -> pidennetään kiskoa automaattisesti!
+            if (layoutMode === 'vertical' && centerType === 'automaatti') {
+                let neededRowLimit = state.rowLimit;
+                let fits = false;
+                while (!fits && neededRowLimit < 200) {
+                    let rUsed = new Array(state.railCount).fill(0);
+                    let cRail = 0;
+                    fits = true;
+                    for (let i = 1; i <= state.fuseCount; i++) {
+                        const item = fusesData[i];
+                        let w = 1;
+                        if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
+                        else if (item.type === 'mcb-3p') w = 3;
+                        else if (item.type.startsWith('vvsk-2-')) w = 2;
+                        else if (item.type.startsWith('vvsk-4-')) w = 4;
+
+                        if (rUsed[cRail] + w > neededRowLimit) {
+                            cRail++;
+                            if (cRail >= state.railCount) {
+                                fits = false;
+                                break;
+                            }
+                        }
+                        if (fits) rUsed[cRail] += w;
+                    }
+                    if (!fits) neededRowLimit++;
+                }
+                if (state.rowLimit !== neededRowLimit) {
+                    state.rowLimit = neededRowLimit;
+                    const el = document.getElementById('rowLimitInput');
+                    if (el) el.value = state.rowLimit;
+                }
+            }
+
+            // KISKOJEN LOGIIKKA
+            if (centerType === 'tulppa') {
+                // TULPPASULAKEKESKUS - Ei kiskoja, isot aidon näköiset tulpat
+                containerHtml += `<div class="grid gap-6 w-full justify-items-center" style="grid-template-columns: repeat(${state.rowLimit}, minmax(0, 1fr))">`;
+                for (let i = 1; i <= state.fuseCount; i++) {
+                    const item = fusesData[i];
+                    if (item.type.startsWith('vvsk-') || item.type.startsWith('empty-') || item.type === 'mcb-3p') {
+                        item.type = 'mcb';
+                        if (item.value === 0) item.value = 10;
+                    }
+                    const isEmpty = item.value === 0;
+                    const conf = getAmpConfig(item.value);
+                    const dragAttrs = `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"`;
+                    
+                    containerHtml += `
+                        <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm" title="Ryhmä ${item.label}">
+                            <input type="text" id="diagram-label-${item.id}" value="${item.label}" oninput="updateLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-16 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
+                            
+                            <!-- Iso aito tulppasulake -->
+                            <div class="w-24 h-24 rounded-full ${isEmpty ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white'} border-[6px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors">
+                                <div class="w-8 h-8 rounded-full ${conf.bg} border-2 border-black/10 shadow-inner flex items-center justify-center"></div>
+                                ${!isEmpty ? `<span class="absolute bottom-2 text-[11px] font-black text-slate-800">${item.value}A</span>` : ''}
+                            </div>
+                            
+                            <input type="text" id="diagram-phase-${item.id}" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-12 text-xs font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mt-3 focus:outline-none focus:ring-2 focus:ring-amber-500 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                        </div>
+                    `;
+                }
+                containerHtml += `</div>`;
+            } 
+            else {
+                // AUTOMAATTIKESKUS - Jaetaan kojeet kiskoille
+                let rails = [{ items: [], used: 0 }];
+                let currentRailIndex = 0;
+
+                for (let i = 1; i <= state.fuseCount; i++) {
+                    const item = fusesData[i];
+                    let w = 1;
+                    if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
+                    else if (item.type === 'mcb-3p') w = 3;
+                    else if (item.type.startsWith('vvsk-2-')) w = 2;
+                    else if (item.type.startsWith('vvsk-4-')) w = 4;
+
+                    if (rails[currentRailIndex].used + w > state.rowLimit) {
+                        const remaining = state.rowLimit - rails[currentRailIndex].used;
+                        for (let k = 0; k < remaining; k++) rails[currentRailIndex].items.push({ type: 'spacer', width: 1 });
+                        
+                        if (!isAutoRail && currentRailIndex >= state.railCount - 1) break; // Varmuuskopio jos ylivuoto tapahtuu
+                        
+                        rails.push({ items: [], used: 0 });
+                        currentRailIndex++;
+                    }
+
+                    rails[currentRailIndex].items.push({ id: item.id, ...item, width: w });
+                    rails[currentRailIndex].used += w;
+                }
+
+                rails.forEach(rail => {
+                    if (rail.used < state.rowLimit) {
+                        const remaining = state.rowLimit - rail.used;
+                        for (let k = 0; k < remaining; k++) rail.items.push({ type: 'spacer', width: 1 });
+                    }
+                });
+
+                let railsContainerClass = isVerticalLayout ? 'flex flex-row flex-wrap justify-center gap-10 w-fit mx-auto' : 'flex flex-col items-center gap-8 w-fit mx-auto';
+                containerHtml += `<div class="${railsContainerClass}">`;
+
+                rails.forEach((rail) => {
+                    if (isVerticalLayout) {
+                        containerHtml += `
+                            <div class="relative px-2 py-3 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex flex-col items-center">
+                                <div class="din-rail-vertical absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-8 border-x-2 border-slate-400 z-0"></div>
+                                <div class="flex flex-col gap-1 z-10 py-1">
+                        `;
+                    } else {
+                        containerHtml += `
+                            <div class="relative py-3 px-2 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex items-center">
+                                <div class="din-rail-horizontal absolute left-0 right-0 top-1/2 -translate-y-1/2 h-8 border-y-2 border-slate-400 z-0"></div>
+                                <div class="flex flex-row gap-1 z-10 px-1">
+                        `;
+                    }
+
+                    rail.items.forEach((item) => {
+                        const styleStr = getBoxStyle(item.width, isVerticalLayout);
+                        const dragAttrs = item.type !== 'spacer' ? `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"` : '';
+
+                        if (item.type === 'spacer') {
+                            const spacerLine = isVerticalLayout ? '<div class="h-px w-8 bg-slate-400"></div>' : '<div class="w-px h-8 bg-slate-400"></div>';
+                            containerHtml += `<div class="bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-sm opacity-60 rounded-sm flex items-center justify-center" style="${styleStr}">${spacerLine}</div>`;
+                        }
+                        else {
+                            // AUTOMAATIT
+                            const customName = item.customName || '';
+                            const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print">Tyhjä</span>`;
+                            const labelInput = `<input type="text" id="diagram-label-${item.id}" value="${item.label}" oninput="updateLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-full text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 focus:outline-none font-bold text-slate-700 dark:text-slate-300 truncate text-[11px] rounded transition-colors">`;
+                            const phaseInput = `<input type="text" id="diagram-phase-${item.id}" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-8 text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded text-center transition-colors hover:border border-transparent hover:border-slate-300 dark:hover:border-slate-600">`;
+                            
+                            if (isVerticalLayout) {
+                                // PYSTYKISKO: KOJEET OVAT POIKITTAIN
+                                if (item.type.startsWith('empty-')) {
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="grab-cursor bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 rounded-sm flex flex-row justify-between items-center px-2 py-1 shadow-md hover:bg-slate-200 dark:hover:bg-slate-700 overflow-hidden transition-all" style="${styleStr}">
+                                            <div class="w-1/4">${labelInput}</div>
+                                            <div class="w-px h-full bg-slate-300 dark:bg-slate-600 border-x border-dashed border-slate-400 mx-1"></div>
+                                            <div class="w-1/4">${phaseInput}</div>
+                                            <span id="diagram-custom-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate w-2/4 pr-1">${customNamePrint}</span>
+                                        </div>`;
+                                } 
+                                else if (item.type === 'mcb-3p') {
+                                    const conf = getAmpConfig(item.value);
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="grab-cursor bg-gradient-to-r from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-row justify-between items-center px-2 shadow-md hover:brightness-95 overflow-hidden transition-all" style="${styleStr}">
+                                            <div class="flex flex-col text-left w-1/4">
+                                                ${labelInput}
+                                                <span class="text-[8px] text-slate-500 dark:text-slate-400 font-bold truncate pl-1">3-vaihe</span>
+                                            </div>
+                                            <div class="flex justify-center w-2/4">
+                                                <div class="w-5 h-[70px] bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex items-center justify-center">
+                                                    <div class="w-3 h-[90%] bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col items-end text-right w-1/4 gap-1">
+                                                ${phaseInput}
+                                                <span class="text-[11px] ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/10">C${item.value}</span>
+                                            </div>
+                                        </div>`;
+                                }
+                                else if (item.type.startsWith('vvsk-')) {
+                                    const is4p = item.width === 4;
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="grab-cursor bg-gradient-to-r from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-row justify-between items-center px-1 shadow-md hover:brightness-95 overflow-hidden transition-all" style="${styleStr}">
+                                            <div class="flex flex-col text-left w-1/4 pl-1">
+                                                ${labelInput}
+                                                <span class="text-[8px] text-slate-500 dark:text-slate-400 font-bold truncate pl-1">${is4p ? '4p' : '2p'}</span>
+                                            </div>
+                                            <div class="flex flex-row justify-center items-center w-2/4 gap-2">
+                                                <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow">T</div>
+                                                <div class="${is4p ? 'w-10' : 'w-6'} h-5 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex items-center">
+                                                    <div class="w-3 h-full bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col text-right w-1/4 pr-1">
+                                                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate">VVSK</span>
+                                                <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate">${item.value}A</span>
+                                            </div>
+                                        </div>`;
+                                } 
+                                else {
+                                    const conf = getAmpConfig(item.value);
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="grab-cursor bg-gradient-to-r from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-row justify-between items-center px-1 shadow-md hover:brightness-95 overflow-hidden transition-all" style="${styleStr}">
+                                            <div class="flex flex-col text-left w-1/3 pl-1">
+                                                ${labelInput}
+                                                ${phaseInput}
+                                            </div>
+                                            <div class="flex justify-center w-1/3">
+                                                <div class="w-6 h-5 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex items-center">
+                                                    <div class="w-2 h-full bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right w-1/3 pr-1 flex justify-end">
+                                                <span class="text-[11px] ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/10">C${item.value}</span>
+                                            </div>
+                                        </div>`;
+                                }
+                            } else {
+                                // VAAKAKISKO
+                                if (item.type.startsWith('empty-')) {
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="grab-cursor bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 rounded-sm flex flex-col justify-between items-center p-1.5 shadow-md hover:bg-slate-200 dark:hover:bg-slate-700 overflow-hidden transition-all" style="${styleStr}">
+                                            ${labelInput}
+                                            <div class="w-full h-px bg-slate-300 dark:bg-slate-600 border-y border-dashed border-slate-400"></div>
+                                            <div class="flex justify-between w-full items-center gap-1">
+                                                ${phaseInput}
+                                                <span id="diagram-custom-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate flex-1">${customNamePrint}</span>
+                                            </div>
+                                        </div>`;
+                                } 
+                                else if (item.type === 'mcb-3p') {
+                                    const conf = getAmpConfig(item.value);
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="grab-cursor bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all" style="${styleStr}">
+                                            <div class="flex justify-between w-full px-2 items-center">
+                                                <div class="w-2/3">${labelInput}</div>
+                                                ${phaseInput}
+                                            </div>
+                                            <div class="flex justify-center w-full py-1">
+                                                <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center">
+                                                    <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-between w-full px-2 items-center">
+                                                <span class="text-[8px] font-bold text-slate-500 dark:text-slate-400">3-vaihe</span>
+                                                <span class="text-[10px] ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/10">C${item.value}</span>
+                                            </div>
+                                        </div>`;
+                                }
+                                else if (item.type.startsWith('vvsk-')) {
+                                    const is4p = item.width === 4;
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="grab-cursor bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all" style="${styleStr}">
+                                            <div class="flex justify-between w-full px-2 items-center">
+                                                <div class="w-2/3">${labelInput}</div>
+                                                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold">${is4p ? '4p' : '2p'}</span>
+                                            </div>
+                                            <div class="flex flex-row justify-around items-center w-full py-1">
+                                                <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow">T</div>
+                                                <div class="${is4p ? 'w-10' : 'w-6'} h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col">
+                                                    <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col text-center w-full pb-0.5">
+                                                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate">VVSK</span>
+                                                <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate">${item.value}A 30mA</span>
+                                            </div>
+                                        </div>`;
+                                } 
+                                else {
+                                    const conf = getAmpConfig(item.value);
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="grab-cursor bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all" style="${styleStr}">
+                                            <div class="flex flex-col text-center w-full">
+                                                ${labelInput}
+                                                ${phaseInput}
+                                            </div>
+                                            <div class="flex justify-center w-full py-1">
+                                                <div class="w-5 h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col">
+                                                    <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="text-center w-full pb-0.5">
+                                                <span class="text-[10px] ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/10">C${item.value}</span>
+                                            </div>
+                                        </div>`;
+                                }
+                            }
+                        }
+                    });
+                    containerHtml += `</div></div>`;
+                });
+                containerHtml += `</div>`;
+            }
+
+            // COLOR GUIDE (VÄRIOHJE) - Toimii myös tummassa tilassa / tulostuksessa
+            let guideHtml = availableAmps.map(amp => {
+                const conf = getAmpConfig(amp);
+                return `<span class="flex items-center gap-1.5 text-xs"><span class="w-4 h-4 rounded-full ${conf.bg} border border-slate-300 dark:border-slate-600 shadow-sm"></span> ${amp}A</span>`;
+            }).join('');
+            if (centerType === 'automaatti') guideHtml += `<span class="flex items-center gap-1.5 text-xs"><span class="w-4 h-4 rounded-full bg-blue-600 border border-slate-300 shadow-sm text-[8px] text-white flex justify-center items-center font-bold">T</span> VVSK</span>`;
+            colorGuide.innerHTML = guideHtml;
+
+            // RYHMÄLUETTELO TAULUKON PIIRTO
+            for (let i = 1; i <= state.fuseCount; i++) {
+                const item = fusesData[i];
+                
+                let selectOptions = "";
+                if (centerType === 'tulppa') {
+                    selectOptions = `<option value="empty-1" ${item.value === 0 ? 'selected' : ''}>Tyhjä tila</option>
+                                     ${availableAmps.map(amp => `<option value="${amp}" ${item.value === amp ? 'selected' : ''}>Tulppasulake ${amp} A</option>`).join('')}`;
+                } else {
+                    selectOptions = `<option value="empty-1" ${item.type === 'empty-1' ? 'selected' : ''}>Tyhjä (1 DIN)</option>
+                                     <option value="empty-2" ${item.type === 'empty-2' ? 'selected' : ''}>Tyhjä (2 DIN)</option>
+                                     <option value="empty-3" ${item.type === 'empty-3' ? 'selected' : ''}>Tyhjä (3 DIN)</option>
+                                     <option value="empty-4" ${item.type === 'empty-4' ? 'selected' : ''}>Tyhjä (4 DIN)</option>
+                                     ${availableAmps.map(amp => `<option value="${amp}" ${item.type === 'mcb' && item.value === amp ? 'selected' : ''}>Johdonsuoja 1v ${amp} A</option>`).join('')}
+                                     ${availableAmps.map(amp => `<option value="mcb-3p-${amp}" ${item.type === 'mcb-3p' && item.value === amp ? 'selected' : ''}>Johdonsuoja 3v ${amp} A</option>`).join('')}
+                                     <option value="vvsk-2-25" ${item.type === 'vvsk-2-25' ? 'selected' : ''}>VVSK 2-nap 25 A</option>
+                                     <option value="vvsk-2-40" ${item.type === 'vvsk-2-40' ? 'selected' : ''}>VVSK 2-nap 40 A</option>
+                                     <option value="vvsk-4-25" ${item.type === 'vvsk-4-25' ? 'selected' : ''}>VVSK 4-nap 25 A</option>
+                                     <option value="vvsk-4-40" ${item.type === 'vvsk-4-40' ? 'selected' : ''}>VVSK 4-nap 40 A</option>`;
+                }
+
+                const isPlaceholderType = item.type.startsWith('empty-');
+                const descValue = isPlaceholderType ? item.customName : item.description;
+                const descPlace = isPlaceholderType ? "Anna tyhjälle laitteelle nimi..." : "Ryhmän käyttökohde...";
+                const onInputEvt = isPlaceholderType ? `updateCustomName(${i}, this.value)` : `updateDesc(${i}, this.value)`;
+
+                tableHtml += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800">
+                        <td class="py-3 px-2 text-center bg-slate-50/50 dark:bg-slate-900/50">
+                            <input type="text" id="table-label-${i}" value="${item.label}" oninput="updateLabel(${i}, this.value)" class="w-full text-center font-bold text-slate-950 dark:text-white bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:outline-none py-1">
+                        </td>
+                        <td class="py-3 px-3 text-center print-select-wrapper">
+                            <select onchange="handleTableTypeChange(${i}, this.value)" id="select-fuse-${i}" class="no-print w-full text-center bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500">
+                                ${selectOptions}
+                            </select>
+                            <span class="print-only-value font-bold text-slate-900 text-sm">${getPrintText(item)}</span>
+                        </td>
+                        <td class="py-3 px-4 flex items-center justify-between gap-3 min-h-[50px]">
+                            <input type="text" id="table-desc-${i}" value="${descValue}" oninput="${onInputEvt}" placeholder="${descPlace}" class="flex-grow bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-amber-500 focus:outline-none py-1 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 font-sans text-sm ${isPlaceholderType ? 'italic font-medium text-amber-700 dark:text-amber-500' : ''}">
+                            <input type="text" id="table-phase-${i}" value="${item.phase}" oninput="updatePhase(${i}, this.value)" class="w-10 text-center text-xs px-1 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded text-slate-500 dark:text-slate-400 font-mono font-bold focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-amber-500 hover:border-slate-400">
+                        </td>
+                    </tr>
+                `;
+            }
+
+            container.innerHTML = containerHtml;
+            tableBody.innerHTML = tableHtml;
+        }
+
+        window.onload = function() {
+            initData();
+            // Asetetaan teema laitteen oletuksen mukaan jos ei pakotettu
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeText').innerText = "Vaalea Tila";
+                document.getElementById('themeIcon').innerHTML = `<path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.22 4.22a1 1 0 011.415 0l.708.708a1 1 0 01-1.414 1.414l-.708-.708a1 1 0 010-1.414zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM15.636 15.636a1 1 0 010 1.415l-.708.708a1 1 0 01-1.414-1.414l.708-.708a1 1 0 011.414 0zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-4.22-4.22a1 1 0 010 1.415l-.708.708a1 1 0 01-1.414-1.414l.708-.708a1 1 0 011.414 0zM4 10a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zM5.778 5.778a1 1 0 011.414 0l.708.708a1 1 0 01-1.414 1.414l-.708-.708a1 1 0 010-1.414zM10 5a5 5 0 100 10 5 5 0 000-10z" clip-rule="evenodd" />`;
+            }
+            renderApp();
+        };
+    </script>
+</body>
+</html>
