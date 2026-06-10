@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="fi" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sähkökeskuksen Suunnittelutyökalu PRO V7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        /* --- TULOSTUS (PRINT) CSS --- */
+        @media print {
+            @page { margin: 1.5cm; size: A4 portrait; }
+            html, body { 
+                background: white !important; 
+                color: black !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 100% !important;
+            }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            
+            .no-print { display: none !important; }
+            .print-shadow-none { box-shadow: none !important; border-color: #cbd5e1 !important; }
+            
+            /* Pakotetaan lohkot, ei flex-keskitystä tulostuksessa (estää yläreunan leikkautumisen) */
+            .print-page-1 { 
+                page-break-after: always; 
+                display: block !important; 
+                padding-top: 0 !important; 
+            }
+            .print-page-2 { 
+                page-break-before: always; 
+                display: block !important; 
+                padding-top: 0 !important;
+            }
+            
+            /* Rivitys (wrap) sallitaan ylileveille kiskostoille tulosteessa */
+            #breakerAreaContainer, .scroll-container { overflow: visible !important; flex-wrap: wrap !important; max-width: 100% !important; }
+
+            /* Pakotetaan gridi säilymään (Korjaa tulppasulakkeiden rivityksen tulosteessa) */
+            .print-grid { display: grid !important; }
+
+            /* Kiskojen tekstin ja rakenteen hallinta tulostuksessa */
+            .rivi-text {
+                position: relative !important;
+                display: block !important;
+                top: 0 !important;
+                left: 0 !important;
+                margin-bottom: 0.5rem !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+                color: #64748b !important;
+            }
+
+            .rail-row { 
+                padding-top: 0.5rem !important;
+                page-break-inside: auto !important; 
+            }
+            
+            .koje, tr { 
+                page-break-inside: avoid !important; 
+                break-inside: avoid !important; 
+            }
+
+            /* Pakotetaan lomakekenttien teksti mustaksi ja poistetaan reunat */
+            input, textarea, select { border: none !important; background: transparent !important; box-shadow: none !important; resize: none !important; color: black !important; }
+            .print-select-wrapper select { display: none !important; }
+            .print-select-wrapper .print-only-value { display: block !important; color: black !important; font-weight: bold; }
+        }
+        
+        .print-only-value { display: none; }
+        
+        /* DIN-kiskon gradientit */
+        .din-rail-horizontal { background: linear-gradient(to bottom, #cbd5e1 0%, #94a3b8 30%, #cbd5e1 70%, #64748b 100%); }
+        .din-rail-vertical { background: linear-gradient(to right, #cbd5e1 0%, #94a3b8 30%, #cbd5e1 70%, #64748b 100%); }
+        
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        .grab-cursor { cursor: grab; } .grab-cursor:active { cursor: grabbing; }
+
+        /* Kustomoitu vierityspalkki työpöydälle */
+        .custom-scrollbar::-webkit-scrollbar { height: 12px; width: 12px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; border: 2px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border: 2px solid #1e293b; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans min-h-screen pb-12 transition-colors duration-300">
+
+    <!-- OHJAUSPANEELI -->
+    <header class="bg-slate-900 dark:bg-black text-white shadow-lg mb-8 no-print border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 py-8 flex flex-col gap-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-center md:text-left">
+                    <h1 class="text-3xl font-black tracking-wide flex items-center justify-center md:justify-start gap-3">
+                        <span class="inline-block w-5 h-5 rounded-full bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]"></span>
+                        Sähkökeskus PRO V7
+                    </h1>
+                    <p class="text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">Dynaaminen sijoituskaavio ja ryhmäluettelo</p>
+                </div>
+                <button onclick="toggleDarkMode()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2 px-5 rounded-full border border-slate-600 shadow-md transition flex items-center gap-2">
+                    <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <!-- Päivittyy JS:ssä -->
+                    </svg>
+                    <span id="themeText">Tumma Tila</span>
+                </button>
+            </div>
+            
+            <!-- Asetusvalikko -->
+            <div class="flex flex-wrap justify-center items-center gap-6 bg-slate-800 dark:bg-slate-900 p-5 rounded-2xl border border-slate-700 w-full shadow-2xl">
+                
+                <div class="flex flex-col gap-2 items-center">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Keskustyyppi</span>
+                    <select id="centerTypeSelect" onchange="changeMainConfig()" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
+                        <option value="tulppa">Tulppasulake (Kierre)</option>
+                        <option value="automaatti" selected>Johdonsuoja (DIN)</option>
+                    </select>
+                </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
+
+                <div class="flex flex-col gap-2 items-center">
+                    <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">Ryhmiä</span>
+                    <div class="flex items-center bg-slate-950 rounded-lg border border-slate-600 overflow-hidden shadow-inner">
+                        <button onclick="adjustCount('fuseCount', -1)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
+                        <input type="number" id="fuseCountInput" value="12" onchange="updateCountFromInput('fuseCount', this.value)" class="w-14 bg-transparent text-center text-white font-black text-base focus:outline-none">
+                        <button onclick="adjustCount('fuseCount', 1)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
+                    </div>
+                </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block" id="railDivider"></div>
+
+                <div class="flex flex-col gap-2 items-center" id="railCountContainer">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Kiskoja</span>
+                    <div class="flex items-center bg-slate-950 rounded-lg border border-slate-600 overflow-hidden shadow-inner">
+                        <button onclick="adjustCount('railCount', -1)" class="px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
+                        <input type="number" id="railCountInput" value="1" onchange="updateCountFromInput('railCount', this.value)" class="w-10 bg-transparent text-center text-white font-black text-base focus:outline-none">
+                        <button onclick="adjustCount('railCount', 1)" class="px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
+                    </div>
+                </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
+
+                <div class="flex flex-col gap-2 items-center">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Moduulia / Rivi</span>
+                    <div class="flex items-center bg-slate-950 rounded-lg border border-slate-600 overflow-hidden shadow-inner">
+                        <button onclick="adjustCount('rowLimit', -1)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
+                        <input type="number" id="rowLimitInput" value="12" onchange="updateCountFromInput('rowLimit', this.value)" class="w-14 bg-transparent text-center text-white font-black text-base focus:outline-none">
+                        <button onclick="adjustCount('rowLimit', 1)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
+                    </div>
+                </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block" id="layoutDivider"></div>
+
+                <div class="flex flex-col gap-2 items-center" id="layoutContainer">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Asettelu</span>
+                    <select id="layoutModeSelect" onchange="changeMainConfig()" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
+                        <option value="horizontal" selected>Vaaka (Kiskot rinnakkain)</option>
+                        <option value="vertical">Pysty (Kiskot allekkain)</option>
+                    </select>
+                </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
+
+                <div class="flex flex-col gap-2 items-center justify-center h-full pt-1">
+                    <label class="flex items-center gap-3 cursor-pointer text-sm font-black text-slate-300 hover:text-white bg-slate-950 px-6 py-3 rounded-lg border border-slate-600 transition shadow-inner">
+                        <input type="checkbox" id="showTopToggle" checked onchange="toggleTopSection(this.checked)" class="w-5 h-5 accent-amber-500 cursor-pointer">
+                        Näytä Yläosa
+                    </label>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[100%] lg:max-w-7xl mx-auto px-2 md:px-4 print-shadow-none">
+        
+        <!-- SIVU 1: SIJOITUSKAAVIO -->
+        <section class="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none print-page-1 transition-colors duration-300 w-full mb-8">
+            <h2 class="text-2xl font-black text-slate-900 dark:text-white border-b-2 border-slate-100 dark:border-slate-800 pb-4 mb-6 w-full text-center tracking-wide">
+                Sähkökeskuksen sijoituskaavio
+            </h2>
+            
+            <!-- Jos Yläosa piilotetaan, Keskuksen perustiedot siirtyvät tänne omaan lohkoonsa! -->
+            <div id="standaloneInfoContainer" class="w-full max-w-[700px] mx-auto mb-8 hidden"></div>
+
+            <!-- Scrollaava säiliö keskuskuvalle, jotta leveys ei riko sivua mobiilissa tai leveillä kiskoilla -->
+            <div class="w-full overflow-x-auto custom-scrollbar pb-6 scroll-container">
+                <div id="physicalCabinet" class="bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-fit min-w-[320px] mx-auto transition-all print-shadow-none">
+                    
+                    <!-- YLÄOSA (Tiedot & Pääsulakkeet) -->
+                    <div id="topSection" class="grid grid-cols-12 gap-8 bg-slate-200 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 w-full min-w-[650px] shadow-sm transition-colors print-shadow-none mx-auto max-w-4xl">
+                        
+                        <!-- Keskuksen perustiedot lomake -->
+                        <div id="perustiedotBlock" class="col-span-7 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl p-5 flex flex-col justify-between shadow-sm transition-colors print-shadow-none">
+                            <span class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block no-print mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">Keskuksen perustiedot:</span>
+                            <div class="grid grid-cols-2 gap-x-8 gap-y-5 text-left w-full h-full">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Keskuksen tunnus</span>
+                                    <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" value="PK1 Mökki">
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Malli/Tyyppi</span>
+                                    <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" value="Pinta-asennus">
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Piirtäjä / Asentaja</span>
+                                    <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" placeholder="Nimi...">
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Päivämäärä</span>
+                                    <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" placeholder="PP.KK.VVVV">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pääsulakkeet (Oikea reuna) -->
+                        <div id="paasulakeBlock" class="col-span-5 flex flex-col justify-center items-center py-1">
+                            <div class="flex flex-col gap-2 items-center w-full">
+                                <div class="text-sm font-black uppercase text-slate-600 dark:text-slate-300 tracking-widest text-center">Pääsulakkeet</div>
+                                <div class="flex gap-3 bg-slate-300 dark:bg-slate-800 p-3 rounded-xl border border-slate-400 dark:border-slate-600 shadow-inner">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <input type="text" value="25" class="w-14 h-14 rounded-full bg-white border-[5px] border-yellow-500 text-center text-lg font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-400" title="Pääsulake L1">
+                                        <span class="text-[10px] font-bold text-slate-500">L1</span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1">
+                                        <input type="text" value="25" class="w-14 h-14 rounded-full bg-white border-[5px] border-yellow-500 text-center text-lg font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-400" title="Pääsulake L2">
+                                        <span class="text-[10px] font-bold text-slate-500">L2</span>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-1">
+                                        <input type="text" value="25" class="w-14 h-14 rounded-full bg-white border-[5px] border-yellow-500 text-center text-lg font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-400" title="Pääsulake L3">
+                                        <span class="text-[10px] font-bold text-slate-500">L3</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ITSE RYHMÄT (Laitteet) -->
+                    <div id="breakerAreaContainer" class="bg-slate-200 dark:bg-slate-700 p-4 md:p-8 rounded-xl border border-slate-300 dark:border-slate-600 w-full flex flex-col items-center shadow-inner transition-colors">
+                        <!-- Generoidaan JS:llä -->
+                    </div>
+                    
+                    <button onclick="adjustCount('fuseCount', 1)" class="no-print mx-auto -mt-4 mb-2 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-700 hover:border-amber-400 dark:hover:bg-amber-900 dark:hover:text-amber-300 rounded-full w-14 h-14 flex items-center justify-center font-bold text-4xl shadow-lg transition-all" title="Lisää uusi ryhmä">+</button>
+                </div>
+            </div>
+            
+            <div class="text-sm text-slate-400 dark:text-slate-500 mt-6 text-center no-print">
+                <p>💡 Voit <b>raahata (drag & drop)</b> kojeita vaihtaaksesi niiden paikkaa. Klikkaa kojeen keskeltä vaihtaaksesi sen tyyppiä.</p>
+            </div>
+        </section>
+
+        <!-- SIVU 2: RYHMÄLUETTELO -->
+        <section class="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none print-page-2 transition-colors duration-300 w-full">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-100 dark:border-slate-800 pb-5 mb-8 gap-4">
+                <div class="w-full">
+                    <input type="text" value="RYHMÄLUETTELO" class="text-3xl font-black text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-amber-500 focus:outline-none w-full" placeholder="Keskuksen nimi">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 mb-8 shadow-sm">
+                <table class="min-w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs md:text-sm font-black uppercase tracking-widest border-b-2 border-slate-200 dark:border-slate-700 transition-colors">
+                            <th class="py-4 px-3 w-16 text-center">Nro</th>
+                            <th class="py-4 px-3 w-64 text-center">Tyyppi / Sulake</th>
+                            <th class="py-4 px-4">Käyttökohde / Tyhjän tila nimi</th>
+                            <th class="py-4 px-2 w-16 text-center no-print">Poista</th>
+                        </tr>
+                    </thead>
+                    <tbody id="groupTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm md:text-base">
+                        <!-- Generoidaan JS:llä -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="border-t-2 border-slate-100 dark:border-slate-800 pt-6">
+                <label class="block text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Huomautukset & Merkinnät</label>
+                <textarea rows="4" placeholder="Yleiset asennushuomiot..." class="w-full p-4 border border-slate-200 dark:border-slate-700 rounded-xl text-base bg-slate-50/50 dark:bg-slate-950/50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition placeholder-slate-400 dark:placeholder-slate-600 text-slate-800 dark:text-slate-200"></textarea>
+            </div>
+
+            <!-- TULOSTUS KESKELLE -->
+            <div class="mt-12 flex justify-center no-print w-full">
+                <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-10 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-3 text-lg hover:scale-105 transform w-full md:w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4" /></svg>
+                    TULOSTA KAAVIO & LUETTELO
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- TUMMA TILA & IKONIT ---
+        function updateThemeIcon() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const iconEl = document.getElementById('themeIcon');
+            const textEl = document.getElementById('themeText');
+            if (isDark) {
+                if(textEl) textEl.innerText = "Vaalea Tila";
+                if(iconEl) iconEl.innerHTML = `<path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4.22 4.22a1 1 0 011.415 0l.708.708a1 1 0 01-1.414 1.414l-.708-.708a1 1 0 010-1.414zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM15.636 15.636a1 1 0 010 1.415l-.708.708a1 1 0 01-1.414-1.414l.708-.708a1 1 0 011.414 0zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-4.22-4.22a1 1 0 010 1.415l-.708.708a1 1 0 01-1.414-1.414l.708-.708a1 1 0 011.414 0zM4 10a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zM5.778 5.778a1 1 0 011.414 0l.708.708a1 1 0 01-1.414 1.414l-.708-.708a1 1 0 010-1.414zM10 5a5 5 0 100 10 5 5 0 000-10z" clip-rule="evenodd" />`;
+            } else {
+                if(textEl) textEl.innerText = "Tumma Tila";
+                if(iconEl) iconEl.innerHTML = `<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />`;
+            }
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            updateThemeIcon();
+        }
+
+        // TULOSTUKSEN AJAKSI TUMMA TILA POIS PÄÄLTÄ
+        let wasDark = false;
+        window.addEventListener('beforeprint', () => {
+            wasDark = document.documentElement.classList.contains('dark');
+            if (wasDark) { document.documentElement.classList.remove('dark'); }
+        });
+        window.addEventListener('afterprint', () => {
+            if (wasDark) { document.documentElement.classList.add('dark'); }
+        });
+
+        // --- SOVELLUKSEN DATAMALLI ---
+        let appState = {
+            fuseCount: 12,
+            railCount: 1,
+            rowLimit: 12,
+            showTop: true
+        };
+        let fusesData = {};
+        
+        const AMPS = [6, 10, 13, 16, 20, 25, 32, 35, 40, 50, 63];
+        const MOD_BASE = 40; 
+        const MOD_GAP = 2;   
+
+        // Alustetaan datat
+        function initData() {
+            for (let i = 1; i <= 200; i++) {
+                const phases = ["L1", "L2", "L3"];
+                fusesData[i] = {
+                    id: i,
+                    value: 16,
+                    label: i.toString(),
+                    description: "",
+                    type: "mcb", 
+                    curve: "C", 
+                    customName: "",
+                    phase: phases[(i - 1) % 3]
+                };
+            }
+        }
+
+        // --- PÄÄASETUKSET JA NÄKYVYYDET ---
+        function changeMainConfig() {
+            const centerType = document.getElementById('centerTypeSelect').value;
+            const layoutMode = document.getElementById('layoutModeSelect').value;
+            const rCont = document.getElementById('railCountContainer');
+            const rDiv = document.getElementById('railCountDivider');
+            const lCont = document.getElementById('layoutContainer');
+            const lDiv = document.getElementById('layoutDivider');
+            
+            if (centerType === 'tulppa') {
+                rCont.style.display = 'none';
+                if(rDiv) rDiv.style.display = 'none';
+                lCont.style.display = 'none';
+                if(lDiv) lDiv.style.display = 'none';
+                if(appState.rowLimit === 12) { appState.rowLimit = 4; document.getElementById('rowLimitInput').value = 4; }
+            } else {
+                lCont.style.display = 'flex';
+                if(lDiv) lDiv.style.display = 'block';
+                if (layoutMode === 'horizontal') {
+                    rCont.style.display = 'none';
+                    if(rDiv) rDiv.style.display = 'none';
+                } else {
+                    rCont.style.display = 'flex';
+                    if(rDiv) rDiv.style.display = 'block';
+                }
+                if(appState.rowLimit === 4) { appState.rowLimit = 12; document.getElementById('rowLimitInput').value = 12; }
+            }
+        }
+
+        function adjustCount(key, amount) {
+            let newVal = appState[key] + amount;
+            if (newVal >= 1) {
+                if(key === 'rowLimit' && newVal < 2) newVal = 2;
+                appState[key] = newVal;
+                document.getElementById(key + 'Input').value = appState[key];
+                
+                // Päivitetään config tarvittaessa, ja suoritetaan renderöinti.
+                changeMainConfig();
+                renderApp();
+            }
+        }
+
+        function updateCountFromInput(key, val) {
+            let num = parseInt(val);
+            if (isNaN(num) || num < 1) num = 1;
+            if (key === 'rowLimit' && num < 2) num = 2;
+            appState[key] = num;
+            document.getElementById(key + 'Input').value = appState[key];
+            
+            changeMainConfig();
+            renderApp();
+        }
+
+        function toggleTopSection(show) {
+            appState.showTop = show;
+            const topSec = document.getElementById('topSection');
+            const standalone = document.getElementById('standaloneInfoContainer');
+            const infoBlock = document.getElementById('perustiedotBlock');
+            const paasulake = document.getElementById('paasulakeBlock');
+            
+            if (show) {
+                topSec.classList.remove('hidden');
+                standalone.classList.add('hidden');
+                topSec.insertBefore(infoBlock, paasulake);
+                infoBlock.classList.replace('col-span-12', 'col-span-7');
+                infoBlock.classList.remove('shadow-md');
+            } else {
+                topSec.classList.add('hidden');
+                standalone.classList.remove('hidden');
+                standalone.appendChild(infoBlock);
+                infoBlock.classList.replace('col-span-7', 'col-span-12');
+                infoBlock.classList.add('shadow-md');
+            }
+        }
+
+        // --- VÄRITYKSET ---
+        function getAmpConfig(val) {
+            switch(parseInt(val)) {
+                case 6: return { bg: "bg-green-500", text: "text-white" };
+                case 10: return { bg: "bg-red-500", text: "text-white" };
+                case 13: return { bg: "bg-purple-600", text: "text-white" };
+                case 16: return { bg: "bg-gray-400 dark:bg-gray-500", text: "text-white" };
+                case 20: return { bg: "bg-blue-500", text: "text-white" };
+                case 25: return { bg: "bg-yellow-400", text: "text-slate-900 font-black" };
+                case 32: return { bg: "bg-fuchsia-600", text: "text-white" };
+                case 35: return { bg: "bg-black", text: "text-white" };
+                case 40: return { bg: "bg-emerald-700", text: "text-white" };
+                case 50: return { bg: "bg-white border-2 border-slate-300", text: "text-slate-900 font-black" };
+                case 63: return { bg: "bg-orange-500", text: "text-white" };
+                case 0: return { bg: "bg-slate-200 dark:bg-slate-700", text: "text-transparent" };
+                default: return { bg: "bg-slate-400", text: "text-white" };
+            }
+        }
+
+        // --- RYHMÄN POISTAMINEN ---
+        function deleteRow(id) {
+            for (let i = id; i < appState.fuseCount; i++) {
+                fusesData[i] = { ...fusesData[i + 1] };
+                fusesData[i].id = i; 
+                fusesData[i].label = i.toString();
+            }
+            appState.fuseCount--;
+            document.getElementById('fuseCountInput').value = appState.fuseCount;
+            renderApp();
+        }
+
+        // --- DRAG AND DROP ---
+        let draggedId = null;
+        function handleDragStart(e, id) {
+            draggedId = id;
+            e.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => e.target.classList.add('opacity-40', 'scale-95'), 10);
+        }
+        function handleDragEnd(e) {
+            e.target.classList.remove('opacity-40', 'scale-95');
+            draggedId = null;
+        }
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('ring-4', 'ring-amber-500', 'z-20', 'scale-105');
+        }
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('ring-4', 'ring-amber-500', 'z-20', 'scale-105');
+        }
+        function handleDrop(e, targetId) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('ring-4', 'ring-amber-500', 'z-20', 'scale-105');
+            if (draggedId && draggedId !== targetId) {
+                let temp = { ...fusesData[draggedId] };
+                fusesData[draggedId] = { ...fusesData[targetId] };
+                fusesData[targetId] = temp;
+                
+                fusesData[draggedId].id = draggedId;
+                fusesData[draggedId].label = draggedId.toString();
+                fusesData[targetId].id = targetId;
+                fusesData[targetId].label = targetId.toString();
+                
+                renderApp();
+            }
+        }
+
+        // --- KOJEEN KLIKKAUS ---
+        function handleElementClick(e, id) {
+            if (!id) return;
+            if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'select') return;
+
+            const item = fusesData[id];
+            const centerType = document.getElementById('centerTypeSelect').value;
+            
+            if (centerType === 'tulppa') {
+                const seq = [6, 10, 13, 16, 20, 25, 32, 35, 63, 'main-switch', 'empty'];
+                let currentPos = -1;
+                if (item.type === 'main-switch') currentPos = seq.indexOf('main-switch');
+                else if (item.type.startsWith('empty')) currentPos = seq.indexOf('empty');
+                else currentPos = seq.indexOf(item.value);
+                
+                let next = seq[(currentPos + 1) % seq.length];
+                if (next === 'main-switch') { item.type = 'main-switch'; item.value = 0; }
+                else if (next === 'empty') { item.type = 'empty-1'; item.value = 0; }
+                else { item.type = 'tulppa'; item.value = next; }
+            } else {
+                if (item.type === 'empty-1') item.type = 'empty-2';
+                else if (item.type === 'empty-2') item.type = 'empty-3';
+                else if (item.type === 'empty-3') item.type = 'empty-4';
+                else if (item.type === 'empty-4') { item.type = 'mcb'; item.value = 6; }
+                else if (item.type === 'mcb') {
+                    let currentIdx = AMPS.indexOf(item.value);
+                    if (currentIdx !== -1 && currentIdx < AMPS.length - 1) { item.value = AMPS[currentIdx + 1]; }
+                    else { item.type = 'mcb-3p'; item.value = 16; }
+                }
+                else if (item.type === 'mcb-3p') { item.type = 'vvsk-2-25'; item.value = 25; }
+                else if (item.type === 'vvsk-2-25') { item.type = 'vvsk-2-40'; item.value = 40; }
+                else if (item.type === 'vvsk-2-40') { item.type = 'vvsk-4-25'; item.value = 25; }
+                else if (item.type === 'vvsk-4-25') { item.type = 'vvsk-4-40'; item.value = 40; }
+                else if (item.type === 'vvsk-4-40') { item.type = 'main-switch'; item.value = 0; }
+                else if (item.type === 'main-switch') { item.type = 'empty-1'; item.value = 0; }
+                else { item.type = 'empty-1'; item.value = 0; }
+            }
+            renderApp();
+        }
+
+        // --- KÄYRIEN JA TYYPPIEN VAIHTO ---
+        function toggleCurve(e, id) {
+            e.stopPropagation();
+            const item = fusesData[id];
+            if (item.curve === 'C') item.curve = 'B';
+            else if (item.curve === 'B') item.curve = 'D';
+            else item.curve = 'C';
+            renderApp();
+        }
+
+        function handleTableSelect(idx, val) {
+            const item = fusesData[idx];
+            if (appState.type === 'tulppa') {
+                if (val.startsWith('empty-')) { item.type = 'empty-1'; item.value = 0; }
+                else if (val === 'main-switch') { item.type = 'main-switch'; item.value = 0; }
+                else { item.type = 'tulppa'; item.value = parseInt(val); }
+            } else {
+                if (val.startsWith('empty-')) { item.type = val; item.value = 0; } 
+                else if (val.startsWith('vvsk-')) { item.type = val; item.value = parseInt(val.split('-')[2] || 25); } 
+                else if (val.startsWith('mcb-3p')) { item.type = 'mcb-3p'; item.value = parseInt(val.split('-')[2]); } 
+                else if (val === 'main-switch') { item.type = 'main-switch'; item.value = 0; }
+                else { item.type = 'mcb'; item.value = parseInt(val); }
+            }
+            renderApp();
+        }
+        
+        function handleCurveChange(id, curveValue) { fusesData[id].curve = curveValue; renderApp(); }
+
+        // --- REAALIAIKAINEN TEKSTIEN PÄIVITYS ---
+        function updateGroupLabel(id, value) {
+            fusesData[id].label = value;
+            const els = document.querySelectorAll(`.fuse-label-input-${id}`);
+            els.forEach(el => { if(el.value !== value) el.value = value; });
+        }
+
+        function updatePhase(id, value) { 
+            fusesData[id].phase = value; 
+            const els = document.querySelectorAll(`.fuse-phase-input-${id}`);
+            els.forEach(el => { if(el.value !== value) el.value = value; });
+        }
+
+        function saveDescription(id, text) { 
+            fusesData[id].description = text; 
+            const els = document.querySelectorAll(`.fuse-desc-input-${id}`);
+            els.forEach(el => { if(el.value !== text) el.value = text; });
+        }
+        
+        function saveCustomName(id, text) {
+            fusesData[id].customName = text;
+            const els = document.querySelectorAll(`.fuse-customname-input-${id}`);
+            els.forEach(el => { if(el.value !== text) el.value = text; });
+            const visualLabel = document.getElementById(`visual-custom-label-${id}`);
+            if (visualLabel) {
+                visualLabel.innerHTML = text ? `<span class="no-print">${text}</span><span class="print-only-value">${text}</span>` : '<span class="no-print text-slate-400">Tyhjä</span>';
+            }
+        }
+
+        function getPrintText(item) {
+            if (item.type.startsWith('empty-')) return item.customName || '';
+            if (item.type === 'main-switch') return 'PÄÄKYTKIN';
+            if (appState.type === 'tulppa' || item.type === 'tulppa') return `Tulppasulake ${item.value} A`;
+            if (item.type === 'mcb-3p') return `3-Vaihe Johdonsuoja ${item.curve}${item.value}A`;
+            if (item.type === 'vvsk-2-25') return 'VVSK 2-nap 25A 30mA';
+            if (item.type === 'vvsk-2-40') return 'VVSK 2-nap 40A 30mA';
+            if (item.type === 'vvsk-4-25') return 'VVSK 4-nap 25A 30mA';
+            if (item.type === 'vvsk-4-40') return 'VVSK 4-nap 40A 30mA';
+            return `Johdonsuoja ${item.curve}${item.value}A`;
+        }
+
+        function getBoxStyle(widthUnits, isVertical) {
+            const size = widthUnits * MOD_BASE + (widthUnits - 1) * MOD_GAP;
+            if (isVertical) return `width: 100px; height: ${size}px;`;
+            return `width: ${size}px; height: 100px;`;
+        }
+
+        // --- PÄÄRENDERÖINTI ---
+        function renderApp() {
+            const centerType = document.getElementById('centerTypeSelect').value;
+            const layoutMode = document.getElementById('layoutModeSelect').value;
+            const isVerticalLayout = (layoutMode === 'vertical');
+            const isAutoRail = (centerType === 'tulppa' || layoutMode === 'horizontal');
+            
+            const container = document.getElementById('breakerAreaContainer');
+            const tableBody = document.getElementById('groupTableBody');
+            
+            let containerHtml = "";
+            let tableHtml = "";
+
+            if (!isAutoRail) {
+                let fits = false;
+                while (!fits && appState.rowLimit < 200) {
+                    let rUsed = new Array(appState.railCount).fill(0);
+                    let cRail = 0;
+                    fits = true;
+
+                    for (let i = 1; i <= appState.fuseCount; i++) {
+                        const item = fusesData[i];
+                        let w = 1;
+                        if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
+                        else if (item.type === 'main-switch') w = 3;
+                        else if (item.type === 'mcb-3p') w = 3;
+                        else if (item.type.startsWith('vvsk-2-')) w = 2;
+                        else if (item.type.startsWith('vvsk-4-')) w = 4;
+
+                        if (rUsed[cRail] + w > appState.rowLimit) {
+                            cRail++;
+                            if (cRail >= appState.railCount) { fits = false; break; }
+                        }
+                        if (fits) rUsed[cRail] += w;
+                    }
+                    if (!fits) appState.rowLimit++;
+                }
+                document.getElementById('rowLimitInput').value = appState.rowLimit;
+            }
+
+            if (centerType === 'tulppa') {
+                // TULPPASULAKEKESKUS
+                containerHtml += `<div class="grid gap-6 justify-items-center w-full print-grid" style="grid-template-columns: repeat(${appState.rowLimit}, minmax(0, 1fr))">`;
+                for (let i = 1; i <= appState.fuseCount; i++) {
+                    const item = fusesData[i];
+                    
+                    if (item.type !== 'tulppa' && item.type !== 'main-switch' && !item.type.startsWith('empty')) {
+                        item.type = 'tulppa';
+                        if (!AMPS.includes(item.value)) item.value = 16;
+                    }
+                    
+                    const isEmpty = item.type.startsWith('empty');
+                    const isMainSwitch = item.type === 'main-switch';
+                    const conf = getAmpConfig(item.value);
+                    const dragAttrs = `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"`;
+                    
+                    if (isMainSwitch) {
+                        containerHtml += `
+                            <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10" title="PÄÄKYTKIN">
+                                <span class="text-xs font-black text-red-600 mb-2 truncate">PÄÄKYTKIN</span>
+                                <div class="w-24 h-24 rounded-xl bg-red-600 border-[4px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors">
+                                    <div class="w-12 h-6 bg-slate-900 rounded shadow-md border-b-2 border-white/20"></div>
+                                </div>
+                                <span class="text-transparent mt-3">0</span>
+                            </div>`;
+                    } else {
+                        containerHtml += `
+                            <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10" title="Ryhmä ${item.label}">
+                                <input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-label-input-${item.id} w-16 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
+                                
+                                <div class="w-24 h-24 rounded-full ${isEmpty ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white'} border-[6px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors">
+                                    <div class="w-8 h-8 rounded-full ${conf.bg} border-2 border-black/10 shadow-inner flex items-center justify-center"></div>
+                                    ${!isEmpty ? `<span class="absolute bottom-2 text-[11px] font-black text-slate-800">${item.value}A</span>` : ''}
+                                </div>
+                                
+                                <input type="text" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-phase-input-${item.id} w-12 text-xs font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mt-3 focus:outline-none focus:ring-2 focus:ring-amber-500 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                            </div>`;
+                    }
+                }
+                containerHtml += `</div>`;
+            } 
+            else {
+                // AUTOMAATTIKESKUS
+                let rails = [{ items: [], used: 0 }];
+                let currentRailIndex = 0;
+
+                for (let i = 1; i <= appState.fuseCount; i++) {
+                    const item = fusesData[i];
+                    if (item.type === 'tulppa') item.type = 'mcb'; // Pakotetaan takaisin automaatiksi
+                    
+                    let w = 1;
+                    if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
+                    else if (item.type === 'main-switch') w = 3;
+                    else if (item.type === 'mcb-3p') w = 3;
+                    else if (item.type.startsWith('vvsk-2-')) w = 2;
+                    else if (item.type.startsWith('vvsk-4-')) w = 4;
+
+                    if (rails[currentRailIndex].used + w > appState.rowLimit) {
+                        const remaining = appState.rowLimit - rails[currentRailIndex].used;
+                        for (let k = 0; k < remaining; k++) rails[currentRailIndex].items.push({ type: 'spacer', width: 1 });
+                        if (!isAutoRail && currentRailIndex >= appState.railCount - 1) break; 
+                        rails.push({ items: [], used: 0 });
+                        currentRailIndex++;
+                    }
+
+                    rails[currentRailIndex].items.push({ id: item.id, ...item, width: w });
+                    rails[currentRailIndex].used += w;
+                }
+
+                rails.forEach(rail => {
+                    if (rail.used < appState.rowLimit) {
+                        const remaining = appState.rowLimit - rail.used;
+                        for (let k = 0; k < remaining; k++) rail.items.push({ type: 'spacer', width: 1 });
+                    }
+                });
+
+                let railsContainerClass = isVerticalLayout ? 'flex flex-row flex-wrap justify-center gap-10 w-fit mx-auto' : 'flex flex-col items-center gap-8 w-fit mx-auto';
+                containerHtml += `<div class="${railsContainerClass}">`;
+
+                rails.forEach((rail, rIndex) => {
+                    const title = isVerticalLayout ? `Pysty ${rIndex+1}` : `Rivi ${rIndex+1}`;
+                    
+                    if (isVerticalLayout) {
+                        containerHtml += `
+                            <div class="rail-row relative px-2 pt-6 pb-2 rounded-lg border-2 border-slate-350 bg-[#f1f5f9] dark:bg-slate-800/60 shadow-inner flex flex-col items-center min-w-[100px] mt-2">
+                                <span class="rivi-text absolute top-1 left-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">${title}</span>
+                                <div class="relative w-full h-full flex flex-col items-center">
+                                    <div class="din-rail-vertical absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-8 border-x-2 border-slate-400 z-0"></div>
+                                    <div class="flex flex-col gap-1 z-10 w-full py-1">
+                        `;
+                    } else {
+                        containerHtml += `
+                            <div class="rail-row relative pt-6 pb-3 px-2 rounded-lg border-2 border-slate-350 bg-[#f1f5f9] dark:bg-slate-800/60 shadow-inner flex flex-col w-full mt-2">
+                                <span class="rivi-text absolute top-1 left-2 px-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">${title}</span>
+                                <div class="relative w-full flex items-center min-h-[80px]">
+                                    <div class="din-rail-horizontal absolute left-0 right-0 top-1/2 -translate-y-1/2 h-8 border-y-2 border-slate-400 z-0"></div>
+                                    <div class="grid gap-1 z-10 w-full print-grid" style="grid-template-columns: repeat(${appState.rowLimit}, minmax(0,1fr))">
+                        `;
+                    }
+
+                    rail.items.forEach((item) => {
+                        const styleStr = getBoxStyle(item.width, isVerticalLayout);
+                        const dragAttrs = item.type !== 'spacer' ? `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"` : '';
+
+                        if (item.type === 'spacer') {
+                            const spacerLine = isVerticalLayout ? '<div class="h-px w-8 bg-slate-400"></div>' : '<div class="w-px h-8 bg-slate-400"></div>';
+                            containerHtml += `<div class="koje bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-sm opacity-60 rounded-sm flex items-center justify-center relative z-10" style="${styleStr}">${spacerLine}</div>`;
+                        }
+                        else {
+                            const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
+                            const labelInput = `<input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-label-input-${item.id} w-full text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 focus:outline-none font-bold text-slate-700 dark:text-slate-300 truncate text-[11px] rounded transition-colors">`;
+                            const phaseInput = `<input type="text" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-phase-input-${item.id} w-8 text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded text-center transition-colors hover:border border-transparent hover:border-slate-300 dark:hover:border-slate-600">`;
+                            
+                            if (isVerticalLayout) {
+                                // PYSTYKISKO
+                                if (item.type.startsWith('empty-')) {
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 rounded-sm flex flex-row justify-between items-center px-2 py-1 shadow-md hover:bg-slate-200 dark:hover:bg-slate-700 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            <div class="w-1/4">${labelInput}</div>
+                                            <div class="w-px h-full bg-slate-300 dark:bg-slate-600 border-x border-dashed border-slate-400 mx-1"></div>
+                                            <div class="w-1/4">${phaseInput}</div>
+                                            <span id="visual-custom-label-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate w-2/4 pr-1">${customNamePrint}</span>
+                                        </div>`;
+                                }
+                                else if (item.type === 'main-switch') {
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-red-600 border-2 border-slate-900 rounded-sm flex flex-row justify-between items-center px-2 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            <div class="w-1/4"><span class="text-[12px] font-black text-white truncate w-full text-center block">PÄÄ<br>KYTKIN</span></div>
+                                            <div class="flex justify-center w-2/4">
+                                                <div class="w-5 h-[70px] bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex items-center justify-center shadow-inner">
+                                                    <div class="w-3 h-[90%] bg-slate-800 dark:bg-slate-950 rounded-sm shadow-md border-r border-white/20"></div>
+                                                </div>
+                                            </div>
+                                            <div class="w-1/4"></div>
+                                        </div>`;
+                                }
+                                else if (item.type === 'mcb-3p') {
+                                    const conf = getAmpConfig(item.value);
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-gradient-to-r from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-row justify-between items-center px-2 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            <div class="flex flex-col text-left w-1/4">
+                                                ${labelInput}
+                                                <span class="text-[8px] text-slate-500 dark:text-slate-400 font-bold truncate pl-1">3-vaihe</span>
+                                            </div>
+                                            <div class="flex justify-center w-2/4">
+                                                <div class="w-5 h-[70px] bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex items-center justify-center">
+                                                    <div class="w-3 h-[90%] bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col items-end text-right w-1/4 gap-1">
+                                                ${phaseInput}
+                                                <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[11px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20">${item.curve}${item.value}</span>
+                                            </div>
+                                        </div>`;
+                                }
+                                else if (item.type.startsWith('vvsk-')) {
+                                    const is4p = item.width === 4;
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-gradient-to-r from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-row justify-between items-center px-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            <div class="flex flex-col text-left w-1/4 pl-1">
+                                                ${labelInput}
+                                                <span class="text-[8px] text-slate-500 dark:text-slate-400 font-bold truncate pl-1">${is4p ? '4p' : '2p'}</span>
+                                            </div>
+                                            <div class="flex flex-row justify-center items-center w-2/4 gap-2">
+                                                <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow">T</div>
+                                                <div class="${is4p ? 'w-10' : 'w-6'} h-5 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex items-center">
+                                                    <div class="w-3 h-full bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col text-right w-1/4 pr-1">
+                                                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate">VVSK</span>
+                                                <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate">${item.value}A</span>
+                                            </div>
+                                        </div>`;
+                                } 
+                                else {
+                                    const conf = getAmpConfig(item.value);
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-gradient-to-r from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-row justify-between items-center px-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            <div class="flex flex-col text-left w-1/3 pl-1">
+                                                ${labelInput}
+                                                ${phaseInput}
+                                            </div>
+                                            <div class="flex justify-center w-1/3">
+                                                <div class="w-6 h-5 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex items-center">
+                                                    <div class="w-2 h-full bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="text-right w-1/3 pr-1 flex justify-end">
+                                                <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[11px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20">${item.curve}${item.value}</span>
+                                            </div>
+                                        </div>`;
+                                }
+                            } else {
+                                // VAAKAKISKO
+                                if (item.type.startsWith('empty-')) {
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 rounded-sm flex flex-col justify-between items-center p-1.5 shadow-md hover:bg-slate-200 dark:hover:bg-slate-700 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            ${labelInput}
+                                            <div class="w-full h-px bg-slate-300 dark:bg-slate-600 border-y border-dashed border-slate-400"></div>
+                                            <div class="flex justify-between w-full items-center gap-1">
+                                                ${phaseInput}
+                                                <span id="visual-custom-label-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate flex-1">${customNamePrint}</span>
+                                            </div>
+                                        </div>`;
+                                }
+                                else if (item.type === 'main-switch') {
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-red-600 border-2 border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            <div class="flex justify-center w-full px-2 items-center">
+                                                <span class="text-[14px] font-black text-white truncate text-center">PÄÄKYTKIN</span>
+                                            </div>
+                                            <div class="flex justify-center w-full py-1">
+                                                <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center shadow-inner">
+                                                    <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow-md border-b border-white/20"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-center w-full px-2 items-center text-transparent text-xs">0</div>
+                                        </div>`;
+                                }
+                                else if (item.type === 'mcb-3p') {
+                                    const conf = getAmpConfig(item.value);
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            <div class="flex justify-between w-full px-2 items-center">
+                                                <div class="w-2/3">${labelInput}</div>
+                                                ${phaseInput}
+                                            </div>
+                                            <div class="flex justify-center w-full py-1">
+                                                <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center">
+                                                    <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-between w-full px-2 items-center">
+                                                <span class="text-[8px] font-bold text-slate-500 dark:text-slate-400">3-vaihe</span>
+                                                <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20">${item.curve}${item.value}</span>
+                                            </div>
+                                        </div>`;
+                                }
+                                else if (item.type.startsWith('vvsk-')) {
+                                    const is4p = item.width === 4;
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            <div class="flex justify-between w-full px-2 items-center">
+                                                <div class="w-2/3">${labelInput}</div>
+                                                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold">${is4p ? '4p' : '2p'}</span>
+                                            </div>
+                                            <div class="flex flex-row justify-around items-center w-full py-1">
+                                                <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow">T</div>
+                                                <div class="${is4p ? 'w-10' : 'w-6'} h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col">
+                                                    <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col text-center w-full pb-0.5">
+                                                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate">VVSK</span>
+                                                <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate">${item.value}A 30mA</span>
+                                            </div>
+                                        </div>`;
+                                } 
+                                else {
+                                    const conf = getAmpConfig(item.value);
+                                    containerHtml += `
+                                        <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje grab-cursor bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10" style="${styleStr}">
+                                            <div class="flex flex-col text-center w-full">
+                                                ${labelInput}
+                                                ${phaseInput}
+                                            </div>
+                                            <div class="flex justify-center w-full py-1">
+                                                <div class="w-5 h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col">
+                                                    <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow"></div>
+                                                </div>
+                                            </div>
+                                            <div class="text-center w-full pb-0.5">
+                                                <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20">${item.curve}${item.value}</span>
+                                            </div>
+                                        </div>`;
+                                }
+                            }
+                        }
+                    });
+                    if (isVerticalLayout) {
+                        containerHtml += `</div></div></div>`;
+                    } else {
+                        containerHtml += `</div></div></div>`;
+                    }
+                });
+                containerHtml += `</div>`;
+            }
+
+            // RYHMÄLUETTELO TAULUKON PIIRTO
+            for (let i = 1; i <= appState.fuseCount; i++) {
+                const item = fusesData[i];
+                
+                let selectOptions = "";
+                if (centerType === 'tulppa') {
+                    selectOptions = `<option value="empty-1" ${item.type.startsWith('empty') ? 'selected' : ''}>Tyhjä tila</option>
+                                     <option value="main-switch" ${item.type === 'main-switch' ? 'selected' : ''}>Pääkytkin</option>
+                                     ${AMPS.map(amp => `<option value="${amp}" ${item.type === 'tulppa' && item.value == amp ? 'selected' : ''}>Tulppasulake ${amp} A</option>`).join('')}`;
+                } else {
+                    selectOptions = `<option value="empty-1" ${item.type === 'empty-1' ? 'selected' : ''}>Tyhjä (1 DIN)</option>
+                                     <option value="empty-2" ${item.type === 'empty-2' ? 'selected' : ''}>Tyhjä (2 DIN)</option>
+                                     <option value="empty-3" ${item.type === 'empty-3' ? 'selected' : ''}>Tyhjä (3 DIN)</option>
+                                     <option value="empty-4" ${item.type === 'empty-4' ? 'selected' : ''}>Tyhjä (4 DIN)</option>
+                                     <option value="main-switch" ${item.type === 'main-switch' ? 'selected' : ''}>Pääkytkin (3 DIN)</option>
+                                     ${AMPS.map(amp => `<option value="${amp}" ${item.type === 'mcb' && item.value === amp ? 'selected' : ''}>Johdonsuoja 1v ${amp} A</option>`).join('')}
+                                     ${AMPS.map(amp => `<option value="mcb-3p-${amp}" ${item.type === 'mcb-3p' && item.value === amp ? 'selected' : ''}>Johdonsuoja 3v ${amp} A</option>`).join('')}
+                                     <option value="vvsk-2-25" ${item.type === 'vvsk-2-25' ? 'selected' : ''}>VVSK 2-nap 25 A</option>
+                                     <option value="vvsk-2-40" ${item.type === 'vvsk-2-40' ? 'selected' : ''}>VVSK 2-nap 40 A</option>
+                                     <option value="vvsk-4-25" ${item.type === 'vvsk-4-25' ? 'selected' : ''}>VVSK 4-nap 25 A</option>
+                                     <option value="vvsk-4-40" ${item.type === 'vvsk-4-40' ? 'selected' : ''}>VVSK 4-nap 40 A</option>`;
+                }
+
+                const isPlaceholderType = item.type.startsWith('empty-');
+                const isMainSwitch = item.type === 'main-switch';
+                const descValue = isPlaceholderType ? item.customName : item.description;
+                const descPlace = isPlaceholderType ? "Anna tyhjälle laitteelle vapaa nimi (esim. Kellokytkin)..." : "Ryhmän käyttökohde (kirjoita tähän)...";
+                const onInputEvt = isPlaceholderType ? `saveCustomName(${i}, this.value)` : `saveDescription(${i}, this.value)`;
+                
+                let curveSelectHtml = '';
+                if (centerType === 'automaatti' && item.type.includes('mcb')) {
+                    curveSelectHtml = `
+                        <select onchange="handleCurveChange(${i}, this.value)" class="no-print ml-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-1 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500 hover:border-slate-400">
+                            <option value="B" ${item.curve === 'B' ? 'selected' : ''}>B</option>
+                            <option value="C" ${item.curve === 'C' ? 'selected' : ''}>C</option>
+                            <option value="D" ${item.curve === 'D' ? 'selected' : ''}>D</option>
+                        </select>
+                    `;
+                }
+
+                tableHtml += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800">
+                        <td class="py-3 px-2 text-center bg-slate-50/50 dark:bg-slate-900/50 relative">
+                            <input type="text" value="${item.label}" oninput="updateGroupLabel(${i}, this.value)" class="fuse-label-input-${i} w-full text-center font-bold text-slate-950 dark:text-white bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:outline-none py-1 text-base">
+                        </td>
+                        <td class="py-3 px-3 text-center print-select-wrapper flex justify-center items-center gap-1">
+                            <select onchange="handleTableSelect(${i}, this.value)" class="no-print w-full max-w-[200px] text-center bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500 hover:border-slate-400">
+                                ${selectOptions}
+                            </select>
+                            ${curveSelectHtml}
+                            <span class="print-only-value font-bold text-slate-900 text-sm">${getPrintText(item)}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center justify-between gap-3 min-h-[40px]">
+                                <input type="text" value="${descValue}" oninput="${onInputEvt}" placeholder="${descPlace}" class="fuse-customname-input-${i} fuse-desc-input-${i} flex-grow bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-amber-500 focus:outline-none py-1 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 font-sans text-sm ${isPlaceholderType ? 'italic font-medium text-amber-700 dark:text-amber-500' : ''}" ${isMainSwitch ? 'disabled placeholder="-"' : ''}>
+                                <input type="text" value="${item.phase}" oninput="updatePhase(${i}, this.value)" class="fuse-phase-input-${i} w-10 text-center text-xs px-1 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded text-slate-500 dark:text-slate-400 font-mono font-bold focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-amber-500 hover:border-slate-400 transition-colors">
+                            </div>
+                        </td>
+                        <td class="py-3 px-2 text-center no-print">
+                            <button onclick="deleteRow(${i})" class="text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-2 rounded-lg transition-colors" title="Poista ryhmä">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            container.innerHTML = containerHtml;
+            tableBody.innerHTML = tableHtml;
+        }
+
+        window.onload = function() {
+            initData();
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            }
+            updateThemeIcon();
+            changeMainConfig();
+        };
+    </script>
+</body>
+</html>
