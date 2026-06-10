@@ -23,6 +23,10 @@
             
             .no-print { display: none !important; }
             .print-shadow-none { box-shadow: none !important; border-color: #cbd5e1 !important; }
+            
+            /* Taustojen siivous tulosteessa */
+            .print-white-bg { background: white !important; border-color: #cbd5e1 !important; }
+            .print-no-bg { background: transparent !important; border-color: #cbd5e1 !important; }
 
             /* Pakotetaan lohkot, ei flex-keskitystä tulostuksessa (estää yläreunan leikkautumisen) */
             .print-page-1 { 
@@ -36,15 +40,10 @@
                 padding-top: 0 !important;
             }
             
-            /* Puramme flexboxin kokonaan rivien isännältä tulostuksessa sivunvaihdon helpottamiseksi */
-            #breakerAreaContainer {
-                display: block !important;
-                background-color: transparent !important;
-                border: none !important;
-                padding: 0 !important;
-            }
+            /* Rivitys (wrap) sallitaan ylileveille kiskostoille tulosteessa */
+            #breakerAreaContainer, .scroll-container { overflow: visible !important; flex-wrap: wrap !important; max-width: 100% !important; }
 
-            .scroll-container { overflow: visible !important; flex-wrap: wrap !important; max-width: 100% !important; }
+            /* Pakotetaan gridi säilymään */
             .print-grid { display: grid !important; }
 
             /* Kiskojen tekstin ja rakenteen hallinta tulostuksessa */
@@ -59,14 +58,9 @@
                 color: #64748b !important;
             }
 
-            /* Rivi käsitellään inline-blockina, jotta se ei VAHINGOSSAKAAN katkea keskeltä */
             .rail-row { 
                 padding-top: 0.5rem !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-                display: inline-block !important;
-                width: 100% !important;
-                background-color: white !important;
+                page-break-inside: auto !important; 
             }
             
             .koje, tr { 
@@ -189,7 +183,6 @@
     <main class="max-w-[100%] lg:max-w-7xl mx-auto px-2 md:px-4 print-shadow-none">
         
         <!-- SIVU 1: SIJOITUSKAAVIO -->
-        <!-- Poistettu harmaa tausta tulostuksesta luokilla print:bg-white print:shadow-none print:border-none -->
         <section class="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print:bg-white print:border-none print:shadow-none print-page-1 transition-colors duration-300 w-full mb-8">
             <h2 class="text-2xl font-black text-slate-900 dark:text-white border-b-2 border-slate-100 dark:border-slate-800 pb-4 mb-6 w-full text-center tracking-wide no-print">
                 Sähkökeskuksen sijoituskaavio
@@ -200,7 +193,6 @@
 
             <!-- Scrollaava säiliö keskuskuvalle, jotta leveys ei riko sivua mobiilissa tai leveillä kiskoilla -->
             <div class="w-full overflow-x-auto custom-scrollbar pb-6 scroll-container">
-                <!-- physicalCabinet harmaat taustat on korvattu valkoisella tulosteessa -->
                 <div id="physicalCabinet" class="print:bg-white print:border-slate-300 print:border-[1px] print:shadow-none print:p-2 bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-fit min-w-[320px] mx-auto transition-all">
                     
                     <!-- YLÄOSA (Tiedot & Pääsulakkeet) -->
@@ -252,7 +244,7 @@
                     </div>
 
                     <!-- ITSE RYHMÄT (Laitteet) -->
-                    <div id="breakerAreaContainer" class="bg-slate-200 dark:bg-slate-700 p-4 md:p-8 rounded-xl border border-slate-300 dark:border-slate-600 w-full flex flex-col items-center shadow-inner transition-colors">
+                    <div id="breakerAreaContainer" class="print:bg-white bg-slate-200 dark:bg-slate-700 p-4 md:p-8 rounded-xl border border-slate-300 dark:border-slate-600 w-full flex flex-col items-center shadow-inner transition-colors">
                         <!-- Generoidaan JS:llä -->
                     </div>
                     
@@ -351,6 +343,13 @@
         const availableAmps = [6, 10, 13, 16, 20, 25, 32, 35, 40, 50, 63];
         const MOD_BASE = 40; 
         const MOD_GAP = 2;   
+
+        // Alustetaan datat
+        function initData() {
+            for (let i = 1; i <= 200; i++) {
+                getFuse(i);
+            }
+        }
 
         // Dynaaminen datan haku
         function getFuse(id) {
@@ -515,29 +514,62 @@
             const centerType = document.getElementById('centerTypeSelect').value;
             
             if (centerType === 'tulppa') {
-                let currentVal = parseInt(item.value);
-                let currentIdx = availableAmps.indexOf(currentVal);
-                if (item.type === 'main-switch') { item.value = 6; item.type = 'mcb'; }
-                else if (currentVal === 0) { item.value = 6; item.type = 'mcb'; }
-                else if (currentIdx === availableAmps.length - 1) { item.type = 'main-switch'; item.value = 1; }
-                else { item.value = availableAmps[currentIdx + 1]; item.type = 'mcb'; }
-            } else {
-                if (item.type === 'empty-1') item.type = 'empty-2';
-                else if (item.type === 'empty-2') item.type = 'empty-3';
-                else if (item.type === 'empty-3') item.type = 'empty-4';
-                else if (item.type === 'empty-4') { item.type = 'mcb'; item.value = 6; }
-                else if (item.type === 'mcb') {
+                if (item.type === 'main-switch') {
+                    item.type = 'empty-1';
+                    item.value = 0;
+                } else if (item.type.startsWith('empty')) {
+                    item.type = 'tulppa';
+                    item.value = 6;
+                } else {
                     let currentIdx = availableAmps.indexOf(item.value);
-                    if (currentIdx < availableAmps.length - 1) { item.value = availableAmps[currentIdx + 1]; }
-                    else { item.type = 'mcb-3p'; item.value = 16; }
+                    if (currentIdx === availableAmps.length - 1) {
+                        item.type = 'main-switch';
+                        item.value = 0;
+                    } else {
+                        item.type = 'tulppa';
+                        item.value = availableAmps[currentIdx + 1];
+                    }
                 }
-                else if (item.type === 'mcb-3p') { item.type = 'vvsk-2-25'; item.value = 25; }
-                else if (item.type === 'vvsk-2-25') { item.type = 'vvsk-2-40'; item.value = 40; }
-                else if (item.type === 'vvsk-2-40') { item.type = 'vvsk-4-25'; item.value = 25; }
-                else if (item.type === 'vvsk-4-25') { item.type = 'vvsk-4-40'; item.value = 40; }
-                else if (item.type === 'vvsk-4-40') { item.type = 'main-switch'; item.value = 1; }
-                else if (item.type === 'main-switch') { item.type = 'empty-1'; item.value = 0; }
-                else { item.type = 'empty-1'; item.value = 0; }
+            } else {
+                if (item.type === 'empty-1') {
+                    item.type = 'empty-2';
+                } else if (item.type === 'empty-2') {
+                    item.type = 'empty-3';
+                } else if (item.type === 'empty-3') {
+                    item.type = 'empty-4';
+                } else if (item.type === 'empty-4') {
+                    item.type = 'mcb';
+                    item.value = 6;
+                } else if (item.type === 'mcb') {
+                    let currentIdx = availableAmps.indexOf(item.value);
+                    if (currentIdx < availableAmps.length - 1) { 
+                        item.value = availableAmps[currentIdx + 1]; 
+                    } else { 
+                        item.type = 'mcb-3p'; 
+                        item.value = 16; 
+                    }
+                } else if (item.type === 'mcb-3p') {
+                    item.type = 'vvsk-2-25';
+                    item.value = 25;
+                } else if (item.type === 'vvsk-2-25') {
+                    item.type = 'vvsk-2-40';
+                    item.value = 40;
+                } else if (item.type === 'vvsk-2-40') {
+                    item.type = 'vvsk-4-25';
+                    item.value = 25;
+                } else if (item.type === 'vvsk-4-25') {
+                    item.type = 'vvsk-4-40';
+                    item.value = 40;
+                } else if (item.type === 'vvsk-4-40') {
+                    item.type = 'main-switch';
+                    item.value = 0;
+                } else if (item.type === 'main-switch') {
+                    item.type = 'empty-1';
+                    item.value = 0;
+                } else {
+                    item.type = 'empty-1';
+                    item.value = 0;
+                }
             }
             renderApp();
         }
@@ -554,13 +586,20 @@
             if (el) el.innerHTML = `${item.curve}${item.value}`;
         }
 
-        function handleTableTypeChange(id, typeValue) {
-            const item = getFuse(id);
-            if (typeValue.startsWith('empty-')) { item.type = typeValue; item.value = 0; } 
-            else if (typeValue.startsWith('vvsk-')) { item.type = typeValue; item.value = parseInt(typeValue.split('-')[2]); } 
-            else if (typeValue.startsWith('mcb-3p')) { item.type = 'mcb-3p'; item.value = parseInt(typeValue.split('-')[2]); } 
-            else if (typeValue === 'main-switch') { item.type = 'main-switch'; item.value = 1; }
-            else { item.type = 'mcb'; item.value = parseInt(typeValue); }
+        function handleTableSelect(idx, val) {
+            const item = getFuse(idx);
+            const centerType = document.getElementById('centerTypeSelect').value;
+            if (centerType === 'tulppa') {
+                if (val.startsWith('empty-')) { item.type = 'empty-1'; item.value = 0; }
+                else if (val === 'main-switch') { item.type = 'main-switch'; item.value = 0; }
+                else { item.type = 'tulppa'; item.value = parseInt(val); }
+            } else {
+                if (val.startsWith('empty-')) { item.type = val; item.value = 0; } 
+                else if (val.startsWith('vvsk-')) { item.type = val; item.value = parseInt(val.split('-')[2] || 25); } 
+                else if (val.startsWith('mcb-3p')) { item.type = 'mcb-3p'; item.value = parseInt(val.split('-')[2]); } 
+                else if (val === 'main-switch') { item.type = 'main-switch'; item.value = 0; }
+                else { item.type = 'mcb'; item.value = parseInt(val); }
+            }
             renderApp();
         }
         
@@ -571,8 +610,11 @@
         
         function saveCustomName(id, text) {
             getFuse(id).customName = text;
-            const el = document.getElementById(`visual-custom-label-${id}`);
-            if (el) { el.innerHTML = text ? `<span class="no-print">${text}</span><span class="print-only-value">${text}</span>` : '<span class="no-print text-slate-400">Tyhjä</span>'; }
+            const labelName = text || 'Tyhjä';
+            const targetVisualSpan = document.getElementById(`visual-custom-label-${id}`);
+            if (targetVisualSpan) {
+                targetVisualSpan.innerHTML = text ? `<span class="no-print">${text}</span><span class="print-only-value">${text}</span>` : '<span class="no-print">Tyhjä</span>';
+            }
         }
 
         function getPrintText(item) {
@@ -613,11 +655,12 @@
                 containerHtml += `<div class="grid gap-6 w-full justify-items-center relative print-grid" style="grid-template-columns: repeat(${appState.rowLimit}, minmax(0, 1fr))">`;
                 for (let i = 1; i <= appState.fuseCount; i++) {
                     const item = getFuse(i);
-                    if (item.type.startsWith('vvsk-') || item.type.startsWith('empty-') || item.type === 'mcb-3p') {
-                        item.type = 'mcb';
-                        if (item.value === 0) item.value = 10;
+                    if (item.type !== 'tulppa' && item.type !== 'main-switch' && !item.type.startsWith('empty')) {
+                        item.type = 'tulppa';
+                        if (!availableAmps.includes(item.value)) item.value = 16;
                     }
-                    const isEmpty = item.value === 0 && item.type !== 'main-switch';
+                    
+                    const isEmpty = item.type.startsWith('empty');
                     const isMainSwitch = item.type === 'main-switch';
                     const conf = getAmpConfig(item.value);
                     const dragAttrs = `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"`;
@@ -632,16 +675,24 @@
                                 <span class="text-transparent mt-3">0</span>
                             </div>`;
                     } else {
+                        const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
+                        
                         containerHtml += `
                             <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:border-slate-300 print:shadow-none print:border-[1px]" title="Ryhmä ${item.label}">
-                                <input type="text" id="fuse-label-${item.id}" value="${item.label}" onchange="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-16 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
+                                <input type="text" id="fuse-label-${item.id}" value="${item.label}" onchange="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-16 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
                                 
-                                <div class="w-24 h-24 rounded-full ${isEmpty ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white'} border-[6px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:bg-white">
-                                    <div class="w-8 h-8 rounded-full ${conf.bg} border-2 border-black/10 shadow-inner flex items-center justify-center print:shadow-none print:border-slate-400"></div>
-                                    ${!isEmpty ? `<span class="absolute bottom-2 text-[11px] font-black text-slate-800">${item.value}A</span>` : ''}
+                                <div class="w-24 h-24 rounded-full ${isEmpty ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white'} border-[6px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:bg-white print:border-slate-400">
+                                    ${isEmpty ? 
+                                        `<div class="w-10 h-10 rounded-full bg-slate-300 dark:bg-slate-900 shadow-inner print:bg-slate-200 print:shadow-none print:border print:border-slate-400"></div>` : 
+                                        `<div class="w-8 h-8 rounded-full ${conf.bg} border-2 border-black/10 shadow-inner flex items-center justify-center print:shadow-none print:border-slate-400"></div>
+                                         <span class="absolute bottom-2 text-[11px] font-black text-slate-800">${item.value}A</span>`
+                                    }
                                 </div>
                                 
-                                <input type="text" id="fuse-phase-${item.id}" value="${item.phase}" onchange="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-12 text-xs font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mt-3 focus:outline-none focus:ring-2 focus:ring-amber-500 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                                <div class="flex flex-col items-center mt-2 w-full">
+                                    <input type="text" id="fuse-phase-${item.id}" value="${item.phase}" onchange="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-12 text-xs font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                                    ${isEmpty ? `<span id="visual-custom-label-${item.id}" class="text-[8px] font-bold text-slate-500 uppercase truncate w-full text-center mt-1 leading-none h-3">${customNamePrint}</span>` : '<span class="h-3 mt-1 w-full"></span>'}
+                                </div>
                             </div>`;
                     }
                 }
@@ -999,6 +1050,7 @@
         }
 
         window.onload = function() {
+            initData();
             if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 document.documentElement.classList.add('dark');
             }
