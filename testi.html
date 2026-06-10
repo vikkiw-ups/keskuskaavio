@@ -10,6 +10,10 @@
     </script>
     <style>
         /* --- TULOSTUS (PRINT) CSS --- */
+        @media screen {
+            #labelStripsContainer { display: none; }
+        }
+
         @media print {
             @page { margin: 1.5cm; size: A4 portrait; }
             html, body { 
@@ -27,6 +31,21 @@
             /* Taustojen siivous tulosteessa */
             .print-white-bg { background: white !important; border-color: #cbd5e1 !important; }
             .print-no-bg { background: transparent !important; border-color: #cbd5e1 !important; }
+
+            /* --- NORMAALI TULOSTUSTILA --- */
+            body:not(.print-mode-labels) #labelStripsContainer {
+                display: none !important;
+            }
+
+            /* --- MERKINTÄLIUSKOJEN TULOSTUSTILA --- */
+            body.print-mode-labels .print-page-1,
+            body.print-mode-labels .print-page-2,
+            body.print-mode-labels header {
+                display: none !important;
+            }
+            body.print-mode-labels #labelStripsContainer {
+                display: block !important;
+            }
 
             /* Pakotetaan lohkot, ei flex-keskitystä tulostuksessa (estää yläreunan leikkautumisen) */
             .print-page-1 { 
@@ -104,7 +123,7 @@
                         <span class="inline-block w-5 h-5 rounded-full bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]"></span>
                         Sähkökeskus PRO V7
                     </h1>
-                    <p class="text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">Dynaaminen sijoituskaavio ja ryhmäluettelo</p>
+                    <p class="text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">Dynaaminen sijoituskaavio ja merkintäliuskat</p>
                 </div>
                 <button onclick="toggleDarkMode()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2 px-5 rounded-full border border-slate-600 shadow-md transition flex items-center gap-2">
                     <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -204,7 +223,7 @@
                             <div class="grid grid-cols-2 gap-x-8 gap-y-5 text-left w-full h-full">
                                 <div class="flex flex-col">
                                     <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Keskuksen tunnus</span>
-                                    <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" value="PK1 Mökki">
+                                    <input type="text" id="keskusTunnusInput" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" value="PK1 Mökki">
                                 </div>
                                 <div class="flex flex-col">
                                     <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Malli/Tyyppi</span>
@@ -274,7 +293,7 @@
                         <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs md:text-sm font-black uppercase tracking-widest border-b-2 border-slate-200 dark:border-slate-700 transition-colors">
                             <th class="py-4 px-3 w-16 text-center">Nro</th>
                             <th class="py-4 px-3 w-64 text-center">Tyyppi / Sulake</th>
-                            <th class="py-4 px-4">Käyttökohde / Nimi</th>
+                            <th class="py-4 px-4">Käyttökohde / Tyhjän tila nimi</th>
                             <th class="py-4 px-2 w-16 text-center no-print">Poista</th>
                         </tr>
                     </thead>
@@ -290,15 +309,22 @@
             </div>
 
             <!-- TULOSTUS KESKELLE -->
-            <div class="mt-12 flex justify-center no-print w-full">
+            <div class="mt-12 flex flex-col md:flex-row justify-center gap-4 no-print w-full">
                 <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-8 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-3 text-lg hover:scale-105 transform w-full md:w-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4" /></svg>
                     TULOSTA KAAVIO & LUETTELO
+                </button>
+                <button onclick="printLabelStrips()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-3 text-lg hover:scale-105 transform w-full md:w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 7h10v3H7zM5 10h14a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z" /></svg>
+                    TULOSTA MERKINTÄLIUSKA
                 </button>
             </div>
         </section>
 
     </main>
+    
+    <!-- Piilotettu säiliö merkintäliuskoja varten -->
+    <div id="labelStripsContainer"></div>
 
     <script>
         // --- TUMMA TILA & IKONIT ---
@@ -328,6 +354,7 @@
         });
         window.addEventListener('afterprint', () => {
             if (wasDark) { document.documentElement.classList.add('dark'); }
+            document.body.classList.remove('print-mode-labels'); // Siivoaa merkintäliuskatilan
         });
 
         // --- SOVELLUKSEN DATAMALLI ---
@@ -634,6 +661,118 @@
             const size = widthUnits * MOD_BASE + (widthUnits - 1) * MOD_GAP;
             if (isVertical) return `width: 100px; height: ${size}px;`;
             return `width: ${size}px; height: 100px;`;
+        }
+
+        // --- MERKINTÄLIUSKOJEN GENERONTI ---
+        function generateLabelStripsHTML() {
+            const centerType = document.getElementById('centerTypeSelect').value;
+            const keskusTunnus = document.getElementById('keskusTunnusInput').value || 'Sähkökeskus';
+            let html = `<div class="p-8 w-full"><h2 class="text-2xl font-black mb-8 border-b pb-2">Merkintäliuskat: ${keskusTunnus}</h2>`;
+
+            if (centerType === 'tulppa') {
+                // Tulppakeskuksen merkinnät (Yleensä liimattavia neliöitä sulakkeiden alle)
+                html += `<div class="text-sm mb-4">Leikkaa viivoja pitkin ja liimaa sulakepesien viereen/alle.</div>`;
+                html += `<div class="flex flex-wrap gap-4 items-start">`;
+                
+                for (let i = 1; i <= appState.fuseCount; i++) {
+                    const item = getFuse(i);
+                    if (item.type !== 'empty-1' && item.type !== 'main-switch' && item.value !== 0) {
+                        const desc = item.description || item.customName || "";
+                        html += `
+                            <div style="width: 30mm; height: 30mm; border: 1px solid black;" class="p-1 flex flex-col justify-center items-center text-center overflow-hidden">
+                                <span class="font-bold text-[14px] leading-none mb-1">${item.label}</span>
+                                <span class="text-[9px] leading-tight break-words">${desc}</span>
+                            </div>
+                        `;
+                    }
+                }
+                html += `</div></div>`;
+            } else {
+                // Automaattikeskuksen merkintäliuskat (17.5mm / 1 DIN standardileveys)
+                html += `<div class="text-sm mb-6">Liuskan leveys on sovitettu 17.5 mm perusmoduulille. Leikkaa viivoja pitkin.</div>`;
+                
+                let rails = [{ items: [], used: 0 }];
+                let currentRailIndex = 0;
+
+                // Haetaan ja jaetaan kuten sijoituskuvassa
+                for (let i = 1; i <= appState.fuseCount; i++) {
+                    const item = getFuse(i);
+                    let w = 1;
+                    if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
+                    else if (item.type === 'main-switch') w = 3;
+                    else if (item.type === 'mcb-3p') w = 3;
+                    else if (item.type.startsWith('vvsk-2-')) w = 2;
+                    else if (item.type.startsWith('vvsk-4-')) w = 4;
+
+                    if (rails[currentRailIndex].used + w > appState.rowLimit) {
+                        const remaining = appState.rowLimit - rails[currentRailIndex].used;
+                        for (let k = 0; k < remaining; k++) {
+                            rails[currentRailIndex].items.push({ type: 'spacer', width: 1 });
+                        }
+                        rails.push({ items: [], used: 0 });
+                        currentRailIndex++;
+                    }
+
+                    rails[currentRailIndex].items.push({ id: item.id, ...item, width: w });
+                    rails[currentRailIndex].used += w;
+                }
+
+                rails.forEach(rail => {
+                    if (rail.used < appState.rowLimit) {
+                        const remaining = appState.rowLimit - rail.used;
+                        for (let k = 0; k < remaining; k++) rail.items.push({ type: 'spacer', width: 1 });
+                    }
+                });
+
+                // Piirretään Liuskat (Aina vaakasuunnassa fyysiselle liuskalle!)
+                rails.forEach((rail, idx) => {
+                    html += `<div class="mb-8 w-fit">`;
+                    html += `<div class="text-xs font-bold mb-1 text-slate-500">Kisko / Rivi ${idx + 1}</div>`;
+                    html += `<div class="flex flex-row border-l border-t border-b border-black">`;
+                    
+                    rail.items.forEach(item => {
+                        if (item.type === 'spacer') {
+                            html += `<div style="width: 17.5mm; height: 25mm;" class="border-r border-black bg-gray-100 flex flex-col justify-center items-center"><span class="text-gray-300 text-[10px]">-</span></div>`;
+                        } else if (item.type.startsWith('empty-')) {
+                            const desc = item.customName || 'Tyhjä';
+                            html += `
+                            <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r border-black flex flex-col items-center justify-center p-1 overflow-hidden relative">
+                                <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight">${desc}</span>
+                            </div>`;
+                        } else {
+                            const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.description || item.customName || "");
+                            html += `
+                            <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r border-black flex flex-col items-center justify-start p-1 overflow-hidden relative bg-white">
+                                <span class="font-black text-[14px] leading-none mb-0.5">${item.label}</span>
+                                <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">${desc}</span>
+                            </div>`;
+                        }
+                    });
+                    
+                    html += `</div></div>`;
+                });
+                
+                html += `</div>`;
+            }
+
+            return html;
+        }
+
+        // --- MERKINTÄLIUSKOJEN TULOSTUKSEN LAUKAISU ---
+        function printLabelStrips() {
+            const container = document.getElementById('labelStripsContainer');
+            if (!container) return;
+            
+            // Generoidaan HTML ruuduille
+            container.innerHTML = generateLabelStripsHTML();
+            
+            // Lisätään koriin class, joka laukaisee liuskatilan CSS:n
+            document.body.classList.add('print-mode-labels');
+            
+            // Kutsutaan tulostus
+            window.print();
+            
+            // (Siivous hoidetaan 'afterprint' event listenerissä ylhäällä)
         }
 
         // --- PÄÄRENDERÖINTI ---
