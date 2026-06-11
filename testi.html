@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sähkökeskuksen Suunnittelutyökalu PRO V7</title>
+    <title>Sähkökeskuksen Suunnittelutyökalu PRO</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
-    <!-- Dynaaminen tulostustyyli paperin koon ja suunnan hallintaan -->
     <style id="dynamic-print-style">
         @media print {
             @page { size: A4 portrait; margin: 1.5cm; }
@@ -21,22 +21,18 @@
         }
 
         @media print {
-            html, body { 
-                background: white !important; 
-                color: black !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                width: 100% !important;
-            }
+            html, body { background: white !important; color: black !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-            
             .no-print { display: none !important; }
-            .print-shadow-none { box-shadow: none !important; border-color: #cbd5e1 !important; }
+            .print-shadow-none { box-shadow: none !important; }
             
-            /* Taustojen siivous tulosteessa */
-            .print-white-bg { background: white !important; border-color: #cbd5e1 !important; }
-            .print-no-bg { background: transparent !important; border-color: #cbd5e1 !important; }
-
+            /* Poistetaan tumman harmaat reunat tulostuksesta */
+            #physicalCabinet, #topSection, #breakerAreaContainer {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+            
             /* --- NORMAALI TULOSTUSTILA --- */
             body:not(.print-mode-labels) #labelStripsContainer {
                 display: none !important;
@@ -53,98 +49,74 @@
                 width: 100% !important;
             }
 
-            /* Pakotetaan lohkot, ei flex-keskitystä tulostuksessa (estää yläreunan leikkautumisen) */
-            .print-page-1 { 
-                page-break-after: always; 
-                display: block !important; 
-                padding-top: 0 !important; 
-            }
-            .print-page-2 { 
-                page-break-before: always; 
-                display: block !important; 
-                padding-top: 0 !important;
-            }
-            
-            /* Rivitys (wrap) sallitaan ylileveille kiskostoille tulosteessa */
-            #breakerAreaContainer, .scroll-container { overflow: visible !important; flex-wrap: wrap !important; max-width: 100% !important; }
-
-            /* Pakotetaan gridi säilymään */
-            .print-grid { display: grid !important; }
-
-            /* Kiskojen tekstin ja rakenteen hallinta tulostuksessa */
-            .rivi-text {
-                position: relative !important;
-                display: block !important;
-                top: 0 !important;
-                left: 0 !important;
-                margin-bottom: 0.5rem !important;
-                page-break-after: avoid !important;
-                break-after: avoid !important;
-                color: #64748b !important;
-            }
-
-            .rail-row { 
-                padding-top: 0.5rem !important;
-                page-break-inside: auto !important; 
-            }
-            
-            .koje, tr { 
-                page-break-inside: avoid !important; 
-                break-inside: avoid !important; 
-            }
-
-            /* Pakotetaan lomakekenttien teksti mustaksi ja poistetaan reunat */
+            .print-page-1 { page-break-after: always; page-break-inside: avoid; width: 100% !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; background: white !important; padding-top: 1.5cm !important; }
+            .print-page-2 { page-break-before: always; page-break-inside: avoid; width: 100% !important; background: white !important; padding-top: 1.5cm !important; }
+            tr { page-break-inside: avoid; }
             input, textarea, select { border: none !important; background: transparent !important; box-shadow: none !important; resize: none !important; color: black !important; }
             .print-select-wrapper select { display: none !important; }
-            .print-select-wrapper .print-only-value { display: block !important; color: black !important; font-weight: bold; }
+            .print-select-wrapper .print-only-value { display: block !important; color: black !important; }
+            
+            /* Pakotetaan tumman tilan värit pois tulostuksesta */
+            .dark\:bg-slate-800, .dark\:bg-slate-900, .dark\:bg-slate-950 { background-color: transparent !important; }
+            .dark\:text-white, .dark\:text-slate-200 { color: black !important; }
+            .dark\:border-slate-700 { border-color: #e2e8f0 !important; }
+            
+            /* Ylileveiden kiskojen automaattinen rivitys tulostuksessa */
+            .print-grid-wrap { flex-wrap: wrap !important; justify-content: flex-start !important; }
+            .auto-print-item { flex: 0 0 auto !important; margin-bottom: 5px !important; page-break-inside: avoid !important; break-inside: avoid !important; border-color: #cbd5e1 !important; background-color: white !important; }
+            .print-rail-row { page-break-inside: avoid !important; break-inside: avoid !important; }
+            .tulppa-grid { display: flex !important; flex-wrap: wrap !important; justify-content: center !important; gap: 15px !important; }
+            .tulppa-print-item { width: 120px !important; flex: 0 0 auto !important; margin-bottom: 10px !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+            #physicalCabinet { width: 100% !important; max-width: 100% !important; }
         }
         
         .print-only-value { display: none; }
         
-        /* DIN-kiskon gradientit */
-        .din-rail-horizontal { background: linear-gradient(to bottom, #cbd5e1 0%, #94a3b8 30%, #cbd5e1 70%, #64748b 100%); }
-        .din-rail-vertical { background: linear-gradient(to right, #cbd5e1 0%, #94a3b8 30%, #cbd5e1 70%, #64748b 100%); }
-        
+        /* Poistetaan selaimen omat nuolet numerokentistä */
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
-        .grab-cursor { cursor: grab; } .grab-cursor:active { cursor: grabbing; }
+        
+        /* Raahaus kursorit */
+        .grab-cursor { cursor: grab; }
+        .grab-cursor:active { cursor: grabbing; }
 
-        /* Kustomoitu vierityspalkki työpöydälle */
-        .custom-scrollbar::-webkit-scrollbar { height: 12px; width: 12px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; border: 2px solid #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border: 2px solid #1e293b; }
+        /* Mukautettu, selkeästi erottuva vierityspalkki */
+        .custom-scrollbar::-webkit-scrollbar { height: 14px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 8px; border: 1px solid #cbd5e1; margin: 0 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; border: 2px solid #e2e8f0; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; border-color: #334155; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-color: #1e293b; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans min-h-screen pb-12 transition-colors duration-300">
 
-    <!-- OHJAUSPANEELI -->
+    <!-- Ohjauspaneeli -->
     <header class="bg-slate-900 dark:bg-black text-white shadow-lg mb-8 no-print border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 py-8 flex flex-col gap-6">
+        <div class="max-w-7xl mx-auto px-4 py-8 flex flex-col gap-8">
+            <!-- Otsikko ja Tumman tilan kytkin -->
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="text-center md:text-left">
-                    <h1 class="text-3xl font-black tracking-wide flex items-center justify-center md:justify-start gap-3">
-                        <span class="inline-block w-5 h-5 rounded-full bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]"></span>
-                        Sähkökeskus PRO V7
+                    <h1 class="text-3xl font-black tracking-wide flex items-center justify-center md:justify-start gap-3 text-white">
+                        <span class="inline-block w-5 h-5 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)]"></span>
+                        Sähkökeskus PRO
                     </h1>
-                    <p class="text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">Dynaaminen sijoituskaavio ja merkintäliuskat</p>
+                    <p class="text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">Dynaaminen Sijoituskaavio ja Luettelo</p>
                 </div>
                 <button onclick="toggleDarkMode()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2 px-5 rounded-full border border-slate-600 shadow-md transition flex items-center gap-2">
-                    <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <!-- Päivittyy JS:ssä -->
+                    <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                     </svg>
                     <span id="themeText">Tumma Tila</span>
                 </button>
             </div>
             
-            <!-- Asetusvalikko -->
+            <!-- Asetusvalikot -->
             <div class="flex flex-wrap justify-center items-center gap-6 bg-slate-800 dark:bg-slate-900 p-5 rounded-2xl border border-slate-700 w-full shadow-2xl">
-                
                 <div class="flex flex-col gap-2 items-center">
                     <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Keskustyyppi</span>
-                    <select id="centerTypeSelect" onchange="changeMainConfig(true)" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
+                    <select id="centerTypeSelect" onchange="changeCenterType(this.value)" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
                         <option value="tulppa">Tulppasulake (Kierre)</option>
                         <option value="automaatti" selected>Johdonsuoja (DIN)</option>
                     </select>
@@ -153,32 +125,32 @@
                 <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
 
                 <div class="flex flex-col gap-2 items-center">
-                    <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">Ryhmiä</span>
+                    <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">1. Ryhmiä</span>
                     <div class="flex items-center bg-slate-950 rounded-lg border border-slate-600 overflow-hidden shadow-inner">
-                        <button onclick="adjustCount('fuseCount', -1)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
-                        <input type="number" id="fuseCountInput" value="12" onchange="updateCountFromInput('fuseCount', this.value)" class="w-14 bg-transparent text-center text-white font-black text-base focus:outline-none">
-                        <button onclick="adjustCount('fuseCount', 1)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
+                        <button onclick="adjustValue('fuseCount', -1, 1, 9999)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
+                        <input type="number" id="fuseCountInput" value="12" onchange="onValueChange('fuseCount', this.value, 1, 9999)" class="w-14 bg-transparent text-center text-white font-black text-base focus:outline-none">
+                        <button onclick="adjustValue('fuseCount', 1, 1, 9999)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
                     </div>
                 </div>
 
-                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block" id="railDivider"></div>
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
 
                 <div class="flex flex-col gap-2 items-center">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Moduulia / Rivi</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">2. Moduulia / Rivi</span>
                     <div class="flex items-center bg-slate-950 rounded-lg border border-slate-600 overflow-hidden shadow-inner">
-                        <button onclick="adjustCount('rowLimit', -1)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
-                        <input type="number" id="rowLimitInput" value="12" onchange="updateCountFromInput('rowLimit', this.value)" class="w-14 bg-transparent text-center text-white font-black text-base focus:outline-none">
-                        <button onclick="adjustCount('rowLimit', 1)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
+                        <button onclick="adjustValue('rowLimit', -1, 2, 9999)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
+                        <input type="number" id="rowLimitInput" value="12" onchange="onValueChange('rowLimit', this.value, 2, 9999)" class="w-14 bg-transparent text-center text-white font-black text-base focus:outline-none">
+                        <button onclick="adjustValue('rowLimit', 1, 2, 9999)" class="px-5 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
                     </div>
                 </div>
 
-                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block" id="layoutDivider"></div>
+                <div id="layoutModeDivider" class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
 
-                <div class="flex flex-col gap-2 items-center" id="layoutContainer">
+                <div id="layoutModeContainer" class="flex flex-col gap-2 items-center">
                     <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Asettelu</span>
-                    <select id="layoutModeSelect" onchange="changeMainConfig(true)" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
-                        <option value="horizontal" selected>Vaaka (Kiskot rinnakkain)</option>
-                        <option value="vertical">Pysty (Kiskot allekkain)</option>
+                    <select id="layoutModeSelect" onchange="renderApp()" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
+                        <option value="horizontal" selected>Vaaka (Rinnakkain)</option>
+                        <option value="vertical">Pysty (Allekkain)</option>
                     </select>
                 </div>
 
@@ -194,23 +166,20 @@
         </div>
     </header>
 
-    <main class="max-w-[100%] lg:max-w-7xl mx-auto px-2 md:px-4 print-shadow-none">
-        
-        <!-- SIVU 1: SIJOITUSKAAVIO -->
-        <section class="print-white-bg bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none print-page-1 transition-colors duration-300 w-full mb-8">
-            <h2 class="text-2xl font-black text-slate-900 dark:text-white border-b-2 border-slate-100 dark:border-slate-800 pb-4 mb-6 w-full text-center tracking-wide no-print">
+    <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8 print-shadow-none">
+        <!-- SIVU 1: Keskuksen sijoituskaavio -->
+        <section class="lg:col-span-12 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none flex flex-col items-center print-page-1 transition-colors duration-300 w-full overflow-hidden">
+            <h2 class="text-2xl font-black text-slate-900 dark:text-white border-b-2 border-slate-100 dark:border-slate-800 pb-4 mb-8 w-full text-center tracking-wide">
                 Sähkökeskuksen sijoituskaavio
             </h2>
             
-            <div id="standaloneInfoContainer" class="w-full max-w-[700px] mx-auto mb-8 hidden print-white-bg"></div>
+            <div id="standaloneInfoContainer" class="w-full max-w-[700px] mx-auto mb-8 hidden"></div>
 
             <div class="w-full overflow-x-auto custom-scrollbar pb-6 scroll-container">
-                <div id="physicalCabinet" class="print-white-bg print:border-slate-300 print:border-[1px] print:shadow-none print:p-2 bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-fit min-w-[320px] mx-auto transition-all">
+                <div id="physicalCabinet" class="bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-max mx-auto min-w-[560px] transition-all">
                     
-                    <!-- YLÄOSA -->
-                    <div id="topSection" class="print-white-bg grid grid-cols-12 gap-8 bg-slate-200 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 w-full min-w-[650px] shadow-sm transition-colors print-shadow-none mx-auto max-w-4xl">
-                        
-                        <div id="perustiedotBlock" class="print-white-bg col-span-7 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl p-5 flex flex-col justify-between shadow-sm transition-colors print-shadow-none">
+                    <div id="topSection" class="grid grid-cols-12 gap-8 bg-slate-200 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 w-full max-w-2xl mx-auto shadow-sm transition-colors">
+                        <div id="perustiedotBlock" class="col-span-7 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl p-5 flex flex-col justify-between shadow-sm transition-colors">
                             <span class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block no-print mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">Keskuksen perustiedot:</span>
                             <div class="grid grid-cols-2 gap-x-8 gap-y-5 text-left w-full h-full">
                                 <div class="flex flex-col">
@@ -232,11 +201,10 @@
                             </div>
                         </div>
                         
-                        <!-- Pääsulakkeet (Oikea reuna) -->
-                        <div id="paasulakeBlock" class="print-white-bg col-span-5 flex flex-col justify-center items-center py-1">
-                            <div class="flex flex-col gap-2 items-center w-full">
-                                <div class="text-sm font-black uppercase text-slate-600 dark:text-slate-300 tracking-widest text-center">Pääsulakkeet</div>
-                                <div class="print:bg-transparent print:border-none print:shadow-none flex gap-3 bg-slate-300 dark:bg-slate-800 p-3 rounded-xl border border-slate-400 dark:border-slate-600 shadow-inner">
+                        <div id="paasulakeBlock" class="col-span-5 flex flex-col justify-between items-center py-1">
+                            <div class="flex flex-col gap-2 items-center">
+                                <div class="text-sm font-black uppercase text-slate-600 dark:text-slate-300 tracking-widest">Pääsulakkeet</div>
+                                <div class="flex gap-3 bg-slate-300 dark:bg-slate-800 p-3 rounded-xl border border-slate-400 dark:border-slate-600 shadow-inner">
                                     <div class="flex flex-col items-center gap-1">
                                         <input type="text" value="25" class="w-14 h-14 rounded-full bg-white border-[5px] border-yellow-500 text-center text-lg font-black text-slate-900 shadow-md focus:outline-none focus:border-amber-400" title="Pääsulake L1">
                                         <span class="text-[10px] font-bold text-slate-500">L1</span>
@@ -254,69 +222,68 @@
                         </div>
                     </div>
 
-                    <!-- ITSE RYHMÄT (Laitteet) -->
-                    <div id="breakerAreaContainer" class="print-white-bg bg-slate-200 dark:bg-slate-700 p-4 md:p-8 rounded-xl border border-slate-300 dark:border-slate-600 w-full flex flex-col items-center shadow-inner transition-colors">
-                        <!-- Generoidaan JS:llä -->
+                    <div id="breakerAreaContainer" class="bg-slate-200 dark:bg-slate-700 p-8 rounded-xl border border-slate-300 dark:border-slate-600 overflow-hidden w-full flex flex-col items-center shadow-inner transition-colors">
+                        <!-- Javascript generoi sisällön tähän -->
                     </div>
                     
-                    <button onclick="adjustCount('fuseCount', 1)" class="no-print mx-auto -mt-4 mb-2 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-700 hover:border-amber-400 dark:hover:bg-amber-900 dark:hover:text-amber-300 rounded-full w-14 h-14 flex items-center justify-center font-bold text-4xl shadow-lg transition-all" title="Lisää uusi ryhmä">+</button>
-
-                    <!-- Väriohjekartta piilotettu tulosteessa -->
-                    <div id="fuseColorGuide" class="no-print text-xs font-bold text-slate-600 dark:text-slate-400 flex flex-wrap justify-center gap-5 px-2 pt-4 border-t-2 border-slate-300 dark:border-slate-600 w-full transition-colors print-shadow-none"></div>
+                    <button onclick="adjustValue('fuseCount', 1, 1, 9999)" class="no-print mx-auto -mt-4 mb-2 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-700 hover:border-amber-400 dark:hover:bg-amber-900 dark:hover:text-amber-300 rounded-full w-14 h-14 flex items-center justify-center font-bold text-4xl shadow-lg transition-all" title="Lisää uusi ryhmä">+</button>
                 </div>
             </div>
             
             <div class="text-sm text-slate-400 dark:text-slate-500 mt-6 text-center no-print">
-                <p>💡 Voit <b>raahata (drag & drop)</b> kojeita vaihtaaksesi niiden paikkaa. Klikkaa C-käyrän tai ampeeri-arvon kohdalta vaihtaaksesi sen tyyppiä.</p>
+                <p>💡 Voit <b>raahata (drag & drop)</b> kojeita vaihtaaksesi niiden paikkaa. Klikkaa kojeen keskeltä vaihtaaksesi sen tyyppiä.</p>
             </div>
         </section>
 
-        <!-- SIVU 2: RYHMÄLUETTELO -->
-        <section class="print-white-bg bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none print-page-2 transition-colors duration-300 w-full">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-100 dark:border-slate-800 pb-5 mb-8 gap-4">
-                <div class="w-full">
-                    <h2 class="text-3xl font-black text-slate-900 dark:text-white w-full uppercase tracking-widest">RYHMÄLUETTELO</h2>
+        <!-- SIVU 2: Ryhmäluettelo -->
+        <section class="lg:col-span-12 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none print-page-2 transition-colors duration-300">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-6 gap-2">
+                <div>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-widest">Ryhmäluettelo</h2>
                 </div>
             </div>
 
-            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 mb-8 shadow-sm">
+            <!-- Taulukko -->
+            <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                 <table class="min-w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs md:text-sm font-black uppercase tracking-widest border-b-2 border-slate-200 dark:border-slate-700 transition-colors">
-                            <th class="py-3 px-3 w-16 text-center">Nro</th>
-                            <th class="py-3 px-3 w-56 text-center">Tyyppi / Sulake</th>
-                            <th class="py-3 px-4">Käyttökohde / Tyhjän moduulin vapaa nimi</th>
+                        <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                            <th class="py-3 px-4 w-12 text-center">Nro</th>
+                            <th class="py-3 px-3 w-40 text-center">Tyyppi / Sulake</th>
+                            <th class="py-3 px-4">Käyttökohde / Tyhjän moduulin nimi</th>
                             <th class="py-3 px-2 w-12 text-center no-print" title="Liuskan taustaväri">Väri</th>
-                            <th class="py-3 px-2 w-16 text-center no-print">Poista</th>
+                            <th class="py-3 px-2 w-12 text-center no-print">Poista</th>
                         </tr>
                     </thead>
-                    <tbody id="groupTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm md:text-base">
+                    <tbody id="groupTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
                         <!-- Generoidaan JS:llä -->
                     </tbody>
                 </table>
             </div>
 
-            <div class="border-t-2 border-slate-100 dark:border-slate-800 pt-6">
-                <label class="block text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">Huomautukset & Merkinnät</label>
-                <textarea rows="4" placeholder="Yleiset asennushuomiot..." class="w-full p-4 border border-slate-200 dark:border-slate-700 rounded-xl text-base bg-slate-50/50 dark:bg-slate-950/50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition placeholder-slate-400 dark:placeholder-slate-600 text-slate-800 dark:text-slate-200"></textarea>
+            <!-- Vapaa huomautusalue -->
+            <div class="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4">
+                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Huomautukset & Merkinnät</label>
+                <textarea rows="4" placeholder="Yleiset asennushuomiot..." class="w-full p-4 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-slate-50/50 dark:bg-slate-950/50 focus:outline-none focus:ring-2 focus:ring-amber-500 transition placeholder-slate-400 dark:placeholder-slate-600 text-slate-800 dark:text-slate-200"></textarea>
             </div>
 
-            <!-- TULOSTUS & ASETUKSET -->
+            <!-- Tulostuspainikkeet -->
             <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 no-print w-full max-w-5xl mx-auto">
-                <!-- Kaavion tulostus -->
+                
+                <!-- 1. Dokumentaation Tulostus -->
                 <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col items-center justify-center gap-4">
                     <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">1. Dokumentaation Tulostus</h3>
-                    <p class="text-xs text-slate-500 text-center mb-2">Tulostaa sijoituskaavion (Sivu 1) ja ryhmäluettelon (Sivu 2) A4-kokoihin.</p>
+                    <p class="text-xs text-slate-500 text-center mb-2">Tulostaa sijoituskaavion ja ryhmäluettelon (A4-koko).</p>
                     <button onclick="printNormal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-6 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-2 text-base hover:scale-105 transform w-full">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4" /></svg>
                         TULOSTA KAAVIO & LUETTELO
                     </button>
                 </div>
 
-                <!-- Liuskan tulostus -->
+                <!-- 2. Liuskan Tulostus -->
                 <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col items-center justify-center gap-4">
                     <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">2. Merkintäliuskojen Tulostus</h3>
-                    <p class="text-xs text-slate-500 text-center mb-2">Tulostaa leikattavat tarrat keskuskuorikoihin värikoodattuina.</p>
+                    <p class="text-xs text-slate-500 text-center mb-2">Tulostaa leikattavat tarrat keskuskuorikoihin (17.5mm).</p>
                     <div class="flex flex-wrap justify-center gap-4 w-full mb-2">
                         <div class="flex flex-col gap-1 items-center">
                             <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Paperikoko:</span>
@@ -342,7 +309,7 @@
         </section>
 
     </main>
-    
+
     <!-- Piilotettu säiliö merkintäliuskoja varten -->
     <div id="labelStripsContainer" class="bg-white print:bg-white text-black font-sans w-full max-w-full overflow-hidden flex flex-col items-center"></div>
 
@@ -361,12 +328,12 @@
             }
         }
 
+        // Tumman tilan hallinta
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
             updateThemeIcon();
         }
 
-        // TULOSTUKSEN AJAKSI TUMMA TILA POIS PÄÄLTÄ (CSS ei aina riitä)
         let wasDark = false;
         window.addEventListener('beforeprint', () => {
             wasDark = document.documentElement.classList.contains('dark');
@@ -378,7 +345,7 @@
             setPrintStyles('normal'); 
         });
 
-        // --- DYNAMINEN TULOSTUSTYYLI SIVUKOOLLE ---
+        // Tulostustyylit
         function setPrintStyles(mode, paperSize = 'A4', orientation = 'portrait') {
             let styleEl = document.getElementById('dynamic-print-style');
             if (!styleEl) {
@@ -393,19 +360,14 @@
             }
         }
 
-        // --- SOVELLUKSEN DATAMALLI ---
-        let appState = {
-            fuseCount: 12,
-            rowLimit: 12,
-            showTop: true
-        };
+        // Tila
+        let state = { fuseCount: 12, rowLimit: 12, showTop: true };
         const fusesData = {};
         
         const availableAmps = [6, 10, 13, 16, 20, 25, 32, 35, 40, 50, 63];
         const MOD_BASE = 40; 
         const MOD_GAP = 2;   
 
-        // Alustetaan datat
         function initData() {
             for (let i = 1; i <= 200; i++) {
                 getFuse(i);
@@ -424,32 +386,29 @@
                     curve: "C",
                     customName: "",
                     phase: phases[(id - 1) % 3],
-                    labelColor: "#ffffff" // Oletuksena valkoinen tausta merkintäliuskalle
+                    labelColor: "#ffffff"
                 };
             }
             return fusesData[id];
         }
 
-        function changeMainConfig(triggerRender = false) {
-            const centerType = document.getElementById('centerTypeSelect').value;
+        function changeCenterType(val) {
             const layoutMode = document.getElementById('layoutModeSelect').value;
-            const lCont = document.getElementById('layoutContainer');
-            const lDiv = document.getElementById('layoutDivider');
+            const lCont = document.getElementById('layoutModeContainer');
+            const lDiv = document.getElementById('layoutModeDivider');
             
-            if (centerType === 'tulppa') {
-                lCont.style.display = 'none';
+            if (val === 'tulppa') {
+                if(lCont) lCont.style.display = 'none';
                 if(lDiv) lDiv.style.display = 'none';
-                // Oletus rivileveys tulppakeskukselle: 4
-                if(appState.rowLimit === 12) { appState.rowLimit = 4; document.getElementById('rowLimitInput').value = 4; }
+                if(state.rowLimit === 12) { state.rowLimit = 4; document.getElementById('rowLimitInput').value = 4; }
             } else {
-                lCont.style.display = 'flex';
+                if(lCont) lCont.style.display = 'flex';
                 if(lDiv) lDiv.style.display = 'block';
             }
             
-            // Konvertoidaan laitteet tyypin vaihtuessa
-            for (let i = 1; i <= appState.fuseCount; i++) {
+            for (let i = 1; i <= state.fuseCount; i++) {
                 const item = fusesData[i];
-                if (centerType === 'tulppa') {
+                if (val === 'tulppa') {
                     if (item.type === 'mcb' || item.type === 'mcb-3p' || item.type.startsWith('vvsk-')) {
                         item.type = 'tulppa';
                         if (item.value === 0 || !availableAmps.includes(item.value)) item.value = 16;
@@ -464,30 +423,29 @@
                 }
             }
             
-            if (triggerRender) renderApp();
+            renderApp();
         }
 
-        function adjustCount(key, amount) {
-            let newVal = appState[key] + amount;
-            if (newVal >= 1) { 
-                appState[key] = newVal;
-                document.getElementById(key + 'Input').value = appState[key];
-                changeMainConfig(false);
+        function adjustValue(key, amount, min, max) {
+            let newVal = state[key] + amount;
+            if (newVal >= min && newVal <= max) { 
+                state[key] = newVal;
+                document.getElementById(key + 'Input').value = state[key];
                 renderApp();
             }
         }
 
-        function updateCountFromInput(key, val) {
+        function onValueChange(key, val, min, max) {
             let num = parseInt(val);
-            if (isNaN(num) || num < 1) num = 1; 
-            appState[key] = num;
-            document.getElementById(key + 'Input').value = appState[key];
-            changeMainConfig(false);
+            if (isNaN(num) || num < min) num = min; 
+            if (num > max) num = max;
+            state[key] = num;
+            document.getElementById(key + 'Input').value = state[key];
             renderApp();
         }
 
         function toggleTopSection(show) {
-            appState.showTop = show;
+            state.showTop = show;
             const topSec = document.getElementById('topSection');
             const standalone = document.getElementById('standaloneInfoContainer');
             const infoBlock = document.getElementById('perustiedotBlock');
@@ -526,20 +484,19 @@
             }
         }
 
-        // --- RYHMÄN POISTAMINEN ---
         function deleteRow(id) {
-            for (let i = id; i < appState.fuseCount; i++) {
+            for (let i = id; i < state.fuseCount; i++) {
                 fusesData[i] = { ...getFuse(i + 1) };
                 fusesData[i].id = i; 
                 fusesData[i].label = i.toString();
             }
-            delete fusesData[appState.fuseCount];
-            appState.fuseCount--;
-            document.getElementById('fuseCountInput').value = appState.fuseCount;
+            delete fusesData[state.fuseCount];
+            state.fuseCount--;
+            document.getElementById('fuseCountInput').value = state.fuseCount;
             renderApp();
         }
 
-        // --- RAAHAUS (DRAG AND DROP) ---
+        // Raahaus
         let draggedId = null;
         function handleDragStart(e, id) {
             draggedId = id;
@@ -574,7 +531,6 @@
             }
         }
 
-        // --- KOJEEN KLIKKAUS LENNOSSA ---
         function handleElementClick(e, id) {
             if (!id) return;
             if (e.target.tagName.toLowerCase() === 'input') return;
@@ -600,16 +556,11 @@
                     }
                 }
             } else {
-                if (item.type === 'empty-1') {
-                    item.type = 'empty-2';
-                } else if (item.type === 'empty-2') {
-                    item.type = 'empty-3';
-                } else if (item.type === 'empty-3') {
-                    item.type = 'empty-4';
-                } else if (item.type === 'empty-4') {
-                    item.type = 'mcb';
-                    item.value = 6;
-                } else if (item.type === 'mcb') {
+                if (item.type === 'empty-1') { item.type = 'empty-2'; }
+                else if (item.type === 'empty-2') { item.type = 'empty-3'; }
+                else if (item.type === 'empty-3') { item.type = 'empty-4'; }
+                else if (item.type === 'empty-4') { item.type = 'mcb'; item.value = 10; }
+                else if (item.type === 'mcb') {
                     let currentIdx = availableAmps.indexOf(item.value);
                     if (currentIdx < availableAmps.length - 1) { 
                         item.value = availableAmps[currentIdx + 1]; 
@@ -617,28 +568,14 @@
                         item.type = 'mcb-3p'; 
                         item.value = 16; 
                     }
-                } else if (item.type === 'mcb-3p') {
-                    item.type = 'vvsk-2-25';
-                    item.value = 25;
-                } else if (item.type === 'vvsk-2-25') {
-                    item.type = 'vvsk-2-40';
-                    item.value = 40;
-                } else if (item.type === 'vvsk-2-40') {
-                    item.type = 'vvsk-4-25';
-                    item.value = 25;
-                } else if (item.type === 'vvsk-4-25') {
-                    item.type = 'vvsk-4-40';
-                    item.value = 40;
-                } else if (item.type === 'vvsk-4-40') {
-                    item.type = 'main-switch';
-                    item.value = 0;
-                } else if (item.type === 'main-switch') {
-                    item.type = 'empty-1';
-                    item.value = 0;
-                } else {
-                    item.type = 'empty-1';
-                    item.value = 0;
-                }
+                } 
+                else if (item.type === 'mcb-3p') { item.type = 'vvsk-2-25'; item.value = 25; }
+                else if (item.type === 'vvsk-2-25') { item.type = 'vvsk-2-40'; item.value = 40; }
+                else if (item.type === 'vvsk-2-40') { item.type = 'vvsk-4-25'; item.value = 25; }
+                else if (item.type === 'vvsk-4-25') { item.type = 'vvsk-4-40'; item.value = 40; }
+                else if (item.type === 'vvsk-4-40') { item.type = 'main-switch'; item.value = 0; }
+                else if (item.type === 'main-switch') { item.type = 'empty-1'; item.value = 0; }
+                else { item.type = 'empty-1'; item.value = 0; }
             }
             renderApp();
         }
@@ -649,9 +586,7 @@
             if (item.curve === 'C') item.curve = 'B';
             else if (item.curve === 'B') item.curve = 'D';
             else item.curve = 'C';
-            
-            const el = document.getElementById(`fuse-curve-badge-${id}`);
-            if (el) el.innerHTML = `${item.curve}${item.value}`;
+            renderApp();
         }
 
         function handleTableSelect(idx, val) {
@@ -673,7 +608,6 @@
         
         function handleCurveChange(id, curveValue) { getFuse(id).curve = curveValue; renderApp(); }
         
-        // Reaaliaikainen tekstien päivitys (ei riko focusta)
         function updateGroupLabel(id, value) { 
             getFuse(id).label = value; 
             document.querySelectorAll(`.fuse-label-input-${id}`).forEach(el => { if(el.value !== value) el.value = value; });
@@ -694,8 +628,6 @@
                 targetVisualSpan.innerHTML = text ? `<span class="no-print">${text}</span><span class="print-only-value">${text}</span>` : '<span class="no-print">Tyhjä</span>';
             }
         }
-        
-        // Päivittää liuskojen taustavärin
         function updateLabelColor(id, color) {
             getFuse(id).labelColor = color;
         }
@@ -718,11 +650,10 @@
 
         function getBoxStyle(widthUnits, isVertical) {
             const size = widthUnits * MOD_BASE + (widthUnits - 1) * MOD_GAP;
-            if (isVertical) return `width: 100px; height: ${size}px;`;
-            return `width: ${size}px; height: 100px;`;
+            if (isVertical) return `min-width: 100px; width: 100px; min-height: ${size}px; height: ${size}px;`;
+            return `min-width: ${size}px; width: ${size}px; min-height: 100px; height: 100px;`;
         }
 
-        // --- MERKINTÄLIUSKOJEN GENERONTI ---
         function generateLabelStripsHTML(paperSize, orientation) {
             const centerType = document.getElementById('centerTypeSelect').value;
             const keskusTunnus = document.getElementById('keskusTunnusInput') ? document.getElementById('keskusTunnusInput').value : 'Sähkökeskus';
@@ -734,7 +665,7 @@
                 html += `<div class="flex flex-wrap gap-4 items-start justify-center">`;
                 
                 let tulppaItems = [];
-                for (let i = 1; i <= appState.fuseCount; i++) {
+                for (let i = 1; i <= state.fuseCount; i++) {
                     const item = getFuse(i);
                     if (item.type !== 'empty-1' && item.type !== 'main-switch' && item.value !== 0) {
                         tulppaItems.push(item);
@@ -745,12 +676,12 @@
                     const desc = item.description || item.customName || "";
                     const bgColor = item.labelColor || '#ffffff';
                     html += `
-                        <div style="width: 30mm; height: 30mm;" class="border-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
-                            <div class="w-full bg-slate-100 border-b-2 border-black flex items-center justify-center h-[35%] box-border" style="background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
-                                <span class="font-black text-[14px] leading-none">${item.label}</span>
+                        <div style="width: 30mm; height: 30mm; border: 2px solid black !important; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col items-center justify-start overflow-hidden relative">
+                            <div style="width: 100%; height: 35%; border-bottom: 2px solid black !important; box-sizing: border-box; background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center">
+                                <span class="font-black text-[14px] leading-none" style="color: black !important;">${item.label}</span>
                             </div>
-                            <div class="w-full h-[65%] flex items-center justify-center p-1 box-border bg-white print-white-bg">
-                                <span class="text-[8px] leading-tight text-center break-words">${desc}</span>
+                            <div style="width: 100%; height: 65%; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center p-1">
+                                <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; color: black !important;">${desc}</span>
                             </div>
                         </div>
                     `;
@@ -768,7 +699,7 @@
                 let rails = [{ items: [], used: 0 }];
                 let currentRailIndex = 0;
 
-                for (let i = 1; i <= appState.fuseCount; i++) {
+                for (let i = 1; i <= state.fuseCount; i++) {
                     const item = getFuse(i);
                     let w = 1;
                     if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
@@ -777,8 +708,8 @@
                     else if (item.type.startsWith('vvsk-2-')) w = 2;
                     else if (item.type.startsWith('vvsk-4-')) w = 4;
 
-                    if (rails[currentRailIndex].used + w > appState.rowLimit) {
-                        const remaining = appState.rowLimit - rails[currentRailIndex].used;
+                    if (rails[currentRailIndex].used + w > state.rowLimit) {
+                        const remaining = state.rowLimit - rails[currentRailIndex].used;
                         for (let k = 0; k < remaining; k++) {
                             rails[currentRailIndex].items.push({ type: 'spacer', width: 1 });
                         }
@@ -791,8 +722,8 @@
                 }
 
                 rails.forEach(rail => {
-                    if (rail.used < appState.rowLimit) {
-                        const remaining = appState.rowLimit - rail.used;
+                    if (rail.used < state.rowLimit) {
+                        const remaining = state.rowLimit - rail.used;
                         for (let k = 0; k < remaining; k++) rail.items.push({ type: 'spacer', width: 1 });
                     }
                 });
@@ -815,33 +746,24 @@
 
                     subRails.forEach((subRail, subIdx) => {
                         html += `<div class="mb-6 w-fit mx-auto" style="page-break-inside: avoid; break-inside: avoid;">`;
-                        html += `<div class="flex flex-row border-l-2 border-t-2 border-b-2 border-black box-border">`;
+                        html += `<div style="display: flex; flex-direction: row; border-left: 2px solid black !important; border-top: 2px solid black !important; border-bottom: 2px solid black !important; box-sizing: border-box;">`;
                         
                         subRail.items.forEach(item => {
                             if (item.type === 'spacer') {
-                                html += `<div style="width: 17.5mm; height: 25mm;" class="border-r-2 border-black bg-gray-100 flex flex-col justify-center items-center box-border"></div>`;
-                            } else if (item.type.startsWith('empty-')) {
-                                const desc = item.customName || 'Tyhjä';
-                                const bgColor = item.labelColor || '#ffffff';
-                                html += `
-                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
-                                    <div class="w-full border-b-2 border-black flex items-center justify-center h-[35%] box-border" style="background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
-                                        <span class="font-black text-[14px] leading-none">${item.label}</span>
-                                    </div>
-                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border bg-white print-white-bg">
-                                        <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight">${desc}</span>
-                                    </div>
-                                </div>`;
+                                html += `<div style="width: 17.5mm; height: 25mm; border-right: 2px solid black !important; box-sizing: border-box; background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col justify-center items-center"></div>`;
                             } else {
-                                const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.description || item.customName || "");
+                                const customNamePrint = item.customName || '';
+                                const labelInput = item.label;
+                                const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.type.startsWith('empty-') ? customNamePrint : (item.description || item.customName || ""));
                                 const bgColor = item.labelColor || '#ffffff';
+                                
                                 html += `
-                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
-                                    <div class="w-full border-b-2 border-black flex items-center justify-center h-[35%] box-border" style="background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
-                                        <span class="font-black text-[14px] leading-none">${item.label}</span>
+                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm; border-right: 2px solid black !important; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col items-center justify-start overflow-hidden relative">
+                                    <div style="width: 100%; height: 35%; border-bottom: 2px solid black !important; box-sizing: border-box; background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center">
+                                        <span class="font-black text-[14px] leading-none" style="color: black !important;">${labelInput}</span>
                                     </div>
-                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border bg-white print-white-bg">
-                                        <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">${desc}</span>
+                                    <div style="width: 100%; height: 65%; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center p-1">
+                                        <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; color: black !important;">${desc}</span>
                                     </div>
                                 </div>`;
                             }
@@ -850,7 +772,6 @@
                         html += `</div></div>`;
                     });
                 });
-                html += `</div>`;
             }
 
             return html;
@@ -859,25 +780,18 @@
         function printNormal() {
             setPrintStyles('normal');
             document.body.classList.remove('print-mode-labels');
-            setTimeout(() => {
-                window.print();
-            }, 500);
+            setTimeout(() => { window.print(); }, 500);
         }
 
         function printLabelStrips() {
             const container = document.getElementById('labelStripsContainer');
             if (!container) return;
-            
             const paperSize = document.getElementById('printPaperSize').value;
             const orientation = document.getElementById('printOrientation').value;
-            
             setPrintStyles('labels', paperSize, orientation);
             container.innerHTML = generateLabelStripsHTML(paperSize, orientation);
             document.body.classList.add('print-mode-labels');
-            
-            setTimeout(() => {
-                window.print();
-            }, 500);
+            setTimeout(() => { window.print(); }, 500);
         }
 
         // --- PÄÄRENDERÖINTI ---
@@ -888,52 +802,20 @@
             
             const container = document.getElementById('breakerAreaContainer');
             const tableBody = document.getElementById('groupTableBody');
-            const colorGuide = document.getElementById('fuseColorGuide');
             
             let containerHtml = "";
             let tableHtml = "";
 
-            if (centerType === 'automaatti' || layoutMode === 'horizontal') {
-                let fits = false;
-                while (!fits && appState.rowLimit < 200) {
-                    let rUsed = new Array(appState.railCount || 1).fill(0);
-                    let cRail = 0;
-                    fits = true;
-
-                    for (let i = 1; i <= appState.fuseCount; i++) {
-                        const item = getFuse(i);
-                        let w = 1;
-                        if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
-                        else if (item.type === 'main-switch') w = 3;
-                        else if (item.type === 'mcb-3p') w = 3;
-                        else if (item.type.startsWith('vvsk-2-')) w = 2;
-                        else if (item.type.startsWith('vvsk-4-')) w = 4;
-
-                        if (rUsed[cRail] + w > appState.rowLimit) {
-                            cRail++;
-                            if (cRail >= (appState.railCount || 1)) { fits = false; break; }
-                        }
-                        if (fits) rUsed[cRail] += w;
-                    }
-                    if (!fits) appState.rowLimit++;
-                }
-                document.getElementById('rowLimitInput').value = appState.rowLimit;
-            }
-
-            // KISKOJEN LOGIIKKA - ÄLYKÄS JAKAUTUMINEN JOPA RAJATTOMASTI
             if (centerType === 'tulppa') {
                 containerHtml += `<div class="flex flex-col w-full items-center">`;
-                
                 let tulppaItems = [];
-                for (let i = 1; i <= appState.fuseCount; i++) {
-                    const item = getFuse(i);
-                    tulppaItems.push(item);
+                for (let i = 1; i <= state.fuseCount; i++) {
+                    tulppaItems.push(getFuse(i));
                 }
 
-                // Jaetaan tulpat riveille asetetun rowLimitin mukaan
-                for (let i = 0; i < tulppaItems.length; i += appState.rowLimit) {
-                    const rowItems = tulppaItems.slice(i, i + appState.rowLimit);
-                    containerHtml += `<div class="grid gap-6 w-full justify-items-center mb-8 rail-row print-no-bg print-grid" style="grid-template-columns: repeat(${appState.rowLimit}, minmax(0, 1fr))">`;
+                for (let i = 0; i < tulppaItems.length; i += state.rowLimit) {
+                    const rowItems = tulppaItems.slice(i, i + state.rowLimit);
+                    containerHtml += `<div class="grid gap-6 w-full justify-items-center mb-8 rail-row print-no-bg print-grid" style="grid-template-columns: repeat(${state.rowLimit}, minmax(0, 1fr))">`;
                     
                     rowItems.forEach(item => {
                         const isEmpty = item.type.startsWith('empty-') || item.value === 0;
@@ -943,7 +825,7 @@
                         
                         if (isMainSwitch) {
                             containerHtml += `
-                                <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:border-slate-300 print:shadow-none print:border-[1px]" title="PÄÄKYTKIN">
+                                <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item shrink-0 grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:shadow-none print:border print:border-slate-400" title="PÄÄKYTKIN">
                                     <span class="text-xs font-black text-red-600 mb-2 truncate">PÄÄKYTKIN</span>
                                     <div class="w-24 h-24 rounded-xl bg-red-600 border-[4px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:border-slate-400">
                                         <div class="w-12 h-6 bg-slate-900 rounded shadow-md border-b-2 border-white/20 print:shadow-none"></div>
@@ -953,25 +835,24 @@
                         } else {
                             const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
                             const printValue = isEmpty ? '' : `${item.value}A`;
-                            const centerVal = isEmpty ? '' : item.value;
                             const bgCls = isEmpty ? 'bg-slate-200 dark:bg-slate-800' : conf.bg;
                             const borderCls = isEmpty ? 'border-transparent' : 'border-black/10';
                             const innerCls = isEmpty ? 'shadow-inner print:shadow-none print:bg-slate-200' : 'shadow-sm print:shadow-none';
 
                             containerHtml += `
-                                <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:border-slate-300 print:shadow-none print:border-[1px]" title="Ryhmä ${item.label}">
-                                    <input type="text" id="fuse-label-${item.id}" value="${item.label}" onchange="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-16 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
+                                <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item shrink-0 grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:shadow-none print:border print:border-slate-400" title="Ryhmä ${item.label}">
+                                    <input type="text" id="fuse-label-${item.id}" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-label-input-${item.id} w-16 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
                                     
                                     <div class="w-24 h-24 rounded-full ${isEmpty ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white'} border-[6px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:bg-white print:border-slate-400">
                                         ${isEmpty ? 
                                             `<div class="w-10 h-10 rounded-full bg-slate-300 dark:bg-slate-900 shadow-inner print:bg-slate-200 print:shadow-none print:border print:border-slate-400"></div>` : 
-                                            `<div class="w-8 h-8 rounded-full ${bgCls} border-2 ${borderCls} ${innerCls} flex items-center justify-center print:border-slate-400"></div>
+                                            `<div class="w-8 h-8 rounded-full ${bgCls} border-2 ${borderCls} ${innerCls} flex items-center justify-center print:shadow-none print:border-slate-400"></div>
                                              <span class="absolute bottom-2 text-[11px] font-black text-slate-800">${printValue}</span>`
                                         }
                                     </div>
                                     
                                     <div class="flex flex-col items-center mt-2 w-full">
-                                        <input type="text" id="fuse-phase-${item.id}" value="${item.phase}" onchange="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-12 text-xs font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                                        <input type="text" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-phase-input-${item.id} w-12 text-xs font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-amber-500 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
                                         ${isEmpty ? `<span id="visual-custom-label-${item.id}" class="text-[8px] font-bold text-slate-500 uppercase truncate w-full text-center mt-1 leading-none h-3">${customNamePrint}</span>` : '<span class="h-3 mt-1 w-full"></span>'}
                                     </div>
                                 </div>`;
@@ -986,7 +867,7 @@
                 let rails = [];
                 let currentRail = { items: [], used: 0 };
 
-                for (let i = 1; i <= appState.fuseCount; i++) {
+                for (let i = 1; i <= state.fuseCount; i++) {
                     const item = getFuse(i);
                     let w = 1;
                     if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
@@ -995,7 +876,7 @@
                     else if (item.type.startsWith('vvsk-2-')) w = 2;
                     else if (item.type.startsWith('vvsk-4-')) w = 4;
 
-                    if (currentRail.used + w > appState.rowLimit) {
+                    if (currentRail.used + w > state.rowLimit) {
                         rails.push(currentRail);
                         currentRail = { items: [], used: 0 };
                     }
@@ -1007,56 +888,30 @@
                 let railsContainerClass = isVerticalLayout ? 'flex flex-row flex-wrap justify-center gap-10 w-fit mx-auto' : 'flex flex-col items-center gap-8 w-fit mx-auto';
                 containerHtml += `<div class="${railsContainerClass}">`;
 
-                const MAX_PRINT_WIDTH = 14;
-
                 rails.forEach((rail, rIndex) => {
                     let subRails = [];
-                    if (!isVerticalLayout && appState.rowLimit > MAX_PRINT_WIDTH) {
-                        let currSub = { items: [], used: 0 };
-                        rail.items.forEach(item => {
-                            if (currSub.used + item.width > MAX_PRINT_WIDTH) {
-                                while(currSub.used < MAX_PRINT_WIDTH) {
-                                    currSub.items.push({ type: 'spacer', width: 1 });
-                                    currSub.used++;
-                                }
-                                subRails.push(currSub);
-                                currSub = { items: [], used: 0 };
-                            }
-                            currSub.items.push(item);
-                            currSub.used += item.width;
-                        });
-                        if (currSub.used > 0) {
-                            while(currSub.used < MAX_PRINT_WIDTH) {
-                                currSub.items.push({ type: 'spacer', width: 1 });
-                                currSub.used++;
-                            }
-                            subRails.push(currSub);
-                        }
-                    } else {
-                        while(rail.used < appState.rowLimit) {
-                            rail.items.push({ type: 'spacer', width: 1 });
-                            rail.used++;
-                        }
-                        subRails = [rail];
+                    // Ei pilkota enää ruudulla kiskon pituutta, annetaan CSS flex-wrap hoitaa tarvittaessa
+                    while(rail.used < state.rowLimit) {
+                        rail.items.push({ type: 'spacer', width: 1 });
+                        rail.used++;
                     }
+                    subRails = [rail];
 
                     subRails.forEach((subRail, subIndex) => {
-                        const rowNumberLabel = isVerticalLayout ? `Pysty ${rIndex+1}` : (subRails.length > 1 ? `Rivi ${rIndex+1} (Osa ${subIndex+1})` : `Rivi ${rIndex+1}`);
+                        const rowNumberLabel = isVerticalLayout ? `Pysty ${rIndex+1}` : `Rivi ${rIndex+1}`;
 
                         if (isVerticalLayout) {
                             containerHtml += `
-                                <div class="rail-row relative px-2 py-3 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex flex-col items-center print:bg-white print:border-slate-300 print:shadow-none">
+                                <div class="rail-row relative px-2 py-3 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex flex-col items-center print:bg-white print:border-slate-300 print:shadow-none w-max mx-auto">
                                     <span class="rivi-text absolute top-1 left-2 font-bold text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest no-print">${rowNumberLabel}</span>
-                                    <div class="din-rail-vertical absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-8 border-x-2 border-slate-400 z-0"></div>
-                                    <div class="flex flex-col gap-[2px] z-10 py-1 w-full">
+                                    <div class="flex flex-col gap-[2px] z-10 py-1 w-max items-center">
                             `;
                         } else {
                             containerHtml += `
-                                <div class="rail-row relative py-3 px-2 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex flex-col w-full mt-2 print:bg-white print:border-slate-300 print:shadow-none">
+                                <div class="rail-row relative py-3 px-2 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex flex-col w-max mt-2 print:bg-white print:border-slate-300 print:shadow-none mx-auto">
                                     <span class="rivi-text font-bold text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1 mb-1 absolute top-1 left-2 no-print">${rowNumberLabel}</span>
-                                    <div class="relative flex items-center w-full">
-                                        <div class="din-rail-horizontal absolute left-0 right-0 top-1/2 -translate-y-1/2 h-8 border-y-2 border-slate-400 z-0"></div>
-                                        <div class="flex flex-row flex-wrap gap-[2px] z-10 px-1 w-full justify-center">
+                                    <div class="relative flex items-center w-max justify-center">
+                                        <div class="flex flex-row flex-wrap gap-[2px] z-10 px-1 justify-center print-grid-wrap w-max">
                             `;
                         }
 
@@ -1068,15 +923,14 @@
                             const dragAttrs = item.type !== 'spacer' ? `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"` : '';
 
                             if (item.type === 'spacer') {
-                                const spacerInner = isVerticalLayout ? '<div class="h-px w-8 bg-slate-400"></div>' : '<div class="w-px h-8 bg-slate-400"></div>';
-                                containerHtml += `<div class="koje-item bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-sm opacity-60 rounded-sm flex items-center justify-center relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="width: ${wrapperW}px; height: ${wrapperH}px;">${spacerInner}</div>`;
+                                containerHtml += `<div class="koje-item shrink-0 bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-sm opacity-60 rounded-sm flex items-center justify-center relative z-10 print:bg-white print:border-slate-300 print:shadow-none auto-print-item" style="${getBoxStyle(item.width, isVerticalLayout)}"></div>`;
                             }
                             else {
                                 const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
                                 const labelInput = `<input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-label-input-${item.id} w-full text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 focus:outline-none font-bold text-slate-700 dark:text-slate-300 truncate text-[11px] rounded transition-colors">`;
                                 const phaseInput = `<input type="text" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-phase-input-${item.id} w-8 text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded text-center transition-colors hover:border border-transparent hover:border-slate-300 dark:hover:border-slate-600">`;
                                 
-                                let containerClasses = `koje-item grab-cursor relative z-10 print:bg-white print:shadow-none flex items-center justify-center rounded-sm shadow-md transition-all box-border overflow-hidden `;
+                                let containerClasses = `koje-item shrink-0 grab-cursor relative z-10 print:bg-white print:shadow-none flex items-center justify-center rounded-sm shadow-md transition-all box-border overflow-hidden auto-print-item `;
                                 if (item.type.startsWith('empty-')) {
                                     containerClasses += `bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 print:border-slate-300`;
                                 } else if (item.type === 'main-switch') {
@@ -1167,13 +1021,13 @@
 
                                 let innerWrapper = '';
                                 if (isVerticalLayout) {
-                                    innerWrapper = `<div style="width: ${sizeH}px; height: 100px; transform: rotate(-90deg); transform-origin: center;" class="flex items-center justify-center">${innerContent}</div>`;
+                                    innerWrapper = `<div style="${getBoxStyle(item.width, isVerticalLayout)} transform: rotate(-90deg); transform-origin: center;" class="flex items-center justify-center">${innerContent}</div>`;
                                 } else {
                                     innerWrapper = `<div class="w-full h-full">${innerContent}</div>`;
                                 }
 
                                 containerHtml += `
-                                    <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="${containerClasses}" style="width: ${wrapperW}px; height: ${wrapperH}px;" title="Ryhmä ${item.label}">
+                                    <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="${containerClasses}" style="${getBoxStyle(item.width, isVerticalLayout)}" title="Ryhmä ${item.label}">
                                         ${innerWrapper}
                                     </div>
                                 `;
@@ -1189,16 +1043,8 @@
                 containerHtml += `</div>`;
             }
 
-            // COLOR GUIDE
-            let guideHtml = availableAmps.map(amp => {
-                const conf = getAmpConfig(amp);
-                return `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full ${conf.bg} border border-slate-300 shadow-sm"></span> ${amp}A</span>`;
-            }).join('');
-            if (centerType === 'automaatti') guideHtml += `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full bg-blue-600 border border-slate-300 shadow-sm text-[7px] text-white flex justify-center items-center font-bold">T</span> VVSK</span>`;
-            colorGuide.innerHTML = guideHtml;
-
             // RYHMÄLUETTELO TAULUKON PIIRTO
-            for (let i = 1; i <= appState.fuseCount; i++) {
+            for (let i = 1; i <= state.fuseCount; i++) {
                 const item = getFuse(i);
                 
                 let selectOptions = "";
@@ -1244,7 +1090,7 @@
                             <input type="text" value="${item.label}" oninput="updateGroupLabel(${i}, this.value)" class="fuse-label-input-${i} w-full text-center font-bold text-slate-950 dark:text-white bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:outline-none py-1 text-base">
                         </td>
                         <td class="py-3 px-3 text-center print-select-wrapper flex justify-center items-center gap-1">
-                            <select onchange="handleTableSelect(${i}, this.value)" class="no-print w-full max-w-[200px] text-center bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500 hover:border-slate-400">
+                            <select onchange="handleTableSelect(${i}, this.value)" id="select-fuse-${i}" class="no-print w-full max-w-[200px] text-center bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500 hover:border-slate-400">
                                 ${selectOptions}
                             </select>
                             ${curveSelectHtml}
@@ -1268,15 +1114,15 @@
                 `;
             }
 
-            container.innerHTML = containerHtml;
-            tableBody.innerHTML = tableHtml;
+            document.getElementById('breakerAreaContainer').innerHTML = containerHtml;
+            document.getElementById('groupTableBody').innerHTML = tableHtml;
         }
 
         window.onload = function() {
             initData();
             document.documentElement.classList.remove('dark'); 
             updateThemeIcon();
-            changeMainConfig(true); 
+            renderApp(); 
         };
     </script>
 </body>
