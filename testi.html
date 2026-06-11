@@ -8,6 +8,12 @@
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
+    <!-- Dynaaminen tulostustyyli paperin koon ja suunnan hallintaan -->
+    <style id="dynamic-print-style">
+        @media print {
+            @page { size: A4 portrait; margin: 1.5cm; }
+        }
+    </style>
     <style>
         /* --- TULOSTUS (PRINT) CSS --- */
         @media screen {
@@ -15,7 +21,6 @@
         }
 
         @media print {
-            @page { margin: 1.5cm; size: A4 portrait; }
             html, body { 
                 background: white !important; 
                 color: black !important; 
@@ -45,6 +50,7 @@
             }
             body.print-mode-labels #labelStripsContainer {
                 display: block !important;
+                width: 100% !important;
             }
 
             /* Pakotetaan lohkot, ei flex-keskitystä tulostuksessa (estää yläreunan leikkautumisen) */
@@ -207,17 +213,13 @@
                 Sähkökeskuksen sijoituskaavio
             </h2>
             
-            <!-- Jos Yläosa piilotetaan, Keskuksen perustiedot siirtyvät tänne omaan lohkoonsa! -->
             <div id="standaloneInfoContainer" class="w-full max-w-[700px] mx-auto mb-8 hidden print:bg-white"></div>
 
-            <!-- Scrollaava säiliö keskuskuvalle, jotta leveys ei riko sivua mobiilissa tai leveillä kiskoilla -->
             <div class="w-full overflow-x-auto custom-scrollbar pb-6 scroll-container">
                 <div id="physicalCabinet" class="print:bg-white print:border-slate-300 print:border-[1px] print:shadow-none print:p-2 bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-fit min-w-[320px] mx-auto transition-all">
                     
-                    <!-- YLÄOSA (Tiedot & Pääsulakkeet) -->
                     <div id="topSection" class="print:bg-white print:border-slate-300 print:shadow-none grid grid-cols-12 gap-8 bg-slate-200 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 w-full min-w-[650px] shadow-sm transition-colors mx-auto max-w-4xl">
                         
-                        <!-- Keskuksen perustiedot lomake -->
                         <div id="perustiedotBlock" class="print:bg-white print:border-slate-300 print:shadow-none col-span-7 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl p-5 flex flex-col justify-between shadow-sm transition-colors">
                             <span class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block no-print mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">Keskuksen perustiedot:</span>
                             <div class="grid grid-cols-2 gap-x-8 gap-y-5 text-left w-full h-full">
@@ -240,7 +242,6 @@
                             </div>
                         </div>
                         
-                        <!-- Pääsulakkeet (Oikea reuna) -->
                         <div id="paasulakeBlock" class="print:bg-white col-span-5 flex flex-col justify-center items-center py-1">
                             <div class="flex flex-col gap-2 items-center w-full">
                                 <div class="text-sm font-black uppercase text-slate-600 dark:text-slate-300 tracking-widest text-center">Pääsulakkeet</div>
@@ -262,14 +263,12 @@
                         </div>
                     </div>
 
-                    <!-- ITSE RYHMÄT (Laitteet) -->
                     <div id="breakerAreaContainer" class="print:bg-white bg-slate-200 dark:bg-slate-700 p-4 md:p-8 rounded-xl border border-slate-300 dark:border-slate-600 w-full flex flex-col items-center shadow-inner transition-colors">
                         <!-- Generoidaan JS:llä -->
                     </div>
                     
                     <button onclick="adjustCount('fuseCount', 1)" class="no-print mx-auto -mt-4 mb-2 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-700 hover:border-amber-400 dark:hover:bg-amber-900 dark:hover:text-amber-300 rounded-full w-14 h-14 flex items-center justify-center font-bold text-4xl shadow-lg transition-all" title="Lisää uusi ryhmä">+</button>
 
-                    <!-- Väriohjekartta piilotettu tulosteessa -->
                     <div id="fuseColorGuide" class="no-print text-xs font-bold text-slate-600 dark:text-slate-400 flex flex-wrap justify-center gap-5 px-2 pt-4 border-t-2 border-slate-300 dark:border-slate-600 w-full transition-colors print-shadow-none"></div>
                 </div>
             </div>
@@ -308,23 +307,44 @@
                 <textarea rows="4" placeholder="Yleiset asennushuomiot..." class="w-full p-4 border border-slate-200 dark:border-slate-700 rounded-xl text-base bg-slate-50/50 dark:bg-slate-950/50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition placeholder-slate-400 dark:placeholder-slate-600 text-slate-800 dark:text-slate-200"></textarea>
             </div>
 
-            <!-- TULOSTUS KESKELLE -->
-            <div class="mt-12 flex flex-col md:flex-row justify-center gap-4 no-print w-full">
-                <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-8 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-3 text-lg hover:scale-105 transform w-full md:w-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4" /></svg>
-                    TULOSTA KAAVIO & LUETTELO
-                </button>
-                <button onclick="printLabelStrips()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-3 text-lg hover:scale-105 transform w-full md:w-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 7h10v3H7zM5 10h14a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z" /></svg>
-                    TULOSTA MERKINTÄLIUSKA
-                </button>
+            <!-- TULOSTUS & ASETUKSET -->
+            <div class="mt-12 flex flex-col items-center bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 no-print w-full max-w-4xl mx-auto gap-6 shadow-inner">
+                <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest w-full text-center">Tulostusasetukset (Liuska)</h3>
+                
+                <div class="flex flex-wrap justify-center gap-6 w-full">
+                    <div class="flex flex-col gap-1 items-center">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Paperikoko:</span>
+                        <select id="printPaperSize" class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="A4">A4</option>
+                            <option value="A3">A3</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1 items-center">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Suunta:</span>
+                        <select id="printOrientation" class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="portrait">Pysty</option>
+                            <option value="landscape">Vaaka</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-center gap-4 w-full border-t border-slate-200 dark:border-slate-700 pt-6">
+                    <button onclick="printNormal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-6 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-2 text-base hover:scale-105 transform w-full md:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4" /></svg>
+                        TULOSTA KAAVIO & LUETTELO
+                    </button>
+                    <button onclick="printLabelStrips()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-6 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-2 text-base hover:scale-105 transform w-full md:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 7h10v3H7zM5 10h14a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z" /></svg>
+                        TULOSTA MERKINTÄLIUSKA
+                    </button>
+                </div>
             </div>
         </section>
 
     </main>
     
     <!-- Piilotettu säiliö merkintäliuskoja varten -->
-    <div id="labelStripsContainer"></div>
+    <div id="labelStripsContainer" class="bg-white print:bg-white text-black font-sans"></div>
 
     <script>
         // --- TUMMA TILA & IKONIT ---
@@ -346,7 +366,7 @@
             updateThemeIcon();
         }
 
-        // TULOSTUKSEN AJAKSI TUMMA TILA POIS PÄÄLTÄ
+        // TULOSTUKSEN AJAKSI TUMMA TILA POIS PÄÄLTÄ (CSS ei aina riitä)
         let wasDark = false;
         window.addEventListener('beforeprint', () => {
             wasDark = document.documentElement.classList.contains('dark');
@@ -354,8 +374,24 @@
         });
         window.addEventListener('afterprint', () => {
             if (wasDark) { document.documentElement.classList.add('dark'); }
-            document.body.classList.remove('print-mode-labels'); // Siivoaa merkintäliuskatilan
+            document.body.classList.remove('print-mode-labels');
+            setPrintStyles('normal'); // Palautetaan normaaliin A4 kokoiseksi
         });
+
+        // --- DYNAMINEN TULOSTUSTYYLI SIVUKOOLLE ---
+        function setPrintStyles(mode, paperSize = 'A4', orientation = 'portrait') {
+            let styleEl = document.getElementById('dynamic-print-style');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'dynamic-print-style';
+                document.head.appendChild(styleEl);
+            }
+            if (mode === 'labels') {
+                styleEl.innerHTML = `@media print { @page { size: ${paperSize} ${orientation}; margin: 1.5cm; } }`;
+            } else {
+                styleEl.innerHTML = `@media print { @page { size: A4 portrait; margin: 1.5cm; } }`;
+            }
+        }
 
         // --- SOVELLUKSEN DATAMALLI ---
         let appState = {
@@ -366,7 +402,6 @@
         };
         const fusesData = {};
         
-        // Suomen yleisimmät sulakekoot ja standardivärit
         const availableAmps = [6, 10, 13, 16, 20, 25, 32, 35, 40, 50, 63];
         const MOD_BASE = 40; 
         const MOD_GAP = 2;   
@@ -378,7 +413,6 @@
             }
         }
 
-        // Dynaaminen datan haku
         function getFuse(id) {
             if (!fusesData[id]) {
                 const phases = ["L1", "L2", "L3"];
@@ -409,7 +443,6 @@
                 if(rDiv) rDiv.style.display = 'none';
                 lCont.style.display = 'none';
                 if(lDiv) lDiv.style.display = 'none';
-                // Oletus rivileveys tulppakeskukselle: 4
                 if(appState.rowLimit === 12) { appState.rowLimit = 4; document.getElementById('rowLimitInput').value = 4; }
             } else {
                 lCont.style.display = 'flex';
@@ -484,7 +517,7 @@
             }
         }
 
-        // --- RYHMÄN POISTAMINEN JA UUDELLEENNUMEROINTI ---
+        // --- RYHMÄN POISTAMINEN ---
         function deleteRow(id) {
             for (let i = id; i < appState.fuseCount; i++) {
                 fusesData[i] = { ...getFuse(i + 1) };
@@ -601,7 +634,6 @@
             renderApp();
         }
 
-        // --- KÄYRÄN (B/C/D) VAIHTO LENNOSSA ---
         function toggleCurve(e, id) {
             e.stopPropagation();
             const item = getFuse(id);
@@ -663,14 +695,13 @@
             return `width: ${size}px; height: 100px;`;
         }
 
-        // --- MERKINTÄLIUSKOJEN GENERONTI ---
-        function generateLabelStripsHTML() {
+        // --- MERKINTÄLIUSKOJEN GENERONTI (A4/A3 Pysty/Vaaka älykäs jako) ---
+        function generateLabelStripsHTML(paperSize, orientation) {
             const centerType = document.getElementById('centerTypeSelect').value;
             const keskusTunnus = document.getElementById('keskusTunnusInput').value || 'Sähkökeskus';
             let html = `<div class="p-8 w-full"><h2 class="text-2xl font-black mb-8 border-b pb-2">Merkintäliuskat: ${keskusTunnus}</h2>`;
 
             if (centerType === 'tulppa') {
-                // Tulppakeskuksen merkinnät (Yleensä liimattavia neliöitä sulakkeiden alle)
                 html += `<div class="text-sm mb-4">Leikkaa viivoja pitkin ja liimaa sulakepesien viereen/alle.</div>`;
                 html += `<div class="flex flex-wrap gap-4 items-start">`;
                 
@@ -688,13 +719,18 @@
                 }
                 html += `</div></div>`;
             } else {
-                // Automaattikeskuksen merkintäliuskat (17.5mm / 1 DIN standardileveys)
                 html += `<div class="text-sm mb-6">Liuskan leveys on sovitettu 17.5 mm perusmoduulille. Leikkaa viivoja pitkin.</div>`;
                 
+                // Määritetään montako moduulia mahtuu yhdelle liuskalle ennen sivun katkaisua 
+                let maxMods = 10; 
+                if (paperSize === 'A4' && orientation === 'landscape') maxMods = 14;
+                if (paperSize === 'A3' && orientation === 'portrait') maxMods = 15;
+                if (paperSize === 'A3' && orientation === 'landscape') maxMods = 22;
+
                 let rails = [{ items: [], used: 0 }];
                 let currentRailIndex = 0;
 
-                // Haetaan ja jaetaan kuten sijoituskuvassa
+                // Jaetaan ensin perusasetusten mukaan
                 for (let i = 1; i <= appState.fuseCount; i++) {
                     const item = getFuse(i);
                     let w = 1;
@@ -724,32 +760,51 @@
                     }
                 });
 
-                // Piirretään Liuskat (Aina vaakasuunnassa fyysiselle liuskalle!)
+                // Pilkotaan liuskat tarvittaessa maksimileveyden mukaan paperille
                 rails.forEach((rail, idx) => {
-                    html += `<div class="mb-8 w-fit">`;
-                    html += `<div class="text-xs font-bold mb-1 text-slate-500">Kisko / Rivi ${idx + 1}</div>`;
-                    html += `<div class="flex flex-row border-l border-t border-b border-black">`;
+                    let subRails = [];
+                    let currSub = { items: [], used: 0 };
                     
                     rail.items.forEach(item => {
-                        if (item.type === 'spacer') {
-                            html += `<div style="width: 17.5mm; height: 25mm;" class="border-r border-black bg-gray-100 flex flex-col justify-center items-center"><span class="text-gray-300 text-[10px]">-</span></div>`;
-                        } else if (item.type.startsWith('empty-')) {
-                            const desc = item.customName || 'Tyhjä';
-                            html += `
-                            <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r border-black flex flex-col items-center justify-center p-1 overflow-hidden relative">
-                                <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight">${desc}</span>
-                            </div>`;
-                        } else {
-                            const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.description || item.customName || "");
-                            html += `
-                            <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r border-black flex flex-col items-center justify-start p-1 overflow-hidden relative bg-white">
-                                <span class="font-black text-[14px] leading-none mb-0.5">${item.label}</span>
-                                <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">${desc}</span>
-                            </div>`;
+                        if (currSub.used + item.width > maxMods) {
+                            subRails.push(currSub);
+                            currSub = { items: [], used: 0 };
                         }
+                        currSub.items.push(item);
+                        currSub.used += item.width;
                     });
-                    
-                    html += `</div></div>`;
+                    if (currSub.items.length > 0) {
+                        subRails.push(currSub);
+                    }
+
+                    subRails.forEach((subRail, subIdx) => {
+                        // page-break-inside: avoid pitää yksittäisen liuskan kasassa
+                        html += `<div class="mb-8 w-fit" style="page-break-inside: avoid; break-inside: avoid;">`;
+                        html += `<div class="text-xs font-bold mb-1 text-slate-500">Kisko / Rivi ${idx + 1} ${subRails.length > 1 ? `(Osa ${subIdx + 1})` : ''}</div>`;
+                        html += `<div class="flex flex-row border-l border-t border-b border-black">`;
+                        
+                        subRail.items.forEach(item => {
+                            if (item.type === 'spacer') {
+                                html += `<div style="width: 17.5mm; height: 25mm;" class="border-r border-black bg-gray-100 flex flex-col justify-center items-center"><span class="text-gray-300 text-[10px]">-</span></div>`;
+                            } else if (item.type.startsWith('empty-')) {
+                                const desc = item.customName || 'Tyhjä';
+                                html += `
+                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r border-black flex flex-col items-center justify-center p-1 overflow-hidden relative">
+                                    <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight">${desc}</span>
+                                </div>`;
+                            } else {
+                                const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.description || item.customName || "");
+                                // Pystysuuntainen keskitys korjattu: justify-center
+                                html += `
+                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r border-black flex flex-col items-center justify-center p-1 overflow-hidden relative bg-white">
+                                    <span class="font-black text-[14px] leading-none mb-0.5">${item.label}</span>
+                                    <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">${desc}</span>
+                                </div>`;
+                            }
+                        });
+                        
+                        html += `</div></div>`;
+                    });
                 });
                 
                 html += `</div>`;
@@ -758,21 +813,28 @@
             return html;
         }
 
-        // --- MERKINTÄLIUSKOJEN TULOSTUKSEN LAUKAISU ---
+        function printNormal() {
+            setPrintStyles('normal');
+            document.body.classList.remove('print-mode-labels');
+            setTimeout(() => {
+                window.print();
+            }, 500); // 500ms takaa mobiilissa DOM:in renderöinnin ennen selainikkunan jäätymistä
+        }
+
         function printLabelStrips() {
             const container = document.getElementById('labelStripsContainer');
             if (!container) return;
             
-            // Generoidaan HTML ruuduille
-            container.innerHTML = generateLabelStripsHTML();
+            const paperSize = document.getElementById('printPaperSize').value;
+            const orientation = document.getElementById('printOrientation').value;
             
-            // Lisätään koriin class, joka laukaisee liuskatilan CSS:n
+            setPrintStyles('labels', paperSize, orientation);
+            container.innerHTML = generateLabelStripsHTML(paperSize, orientation);
             document.body.classList.add('print-mode-labels');
             
-            // Kutsutaan tulostus
-            window.print();
-            
-            // (Siivous hoidetaan 'afterprint' event listenerissä ylhäällä)
+            setTimeout(() => {
+                window.print();
+            }, 500);
         }
 
         // --- PÄÄRENDERÖINTI ---
@@ -788,6 +850,37 @@
             
             let containerHtml = "";
             let tableHtml = "";
+
+            if (!isAutoRail()) {
+                let fits = false;
+                while (!fits && appState.rowLimit < 200) {
+                    let rUsed = new Array(appState.railCount).fill(0);
+                    let cRail = 0;
+                    fits = true;
+
+                    for (let i = 1; i <= appState.fuseCount; i++) {
+                        const item = getFuse(i);
+                        let w = 1;
+                        if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
+                        else if (item.type === 'main-switch') w = 3;
+                        else if (item.type === 'mcb-3p') w = 3;
+                        else if (item.type.startsWith('vvsk-2-')) w = 2;
+                        else if (item.type.startsWith('vvsk-4-')) w = 4;
+
+                        if (rUsed[cRail] + w > appState.rowLimit) {
+                            cRail++;
+                            if (cRail >= appState.railCount) { fits = false; break; }
+                        }
+                        if (fits) rUsed[cRail] += w;
+                    }
+                    if (!fits) appState.rowLimit++;
+                }
+                document.getElementById('rowLimitInput').value = appState.rowLimit;
+            }
+
+            function isAutoRail() {
+                 return (centerType === 'tulppa' || layoutMode === 'horizontal');
+            }
 
             // KISKOJEN LOGIIKKA - ÄLYKÄS JAKAUTUMINEN
             if (centerType === 'tulppa') {
@@ -866,13 +959,11 @@
                 const MAX_PRINT_WIDTH = 14;
 
                 rails.forEach((rail, rIndex) => {
-                    // Tulostusjaottelu leveille kiskoille
                     let subRails = [];
                     if (!isVerticalLayout && appState.rowLimit > MAX_PRINT_WIDTH) {
                         let currSub = { items: [], used: 0 };
                         rail.items.forEach(item => {
                             if (currSub.used + item.width > MAX_PRINT_WIDTH) {
-                                // Täytetään reuna tyhjällä
                                 while(currSub.used < MAX_PRINT_WIDTH) {
                                     currSub.items.push({ type: 'spacer', width: 1 });
                                     currSub.used++;
@@ -891,7 +982,6 @@
                             subRails.push(currSub);
                         }
                     } else {
-                        // Täytetään reuna tyhjällä normikokoisessa
                         while(rail.used < appState.rowLimit) {
                             rail.items.push({ type: 'spacer', width: 1 });
                             rail.used++;
@@ -1109,15 +1199,15 @@
                 containerHtml += `</div>`;
             }
 
-            // COLOR GUIDE - Piilotettu tulosteessa no-print -luokalla
+            // COLOR GUIDE
             let guideHtml = availableAmps.map(amp => {
                 const conf = getAmpConfig(amp);
-                return `<span class="flex items-center gap-1.5 text-xs"><span class="w-4 h-4 rounded-full ${conf.bg} border border-slate-300 dark:border-slate-600 shadow-sm"></span> ${amp}A</span>`;
+                return `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full ${conf.bg} border border-slate-300 shadow-sm"></span> ${amp}A</span>`;
             }).join('');
-            if (centerType === 'automaatti') guideHtml += `<span class="flex items-center gap-1.5 text-xs"><span class="w-4 h-4 rounded-full bg-blue-600 border border-slate-300 shadow-sm text-[8px] text-white flex justify-center items-center font-bold">T</span> VVSK</span>`;
+            if (centerType === 'automaatti') guideHtml += `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full bg-blue-600 border border-slate-300 shadow-sm text-[7px] text-white flex justify-center items-center font-bold">T</span> VVSK</span>`;
             colorGuide.innerHTML = guideHtml;
 
-            // RYHMÄLUETTELO TAULUKON PIIRTO
+            // RYHMÄLUETTELO
             for (let i = 1; i <= appState.fuseCount; i++) {
                 const item = getFuse(i);
                 
@@ -1194,7 +1284,7 @@
                 document.documentElement.classList.add('dark');
             }
             updateThemeIcon();
-            changeMainConfig(true); // Varmistaa alkulautauksen renderApp
+            changeMainConfig(true); 
         };
     </script>
 </body>
