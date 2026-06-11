@@ -9,6 +9,7 @@
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
+    <!-- Dynaaminen tulostustyyli paperin koon ja suunnan hallintaan -->
     <style id="dynamic-print-style">
         @media print {
             @page { size: A4 portrait; margin: 1.5cm; }
@@ -116,7 +117,7 @@
             <div class="flex flex-wrap justify-center items-center gap-6 bg-slate-800 dark:bg-slate-900 p-5 rounded-2xl border border-slate-700 w-full shadow-2xl">
                 <div class="flex flex-col gap-2 items-center">
                     <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Keskustyyppi</span>
-                    <select id="centerTypeSelect" onchange="changeCenterType(this.value)" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
+                    <select id="centerTypeSelect" onchange="changeMainConfig(true)" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
                         <option value="tulppa">Tulppasulake (Kierre)</option>
                         <option value="automaatti" selected>Johdonsuoja (DIN)</option>
                     </select>
@@ -169,7 +170,7 @@
     <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8 print-shadow-none">
         <!-- SIVU 1: Keskuksen sijoituskaavio -->
         <section class="lg:col-span-12 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none flex flex-col items-center print-page-1 transition-colors duration-300 w-full overflow-hidden">
-            <h2 class="text-2xl font-black text-slate-900 dark:text-white border-b-2 border-slate-100 dark:border-slate-800 pb-4 mb-8 w-full text-center tracking-wide">
+            <h2 class="text-2xl font-black text-slate-900 dark:text-white border-b-2 border-slate-100 dark:border-slate-800 pb-4 mb-8 w-full text-center tracking-wide no-print">
                 Sähkökeskuksen sijoituskaavio
             </h2>
             
@@ -392,8 +393,8 @@
             return fusesData[id];
         }
 
-        function changeCenterType(val) {
-            const layoutMode = document.getElementById('layoutModeSelect').value;
+        function changeMainConfig(triggerRender = false) {
+            const val = document.getElementById('centerTypeSelect').value;
             const lCont = document.getElementById('layoutModeContainer');
             const lDiv = document.getElementById('layoutModeDivider');
             
@@ -406,6 +407,7 @@
                 if(lDiv) lDiv.style.display = 'block';
             }
             
+            // Konvertoidaan laitteet tyypin vaihtuessa
             for (let i = 1; i <= state.fuseCount; i++) {
                 const item = fusesData[i];
                 if (val === 'tulppa') {
@@ -423,7 +425,7 @@
                 }
             }
             
-            renderApp();
+            if (triggerRender) renderApp();
         }
 
         function adjustValue(key, amount, min, max) {
@@ -431,7 +433,13 @@
             if (newVal >= min && newVal <= max) { 
                 state[key] = newVal;
                 document.getElementById(key + 'Input').value = state[key];
-                renderApp();
+                
+                if (key === 'rowLimit') {
+                    renderApp(); // Suora uudelleenpiirto rivien päivitykselle
+                } else {
+                    changeMainConfig(false);
+                    renderApp();
+                }
             }
         }
 
@@ -441,7 +449,13 @@
             if (num > max) num = max;
             state[key] = num;
             document.getElementById(key + 'Input').value = state[key];
-            renderApp();
+            
+            if (key === 'rowLimit') {
+                renderApp();
+            } else {
+                changeMainConfig(false);
+                renderApp();
+            }
         }
 
         function toggleTopSection(show) {
@@ -628,6 +642,7 @@
                 targetVisualSpan.innerHTML = text ? `<span class="no-print">${text}</span><span class="print-only-value">${text}</span>` : '<span class="no-print">Tyhjä</span>';
             }
         }
+        
         function updateLabelColor(id, color) {
             getFuse(id).labelColor = color;
         }
@@ -676,12 +691,12 @@
                     const desc = item.description || item.customName || "";
                     const bgColor = item.labelColor || '#ffffff';
                     html += `
-                        <div style="width: 30mm; height: 30mm; border: 2px solid black !important; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col items-center justify-start overflow-hidden relative">
+                        <div style="width: 30mm; height: 30mm; border: 2px solid black !important; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col items-center justify-start overflow-hidden relative print-no-bg">
                             <div style="width: 100%; height: 35%; border-bottom: 2px solid black !important; box-sizing: border-box; background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center">
                                 <span class="font-black text-[14px] leading-none" style="color: black !important;">${item.label}</span>
                             </div>
-                            <div style="width: 100%; height: 65%; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center p-1">
-                                <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; color: black !important;">${desc}</span>
+                            <div style="width: 100%; height: 65%; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center p-1 box-border bg-white print-white-bg">
+                                <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight" style="color: black !important;">${desc}</span>
                             </div>
                         </div>
                     `;
@@ -750,19 +765,28 @@
                         
                         subRail.items.forEach(item => {
                             if (item.type === 'spacer') {
-                                html += `<div style="width: 17.5mm; height: 25mm; border-right: 2px solid black !important; box-sizing: border-box; background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col justify-center items-center"></div>`;
-                            } else {
-                                const customNamePrint = item.customName || '';
-                                const labelInput = item.label;
-                                const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.type.startsWith('empty-') ? customNamePrint : (item.description || item.customName || ""));
+                                html += `<div style="width: 17.5mm; height: 25mm; border-right: 2px solid black !important; box-sizing: border-box; background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col justify-center items-center box-border"></div>`;
+                            } else if (item.type.startsWith('empty-')) {
+                                const desc = item.customName || 'Tyhjä';
                                 const bgColor = item.labelColor || '#ffffff';
-                                
                                 html += `
-                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm; border-right: 2px solid black !important; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col items-center justify-start overflow-hidden relative">
+                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm; border-right: 2px solid black !important; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
                                     <div style="width: 100%; height: 35%; border-bottom: 2px solid black !important; box-sizing: border-box; background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center">
-                                        <span class="font-black text-[14px] leading-none" style="color: black !important;">${labelInput}</span>
+                                        <span class="font-black text-[14px] leading-none" style="color: black !important;">${item.label}</span>
                                     </div>
-                                    <div style="width: 100%; height: 65%; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center p-1">
+                                    <div style="width: 100%; height: 65%; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center p-1 box-border bg-white print-white-bg">
+                                        <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight" style="color: black !important;">${desc}</span>
+                                    </div>
+                                </div>`;
+                            } else {
+                                const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.description || item.customName || "");
+                                const bgColor = item.labelColor || '#ffffff';
+                                html += `
+                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm; border-right: 2px solid black !important; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
+                                    <div style="width: 100%; height: 35%; border-bottom: 2px solid black !important; box-sizing: border-box; background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center">
+                                        <span class="font-black text-[14px] leading-none" style="color: black !important;">${item.label}</span>
+                                    </div>
+                                    <div style="width: 100%; height: 65%; box-sizing: border-box; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="flex items-center justify-center p-1 box-border bg-white print-white-bg">
                                         <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; color: black !important;">${desc}</span>
                                     </div>
                                 </div>`;
@@ -1021,7 +1045,7 @@
 
                                 let innerWrapper = '';
                                 if (isVerticalLayout) {
-                                    innerWrapper = `<div style="${getBoxStyle(item.width, isVerticalLayout)} transform: rotate(-90deg); transform-origin: center;" class="flex items-center justify-center">${innerContent}</div>`;
+                                    innerWrapper = `<div style="${getBoxStyle(item.width, false)} position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); transform-origin: center;" class="flex items-center justify-center">${innerContent}</div>`;
                                 } else {
                                     innerWrapper = `<div class="w-full h-full">${innerContent}</div>`;
                                 }
