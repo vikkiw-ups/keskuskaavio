@@ -68,7 +68,7 @@
             /* Rivitys (wrap) sallitaan ylileveille kiskostoille tulosteessa */
             #breakerAreaContainer, .scroll-container { overflow: visible !important; flex-wrap: wrap !important; max-width: 100% !important; }
 
-            /* Pakotetaan gridi säilymään (vain tulppasulakekeskukselle) */
+            /* Pakotetaan gridi säilymään (vain tulppasulakekeskukselle tarvittaessa) */
             .print-grid { display: grid !important; }
 
             /* Kiskojen tekstin ja rakenteen hallinta tulostuksessa */
@@ -298,6 +298,7 @@
                             <th class="py-4 px-3 w-16 text-center">Nro</th>
                             <th class="py-4 px-3 w-64 text-center">Tyyppi / Sulake</th>
                             <th class="py-4 px-4">Käyttökohde / Tyhjän tila nimi</th>
+                            <th class="py-4 px-2 w-16 text-center no-print" title="Liuskan taustaväri">Väri</th>
                             <th class="py-4 px-2 w-16 text-center no-print">Poista</th>
                         </tr>
                     </thead>
@@ -327,7 +328,7 @@
                 <!-- Liuskan tulostus -->
                 <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col items-center justify-center gap-4">
                     <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">2. Merkintäliuskojen Tulostus</h3>
-                    <p class="text-xs text-slate-500 text-center mb-2">Tulostaa leikattavat tarrat keskuskuorikoihin (1 DIN = 17.5mm).</p>
+                    <p class="text-xs text-slate-500 text-center mb-2">Tulostaa leikattavat tarrat keskuskuorikoihin värikoodattuina.</p>
                     <div class="flex flex-wrap justify-center gap-4 w-full mb-2">
                         <div class="flex flex-col gap-1 items-center">
                             <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Paperikoko:</span>
@@ -435,7 +436,8 @@
                     type: "mcb", 
                     curve: "C",
                     customName: "",
-                    phase: phases[(id - 1) % 3]
+                    phase: phases[(id - 1) % 3],
+                    labelColor: "#ffffff" // Oletuksena valkoinen tausta merkintäliuskalle
                 };
             }
             return fusesData[id];
@@ -454,6 +456,7 @@
                 if(rDiv) rDiv.style.display = 'none';
                 lCont.style.display = 'none';
                 if(lDiv) lDiv.style.display = 'none';
+                // Oletus rivileveys tulppakeskukselle: 4
                 if(appState.rowLimit === 12) { appState.rowLimit = 4; document.getElementById('rowLimitInput').value = 4; }
             } else {
                 lCont.style.display = 'flex';
@@ -541,7 +544,7 @@
             renderApp();
         }
 
-        // --- DRAG AND DROP ---
+        // --- RAAHAUS (DRAG AND DROP) ---
         let draggedId = null;
         function handleDragStart(e, id) {
             draggedId = id;
@@ -656,7 +659,7 @@
             if (el) el.innerHTML = `${item.curve}${item.value}`;
         }
 
-        function handleTableSelect(idx, val) {
+        function handleTableTypeChange(idx, val) {
             const item = getFuse(idx);
             const centerType = document.getElementById('centerTypeSelect').value;
             if (centerType === 'tulppa') {
@@ -686,6 +689,11 @@
                 targetVisualSpan.innerHTML = text ? `<span class="no-print">${text}</span><span class="print-only-value">${text}</span>` : '<span class="no-print">Tyhjä</span>';
             }
         }
+        
+        // Päivittää liuskojen taustavärin
+        function updateLabelColor(id, color) {
+            getFuse(id).labelColor = color;
+        }
 
         function getPrintText(item) {
             const centerType = document.getElementById('centerTypeSelect').value;
@@ -700,6 +708,12 @@
             return `Johdonsuoja ${item.curve}${item.value}A`;
         }
 
+        function getBoxStyle(widthUnits, isVertical) {
+            const size = widthUnits * MOD_BASE + (widthUnits - 1) * MOD_GAP;
+            if (isVertical) return `width: 100px; height: ${size}px;`;
+            return `width: ${size}px; height: 100px;`;
+        }
+
         // --- MERKINTÄLIUSKOJEN GENERONTI ---
         function generateLabelStripsHTML(paperSize, orientation) {
             const centerType = document.getElementById('centerTypeSelect').value;
@@ -709,22 +723,29 @@
             if (centerType === 'tulppa') {
                 html += `<div class="flex flex-wrap gap-4 items-start justify-center">`;
                 
+                let tulppaItems = [];
                 for (let i = 1; i <= appState.fuseCount; i++) {
                     const item = getFuse(i);
                     if (item.type !== 'empty-1' && item.type !== 'main-switch' && item.value !== 0) {
-                        const desc = item.description || item.customName || "";
-                        html += `
-                            <div style="width: 30mm; height: 30mm;" class="border-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border">
-                                <div class="w-full bg-slate-100 border-b-2 border-black flex items-center justify-center h-[35%] box-border">
-                                    <span class="font-black text-[14px] leading-none">${item.label}</span>
-                                </div>
-                                <div class="w-full h-[65%] flex items-center justify-center p-1 box-border">
-                                    <span class="text-[8px] leading-tight text-center break-words">${desc}</span>
-                                </div>
-                            </div>
-                        `;
+                        tulppaItems.push(item);
                     }
                 }
+                
+                tulppaItems.forEach(item => {
+                    const desc = item.description || item.customName || "";
+                    const bgColor = item.labelColor || '#ffffff';
+                    html += `
+                        <div style="width: 30mm; height: 30mm;" class="border-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
+                            <div class="w-full bg-slate-100 border-b-2 border-black flex items-center justify-center h-[35%] box-border">
+                                <span class="font-black text-[14px] leading-none">${item.label}</span>
+                            </div>
+                            <div class="w-full h-[65%] flex items-center justify-center p-1 box-border" style="background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
+                                <span class="text-[8px] leading-tight text-center break-words">${desc}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
                 html += `</div>`;
             } else {
                 let maxMods = 10; 
@@ -789,23 +810,25 @@
                                 html += `<div style="width: 17.5mm; height: 25mm;" class="border-r-2 border-black bg-gray-100 flex flex-col justify-center items-center box-border"></div>`;
                             } else if (item.type.startsWith('empty-')) {
                                 const desc = item.customName || 'Tyhjä';
+                                const bgColor = item.labelColor || '#ffffff';
                                 html += `
-                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border">
+                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
                                     <div class="w-full border-b-2 border-black bg-slate-100 flex items-center justify-center h-[35%] box-border">
                                         <span class="font-black text-[14px] leading-none">${item.label}</span>
                                     </div>
-                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border">
+                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border" style="background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
                                         <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight">${desc}</span>
                                     </div>
                                 </div>`;
                             } else {
                                 const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.description || item.customName || "");
+                                const bgColor = item.labelColor || '#ffffff';
                                 html += `
-                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border">
+                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
                                     <div class="w-full border-b-2 border-black bg-slate-100 flex items-center justify-center h-[35%] box-border">
                                         <span class="font-black text-[14px] leading-none">${item.label}</span>
                                     </div>
-                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border">
+                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border" style="background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
                                         <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">${desc}</span>
                                     </div>
                                 </div>`;
@@ -885,50 +908,63 @@
                 document.getElementById('rowLimitInput').value = appState.rowLimit;
             }
 
+            // KISKOJEN LOGIIKKA - TULPPAKESKUS FIXATTU RIVITTYMÄÄN OIKEIN
             if (centerType === 'tulppa') {
-                containerHtml += `<div class="grid gap-6 w-full justify-items-center relative print-grid" style="grid-template-columns: repeat(${appState.rowLimit}, minmax(0, 1fr))">`;
+                containerHtml += `<div class="flex flex-col w-full items-center">`;
+                
+                let tulppaItems = [];
                 for (let i = 1; i <= appState.fuseCount; i++) {
                     const item = getFuse(i);
                     if (item.type !== 'tulppa' && item.type !== 'main-switch' && !item.type.startsWith('empty')) {
                         item.type = 'tulppa';
                         if (!availableAmps.includes(item.value)) item.value = 16;
                     }
+                    tulppaItems.push(item);
+                }
+
+                // Jaetaan tulpat riveille asetetun rowLimitin mukaan
+                for (let i = 0; i < tulppaItems.length; i += appState.rowLimit) {
+                    const rowItems = tulppaItems.slice(i, i + appState.rowLimit);
+                    containerHtml += `<div class="flex flex-row flex-wrap justify-center gap-6 mb-6 rail-row w-full print-no-bg">`;
                     
-                    const isEmpty = item.type.startsWith('empty');
-                    const isMainSwitch = item.type === 'main-switch';
-                    const conf = getAmpConfig(item.value);
-                    const dragAttrs = `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"`;
-                    
-                    if (isMainSwitch) {
-                        containerHtml += `
-                            <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:border-slate-300 print:shadow-none print:border-[1px]" title="PÄÄKYTKIN">
-                                <span class="text-xs font-black text-red-600 mb-2 truncate">PÄÄKYTKIN</span>
-                                <div class="w-24 h-24 rounded-xl bg-red-600 border-[4px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:border-slate-400">
-                                    <div class="w-12 h-6 bg-slate-900 rounded shadow-md border-b-2 border-white/20 print:shadow-none"></div>
-                                </div>
-                                <span class="text-transparent mt-3">0</span>
-                            </div>`;
-                    } else {
-                        const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
+                    rowItems.forEach(item => {
+                        const isEmpty = item.type.startsWith('empty');
+                        const isMainSwitch = item.type === 'main-switch';
+                        const conf = getAmpConfig(item.value);
+                        const dragAttrs = `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"`;
                         
-                        containerHtml += `
-                            <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:border-slate-300 print:shadow-none print:border-[1px]" title="Ryhmä ${item.label}">
-                                <input type="text" id="fuse-label-${item.id}" value="${item.label}" onchange="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-16 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
-                                
-                                <div class="w-24 h-24 rounded-full ${isEmpty ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white'} border-[6px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:bg-white print:border-slate-400">
-                                    ${isEmpty ? 
-                                        `<div class="w-10 h-10 rounded-full bg-slate-300 dark:bg-slate-900 shadow-inner print:bg-slate-200 print:shadow-none print:border print:border-slate-400"></div>` : 
-                                        `<div class="w-8 h-8 rounded-full ${conf.bg} border-2 border-black/10 shadow-inner flex items-center justify-center print:shadow-none print:border-slate-400"></div>
-                                         <span class="absolute bottom-2 text-[11px] font-black text-slate-800">${item.value}A</span>`
-                                    }
-                                </div>
-                                
-                                <div class="flex flex-col items-center mt-2 w-full">
-                                    <input type="text" id="fuse-phase-${item.id}" value="${item.phase}" onchange="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-12 text-xs font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-                                    ${isEmpty ? `<span id="visual-custom-label-${item.id}" class="text-[8px] font-bold text-slate-500 uppercase truncate w-full text-center mt-1 leading-none h-3">${customNamePrint}</span>` : '<span class="h-3 mt-1 w-full"></span>'}
-                                </div>
-                            </div>`;
-                    }
+                        if (isMainSwitch) {
+                            containerHtml += `
+                                <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:border-slate-300 print:shadow-none print:border-[1px]" title="PÄÄKYTKIN">
+                                    <span class="text-xs font-black text-red-600 mb-2 truncate">PÄÄKYTKIN</span>
+                                    <div class="w-24 h-24 rounded-xl bg-red-600 border-[4px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:border-slate-400">
+                                        <div class="w-12 h-6 bg-slate-900 rounded shadow-md border-b-2 border-white/20 print:shadow-none"></div>
+                                    </div>
+                                    <span class="text-transparent mt-3">0</span>
+                                </div>`;
+                        } else {
+                            const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
+                            
+                            containerHtml += `
+                                <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:border-slate-300 print:shadow-none print:border-[1px]" title="Ryhmä ${item.label}">
+                                    <input type="text" id="fuse-label-${item.id}" value="${item.label}" onchange="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-16 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
+                                    
+                                    <div class="w-24 h-24 rounded-full ${isEmpty ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white'} border-[6px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:bg-white print:border-slate-400">
+                                        ${isEmpty ? 
+                                            `<div class="w-10 h-10 rounded-full bg-slate-300 dark:bg-slate-900 shadow-inner print:bg-slate-200 print:shadow-none print:border print:border-slate-400"></div>` : 
+                                            `<div class="w-8 h-8 rounded-full ${conf.bg} border-2 border-black/10 shadow-inner flex items-center justify-center print:shadow-none print:border-slate-400"></div>
+                                             <span class="absolute bottom-2 text-[11px] font-black text-slate-800">${item.value}A</span>`
+                                        }
+                                    </div>
+                                    
+                                    <div class="flex flex-col items-center mt-2 w-full">
+                                        <input type="text" id="fuse-phase-${item.id}" value="${item.phase}" onchange="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-12 text-xs font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                                        ${isEmpty ? `<span id="visual-custom-label-${item.id}" class="text-[8px] font-bold text-slate-500 uppercase truncate w-full text-center mt-1 leading-none h-3">${customNamePrint}</span>` : '<span class="h-3 mt-1 w-full"></span>'}
+                                    </div>
+                                </div>`;
+                        }
+                    });
+                    containerHtml += `</div>`;
                 }
                 containerHtml += `</div>`;
             } 
@@ -955,7 +991,6 @@
                 }
                 if (currentRail.used > 0) rails.push(currentRail);
 
-                // Vaihdettiin gridistä puhtaaseen flexiin ratkaisemaan >1 DIN laitteiden rivitysongelma tulostuksessa!
                 let railsContainerClass = isVerticalLayout ? 'flex flex-row flex-wrap justify-center gap-10 w-fit mx-auto' : 'flex flex-col items-center gap-8 w-fit mx-auto';
                 containerHtml += `<div class="${railsContainerClass}">`;
 
@@ -1147,7 +1182,7 @@
                 if (centerType === 'tulppa') {
                     selectOptions = `<option value="empty-1" ${item.value === 0 && item.type !== 'main-switch' ? 'selected' : ''}>Tyhjä tila</option>
                                      <option value="main-switch" ${item.type === 'main-switch' ? 'selected' : ''}>Pääkytkin</option>
-                                     ${availableAmps.map(amp => `<option value="${amp}" ${item.value === amp && item.type !== 'main-switch' ? 'selected' : ''}>Tulppasulake ${amp} A</option>`).join('')}`;
+                                     ${availableAmps.map(amp => `<option value="${amp}" ${item.type === 'tulppa' && item.value == amp ? 'selected' : ''}>Tulppasulake ${amp} A</option>`).join('')}`;
                 } else {
                     selectOptions = `<option value="empty-1" ${item.type === 'empty-1' ? 'selected' : ''}>Tyhjä (1 DIN)</option>
                                      <option value="empty-2" ${item.type === 'empty-2' ? 'selected' : ''}>Tyhjä (2 DIN)</option>
@@ -1198,6 +1233,9 @@
                             </div>
                         </td>
                         <td class="py-3 px-2 text-center no-print">
+                            <input type="color" value="${item.labelColor}" onchange="updateLabelColor(${i}, this.value)" class="w-8 h-8 p-0 border-0 rounded cursor-pointer shadow-sm bg-transparent" title="Liuskan taustaväri">
+                        </td>
+                        <td class="py-3 px-2 text-center no-print">
                             <button onclick="deleteRow(${i})" class="text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-2 rounded-lg transition-colors" title="Poista ryhmä">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
@@ -1212,11 +1250,10 @@
 
         window.onload = function() {
             initData();
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.classList.add('dark');
-            }
+            // Poistettu automaattinen tumman tilan aktivointi. Sivusto aukeaa aina vaaleana.
+            document.documentElement.classList.remove('dark'); 
             updateThemeIcon();
-            changeMainConfig(true); // Varmistaa alkulautauksen renderApp
+            changeMainConfig(true); 
         };
     </script>
 </body>
