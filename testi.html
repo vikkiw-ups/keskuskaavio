@@ -68,7 +68,7 @@
             /* Rivitys (wrap) sallitaan ylileveille kiskostoille tulosteessa */
             #breakerAreaContainer, .scroll-container { overflow: visible !important; flex-wrap: wrap !important; max-width: 100% !important; }
 
-            /* Pakotetaan gridi säilymään */
+            /* Pakotetaan gridi säilymään (vain tulppasulakekeskukselle) */
             .print-grid { display: grid !important; }
 
             /* Kiskojen tekstin ja rakenteen hallinta tulostuksessa */
@@ -208,19 +208,21 @@
     <main class="max-w-[100%] lg:max-w-7xl mx-auto px-2 md:px-4 print-shadow-none">
         
         <!-- SIVU 1: SIJOITUSKAAVIO -->
-        <section class="bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print:bg-white print:border-none print:shadow-none print-page-1 transition-colors duration-300 w-full mb-8">
+        <section class="print-white-bg bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none print-page-1 transition-colors duration-300 w-full mb-8">
             <h2 class="text-2xl font-black text-slate-900 dark:text-white border-b-2 border-slate-100 dark:border-slate-800 pb-4 mb-6 w-full text-center tracking-wide no-print">
                 Sähkökeskuksen sijoituskaavio
             </h2>
             
-            <div id="standaloneInfoContainer" class="w-full max-w-[700px] mx-auto mb-8 hidden print:bg-white"></div>
+            <!-- Jos Yläosa piilotetaan, Keskuksen perustiedot siirtyvät tänne omaan lohkoonsa! -->
+            <div id="standaloneInfoContainer" class="w-full max-w-[700px] mx-auto mb-8 hidden print-white-bg"></div>
 
             <div class="w-full overflow-x-auto custom-scrollbar pb-6 scroll-container">
-                <div id="physicalCabinet" class="print:bg-white print:border-slate-300 print:border-[1px] print:shadow-none print:p-2 bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-fit min-w-[320px] mx-auto transition-all">
+                <div id="physicalCabinet" class="print-white-bg print:border-slate-300 print:border-[1px] print:p-2 bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-fit min-w-[320px] mx-auto transition-all print-shadow-none">
                     
-                    <div id="topSection" class="print:bg-white print:border-slate-300 print:shadow-none grid grid-cols-12 gap-8 bg-slate-200 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 w-full min-w-[650px] shadow-sm transition-colors mx-auto max-w-4xl">
+                    <!-- YLÄOSA -->
+                    <div id="topSection" class="print-white-bg grid grid-cols-12 gap-8 bg-slate-200 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 w-full min-w-[650px] shadow-sm transition-colors print-shadow-none mx-auto max-w-4xl">
                         
-                        <div id="perustiedotBlock" class="print:bg-white print:border-slate-300 print:shadow-none col-span-7 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl p-5 flex flex-col justify-between shadow-sm transition-colors">
+                        <div id="perustiedotBlock" class="print-white-bg col-span-7 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl p-5 flex flex-col justify-between shadow-sm transition-colors print-shadow-none">
                             <span class="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block no-print mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">Keskuksen perustiedot:</span>
                             <div class="grid grid-cols-2 gap-x-8 gap-y-5 text-left w-full h-full">
                                 <div class="flex flex-col">
@@ -242,7 +244,8 @@
                             </div>
                         </div>
                         
-                        <div id="paasulakeBlock" class="print:bg-white col-span-5 flex flex-col justify-center items-center py-1">
+                        <!-- Pääsulakkeet (Oikea reuna) -->
+                        <div id="paasulakeBlock" class="print-white-bg col-span-5 flex flex-col justify-center items-center py-1">
                             <div class="flex flex-col gap-2 items-center w-full">
                                 <div class="text-sm font-black uppercase text-slate-600 dark:text-slate-300 tracking-widest text-center">Pääsulakkeet</div>
                                 <div class="print:bg-transparent print:border-none print:shadow-none flex gap-3 bg-slate-300 dark:bg-slate-800 p-3 rounded-xl border border-slate-400 dark:border-slate-600 shadow-inner">
@@ -263,12 +266,14 @@
                         </div>
                     </div>
 
-                    <div id="breakerAreaContainer" class="print:bg-white bg-slate-200 dark:bg-slate-700 p-4 md:p-8 rounded-xl border border-slate-300 dark:border-slate-600 w-full flex flex-col items-center shadow-inner transition-colors">
+                    <!-- ITSE RYHMÄT (Laitteet) -->
+                    <div id="breakerAreaContainer" class="print-white-bg bg-slate-200 dark:bg-slate-700 p-4 md:p-8 rounded-xl border border-slate-300 dark:border-slate-600 w-full flex flex-col items-center shadow-inner transition-colors">
                         <!-- Generoidaan JS:llä -->
                     </div>
                     
                     <button onclick="adjustCount('fuseCount', 1)" class="no-print mx-auto -mt-4 mb-2 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-700 hover:border-amber-400 dark:hover:bg-amber-900 dark:hover:text-amber-300 rounded-full w-14 h-14 flex items-center justify-center font-bold text-4xl shadow-lg transition-all" title="Lisää uusi ryhmä">+</button>
 
+                    <!-- Väriohjekartta piilotettu tulosteessa -->
                     <div id="fuseColorGuide" class="no-print text-xs font-bold text-slate-600 dark:text-slate-400 flex flex-wrap justify-center gap-5 px-2 pt-4 border-t-2 border-slate-300 dark:border-slate-600 w-full transition-colors print-shadow-none"></div>
                 </div>
             </div>
@@ -279,7 +284,7 @@
         </section>
 
         <!-- SIVU 2: RYHMÄLUETTELO -->
-        <section class="print:bg-white print:border-none print:shadow-none bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-page-2 transition-colors duration-300 w-full">
+        <section class="print-white-bg bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none print-page-2 transition-colors duration-300 w-full">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-100 dark:border-slate-800 pb-5 mb-8 gap-4">
                 <div class="w-full">
                     <input type="text" value="RYHMÄLUETTELO" class="text-3xl font-black text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-amber-500 focus:outline-none w-full" placeholder="Keskuksen nimi">
@@ -308,34 +313,40 @@
             </div>
 
             <!-- TULOSTUS & ASETUKSET -->
-            <div class="mt-12 flex flex-col items-center bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 no-print w-full max-w-4xl mx-auto gap-6 shadow-inner">
-                <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest w-full text-center">Tulostusasetukset (Liuska)</h3>
-                
-                <div class="flex flex-wrap justify-center gap-6 w-full">
-                    <div class="flex flex-col gap-1 items-center">
-                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Paperikoko:</span>
-                        <select id="printPaperSize" class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            <option value="A4">A4</option>
-                            <option value="A3">A3</option>
-                        </select>
-                    </div>
-                    <div class="flex flex-col gap-1 items-center">
-                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Suunta:</span>
-                        <select id="printOrientation" class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
-                            <option value="portrait">Pysty</option>
-                            <option value="landscape">Vaaka</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="flex flex-col md:flex-row justify-center gap-4 w-full border-t border-slate-200 dark:border-slate-700 pt-6">
-                    <button onclick="printNormal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-6 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-2 text-base hover:scale-105 transform w-full md:w-auto">
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 no-print w-full max-w-5xl mx-auto">
+                <!-- Kaavion tulostus -->
+                <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col items-center justify-center gap-4">
+                    <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">1. Dokumentaation Tulostus</h3>
+                    <p class="text-xs text-slate-500 text-center mb-2">Tulostaa sijoituskaavion (Sivu 1) ja ryhmäluettelon (Sivu 2) A4-kokoihin.</p>
+                    <button onclick="printNormal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-6 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-2 text-base hover:scale-105 transform w-full">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4" /></svg>
                         TULOSTA KAAVIO & LUETTELO
                     </button>
-                    <button onclick="printLabelStrips()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-6 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-2 text-base hover:scale-105 transform w-full md:w-auto">
+                </div>
+
+                <!-- Liuskan tulostus -->
+                <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col items-center justify-center gap-4">
+                    <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">2. Merkintäliuskojen Tulostus</h3>
+                    <p class="text-xs text-slate-500 text-center mb-2">Tulostaa leikattavat tarrat keskuskuorikoihin (1 DIN = 17.5mm).</p>
+                    <div class="flex flex-wrap justify-center gap-4 w-full mb-2">
+                        <div class="flex flex-col gap-1 items-center">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Paperikoko:</span>
+                            <select id="printPaperSize" class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <option value="A4">A4</option>
+                                <option value="A3">A3</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1 items-center">
+                            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Suunta:</span>
+                            <select id="printOrientation" class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <option value="portrait">Pysty</option>
+                                <option value="landscape">Vaaka</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="printLabelStrips()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-6 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-2 text-base hover:scale-105 transform w-full">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 7h10v3H7zM5 10h14a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z" /></svg>
-                        TULOSTA MERKINTÄLIUSKA
+                        TULOSTA MERKINTÄLIUSKAT
                     </button>
                 </div>
             </div>
@@ -344,7 +355,7 @@
     </main>
     
     <!-- Piilotettu säiliö merkintäliuskoja varten -->
-    <div id="labelStripsContainer" class="bg-white print:bg-white text-black font-sans"></div>
+    <div id="labelStripsContainer" class="bg-white print:bg-white text-black font-sans w-full max-w-full overflow-hidden flex flex-col items-center"></div>
 
     <script>
         // --- TUMMA TILA & IKONIT ---
@@ -375,7 +386,7 @@
         window.addEventListener('afterprint', () => {
             if (wasDark) { document.documentElement.classList.add('dark'); }
             document.body.classList.remove('print-mode-labels');
-            setPrintStyles('normal'); // Palautetaan normaaliin A4 kokoiseksi
+            setPrintStyles('normal'); 
         });
 
         // --- DYNAMINEN TULOSTUSTYYLI SIVUKOOLLE ---
@@ -689,39 +700,33 @@
             return `Johdonsuoja ${item.curve}${item.value}A`;
         }
 
-        function getBoxStyle(widthUnits, isVertical) {
-            const size = widthUnits * MOD_BASE + (widthUnits - 1) * MOD_GAP;
-            if (isVertical) return `width: 100px; height: ${size}px;`;
-            return `width: ${size}px; height: 100px;`;
-        }
-
-        // --- MERKINTÄLIUSKOJEN GENERONTI (A4/A3 Pysty/Vaaka älykäs jako) ---
+        // --- MERKINTÄLIUSKOJEN GENERONTI ---
         function generateLabelStripsHTML(paperSize, orientation) {
             const centerType = document.getElementById('centerTypeSelect').value;
-            const keskusTunnus = document.getElementById('keskusTunnusInput').value || 'Sähkökeskus';
-            let html = `<div class="p-8 w-full"><h2 class="text-2xl font-black mb-8 border-b pb-2">Merkintäliuskat: ${keskusTunnus}</h2>`;
+            
+            let html = ``;
 
             if (centerType === 'tulppa') {
-                html += `<div class="text-sm mb-4">Leikkaa viivoja pitkin ja liimaa sulakepesien viereen/alle.</div>`;
-                html += `<div class="flex flex-wrap gap-4 items-start">`;
+                html += `<div class="flex flex-wrap gap-4 items-start justify-center">`;
                 
                 for (let i = 1; i <= appState.fuseCount; i++) {
                     const item = getFuse(i);
                     if (item.type !== 'empty-1' && item.type !== 'main-switch' && item.value !== 0) {
                         const desc = item.description || item.customName || "";
                         html += `
-                            <div style="width: 30mm; height: 30mm; border: 1px solid black;" class="p-1 flex flex-col justify-center items-center text-center overflow-hidden">
-                                <span class="font-bold text-[14px] leading-none mb-1">${item.label}</span>
-                                <span class="text-[9px] leading-tight break-words">${desc}</span>
+                            <div style="width: 30mm; height: 30mm;" class="border-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border">
+                                <div class="w-full bg-slate-100 border-b-2 border-black flex items-center justify-center h-[35%] box-border">
+                                    <span class="font-black text-[14px] leading-none">${item.label}</span>
+                                </div>
+                                <div class="w-full h-[65%] flex items-center justify-center p-1 box-border">
+                                    <span class="text-[8px] leading-tight text-center break-words">${desc}</span>
+                                </div>
                             </div>
                         `;
                     }
                 }
-                html += `</div></div>`;
+                html += `</div>`;
             } else {
-                html += `<div class="text-sm mb-6">Liuskan leveys on sovitettu 17.5 mm perusmoduulille. Leikkaa viivoja pitkin.</div>`;
-                
-                // Määritetään montako moduulia mahtuu yhdelle liuskalle ennen sivun katkaisua 
                 let maxMods = 10; 
                 if (paperSize === 'A4' && orientation === 'landscape') maxMods = 14;
                 if (paperSize === 'A3' && orientation === 'portrait') maxMods = 15;
@@ -730,7 +735,6 @@
                 let rails = [{ items: [], used: 0 }];
                 let currentRailIndex = 0;
 
-                // Jaetaan ensin perusasetusten mukaan
                 for (let i = 1; i <= appState.fuseCount; i++) {
                     const item = getFuse(i);
                     let w = 1;
@@ -760,7 +764,6 @@
                     }
                 });
 
-                // Pilkotaan liuskat tarvittaessa maksimileveyden mukaan paperille
                 rails.forEach((rail, idx) => {
                     let subRails = [];
                     let currSub = { items: [], used: 0 };
@@ -778,27 +781,33 @@
                     }
 
                     subRails.forEach((subRail, subIdx) => {
-                        // page-break-inside: avoid pitää yksittäisen liuskan kasassa
-                        html += `<div class="mb-8 w-fit" style="page-break-inside: avoid; break-inside: avoid;">`;
-                        html += `<div class="text-xs font-bold mb-1 text-slate-500">Kisko / Rivi ${idx + 1} ${subRails.length > 1 ? `(Osa ${subIdx + 1})` : ''}</div>`;
-                        html += `<div class="flex flex-row border-l border-t border-b border-black">`;
+                        html += `<div class="mb-6 w-fit mx-auto" style="page-break-inside: avoid; break-inside: avoid;">`;
+                        html += `<div class="flex flex-row border-l-2 border-t-2 border-b-2 border-black box-border">`;
                         
                         subRail.items.forEach(item => {
                             if (item.type === 'spacer') {
-                                html += `<div style="width: 17.5mm; height: 25mm;" class="border-r border-black bg-gray-100 flex flex-col justify-center items-center"><span class="text-gray-300 text-[10px]">-</span></div>`;
+                                html += `<div style="width: 17.5mm; height: 25mm;" class="border-r-2 border-black bg-gray-100 flex flex-col justify-center items-center box-border"></div>`;
                             } else if (item.type.startsWith('empty-')) {
                                 const desc = item.customName || 'Tyhjä';
                                 html += `
-                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r border-black flex flex-col items-center justify-center p-1 overflow-hidden relative">
-                                    <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight">${desc}</span>
+                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border">
+                                    <div class="w-full border-b-2 border-black bg-slate-100 flex items-center justify-center h-[35%] box-border">
+                                        <span class="font-black text-[14px] leading-none">${item.label}</span>
+                                    </div>
+                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border">
+                                        <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight">${desc}</span>
+                                    </div>
                                 </div>`;
                             } else {
                                 const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.description || item.customName || "");
-                                // Pystysuuntainen keskitys korjattu: justify-center
                                 html += `
-                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r border-black flex flex-col items-center justify-center p-1 overflow-hidden relative bg-white">
-                                    <span class="font-black text-[14px] leading-none mb-0.5">${item.label}</span>
-                                    <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">${desc}</span>
+                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border">
+                                    <div class="w-full border-b-2 border-black bg-slate-100 flex items-center justify-center h-[35%] box-border">
+                                        <span class="font-black text-[14px] leading-none">${item.label}</span>
+                                    </div>
+                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border">
+                                        <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">${desc}</span>
+                                    </div>
                                 </div>`;
                             }
                         });
@@ -806,8 +815,6 @@
                         html += `</div></div>`;
                     });
                 });
-                
-                html += `</div>`;
             }
 
             return html;
@@ -818,7 +825,7 @@
             document.body.classList.remove('print-mode-labels');
             setTimeout(() => {
                 window.print();
-            }, 500); // 500ms takaa mobiilissa DOM:in renderöinnin ennen selainikkunan jäätymistä
+            }, 500);
         }
 
         function printLabelStrips() {
@@ -851,7 +858,7 @@
             let containerHtml = "";
             let tableHtml = "";
 
-            if (!isAutoRail()) {
+            if (centerType === 'automaatti' || layoutMode === 'horizontal') {
                 let fits = false;
                 while (!fits && appState.rowLimit < 200) {
                     let rUsed = new Array(appState.railCount).fill(0);
@@ -878,11 +885,6 @@
                 document.getElementById('rowLimitInput').value = appState.rowLimit;
             }
 
-            function isAutoRail() {
-                 return (centerType === 'tulppa' || layoutMode === 'horizontal');
-            }
-
-            // KISKOJEN LOGIIKKA - ÄLYKÄS JAKAUTUMINEN
             if (centerType === 'tulppa') {
                 containerHtml += `<div class="grid gap-6 w-full justify-items-center relative print-grid" style="grid-template-columns: repeat(${appState.rowLimit}, minmax(0, 1fr))">`;
                 for (let i = 1; i <= appState.fuseCount; i++) {
@@ -931,7 +933,7 @@
                 containerHtml += `</div>`;
             } 
             else {
-                // AUTOMAATTIKESKUS - Oikea jako
+                // AUTOMAATTIKESKUS
                 let rails = [];
                 let currentRail = { items: [], used: 0 };
 
@@ -953,6 +955,7 @@
                 }
                 if (currentRail.used > 0) rails.push(currentRail);
 
+                // Vaihdettiin gridistä puhtaaseen flexiin ratkaisemaan >1 DIN laitteiden rivitysongelma tulostuksessa!
                 let railsContainerClass = isVerticalLayout ? 'flex flex-row flex-wrap justify-center gap-10 w-fit mx-auto' : 'flex flex-col items-center gap-8 w-fit mx-auto';
                 containerHtml += `<div class="${railsContainerClass}">`;
 
@@ -991,202 +994,131 @@
 
                     subRails.forEach((subRail, subIndex) => {
                         const rowNumberLabel = isVerticalLayout ? `Pysty ${rIndex+1}` : (subRails.length > 1 ? `Rivi ${rIndex+1} (Osa ${subIndex+1})` : `Rivi ${rIndex+1}`);
-                        const displayCols = (!isVerticalLayout && appState.rowLimit > MAX_PRINT_WIDTH) ? MAX_PRINT_WIDTH : appState.rowLimit;
 
                         if (isVerticalLayout) {
                             containerHtml += `
                                 <div class="rail-row relative px-2 py-3 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex flex-col items-center print:bg-white print:border-slate-300 print:shadow-none">
-                                    <span class="rivi-text absolute top-1 left-2 font-bold text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">${rowNumberLabel}</span>
+                                    <span class="rivi-text absolute top-1 left-2 font-bold text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest no-print">${rowNumberLabel}</span>
                                     <div class="din-rail-vertical absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-8 border-x-2 border-slate-400 z-0"></div>
-                                    <div class="flex flex-col gap-1 z-10 py-1">
+                                    <div class="flex flex-col gap-[2px] z-10 py-1 w-full">
                             `;
                         } else {
                             containerHtml += `
                                 <div class="rail-row relative py-3 px-2 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex flex-col w-full mt-2 print:bg-white print:border-slate-300 print:shadow-none">
-                                    <span class="rivi-text font-bold text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1 mb-1 absolute top-1 left-2">${rowNumberLabel}</span>
-                                    <div class="relative flex items-center">
+                                    <span class="rivi-text font-bold text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1 mb-1 absolute top-1 left-2 no-print">${rowNumberLabel}</span>
+                                    <div class="relative flex items-center w-full">
                                         <div class="din-rail-horizontal absolute left-0 right-0 top-1/2 -translate-y-1/2 h-8 border-y-2 border-slate-400 z-0"></div>
-                                        <div class="flex flex-row flex-wrap gap-1 z-10 px-1 print-grid" style="grid-template-columns: repeat(${displayCols}, minmax(0,1fr))">
+                                        <div class="flex flex-row flex-wrap gap-[2px] z-10 px-1 w-full justify-center">
                             `;
                         }
 
                         subRail.items.forEach((item) => {
-                            const styleStr = getBoxStyle(item.width, isVerticalLayout);
+                            const sizeH = item.width * MOD_BASE + (item.width - 1) * MOD_GAP;
+                            let wrapperW = isVerticalLayout ? 100 : sizeH;
+                            let wrapperH = isVerticalLayout ? sizeH : 100;
+                            
                             const dragAttrs = item.type !== 'spacer' ? `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"` : '';
 
                             if (item.type === 'spacer') {
-                                const spacerLine = isVerticalLayout ? '<div class="h-px w-8 bg-slate-400"></div>' : '<div class="w-px h-8 bg-slate-400"></div>';
-                                containerHtml += `<div class="koje-item bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-sm opacity-60 rounded-sm flex items-center justify-center relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="${styleStr}">${spacerLine}</div>`;
+                                const spacerInner = isVerticalLayout ? '<div class="h-px w-8 bg-slate-400"></div>' : '<div class="w-px h-8 bg-slate-400"></div>';
+                                containerHtml += `<div class="koje-item bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-sm opacity-60 rounded-sm flex items-center justify-center relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="width: ${wrapperW}px; height: ${wrapperH}px;">${spacerInner}</div>`;
                             }
                             else {
                                 const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
                                 const labelInput = `<input type="text" id="fuse-label-${item.id}" value="${item.label}" onchange="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-full text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 focus:outline-none font-bold text-slate-700 dark:text-slate-300 truncate text-[11px] rounded transition-colors">`;
                                 const phaseInput = `<input type="text" id="fuse-phase-${item.id}" value="${item.phase}" onchange="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-8 text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded text-center transition-colors hover:border border-transparent hover:border-slate-300 dark:hover:border-slate-600">`;
                                 
-                                if (isVerticalLayout) {
-                                    if (item.type.startsWith('empty-')) {
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 rounded-sm flex flex-row justify-between items-center px-2 py-1 shadow-md hover:bg-slate-200 dark:hover:bg-slate-700 overflow-hidden transition-all relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="${styleStr}">
-                                                <div class="w-1/4">${labelInput}</div>
-                                                <div class="w-px h-full bg-slate-300 dark:bg-slate-600 border-x border-dashed border-slate-400 mx-1"></div>
-                                                <div class="w-1/4">${phaseInput}</div>
-                                                <span id="visual-custom-label-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate w-2/4 pr-1">${customNamePrint}</span>
-                                            </div>`;
-                                    }
-                                    else if (item.type === 'main-switch') {
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-red-600 border-2 border-slate-900 rounded-sm flex flex-row justify-between items-center px-2 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10 print:bg-white print:border-slate-400 print:border-[1px] print:shadow-none" style="${styleStr}">
-                                                <div class="w-1/4"><span class="text-[12px] font-black text-white print:text-black truncate w-full text-center block">PÄÄ<br>KYTKIN</span></div>
-                                                <div class="flex justify-center w-2/4">
-                                                    <div class="w-5 h-[70px] bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex items-center justify-center shadow-inner print:shadow-none print:border-slate-300">
-                                                        <div class="w-3 h-[90%] bg-slate-800 dark:bg-slate-950 rounded-sm shadow-md border-r border-white/20 print:shadow-none"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="w-1/4"></div>
-                                            </div>`;
-                                    }
-                                    else if (item.type === 'mcb-3p') {
-                                        const conf = getAmpConfig(item.value);
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-gradient-to-r from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-row justify-between items-center px-2 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="${styleStr}">
-                                                <div class="flex flex-col text-left w-1/4">
-                                                    ${labelInput}
-                                                    <span class="text-[8px] text-slate-500 dark:text-slate-400 font-bold truncate pl-1">3-vaihe</span>
-                                                </div>
-                                                <div class="flex justify-center w-2/4">
-                                                    <div class="w-5 h-[70px] bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex items-center justify-center print:border-slate-300">
-                                                        <div class="w-3 h-[90%] bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex flex-col items-end text-right w-1/4 gap-1">
-                                                    ${phaseInput}
-                                                    <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[11px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
-                                                </div>
-                                            </div>`;
-                                    }
-                                    else if (item.type.startsWith('vvsk-')) {
-                                        const is4p = item.width === 4;
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-gradient-to-r from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-row justify-between items-center px-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="${styleStr}">
-                                                <div class="flex flex-col text-left w-1/4 pl-1">
-                                                    ${labelInput}
-                                                    <span class="text-[8px] text-slate-500 dark:text-slate-400 font-bold truncate pl-1">${is4p ? '4p' : '2p'}</span>
-                                                </div>
-                                                <div class="flex flex-row justify-center items-center w-2/4 gap-2">
-                                                    <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow print:shadow-none">T</div>
-                                                    <div class="${is4p ? 'w-10' : 'w-6'} h-5 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex items-center print:border-slate-300">
-                                                        <div class="w-3 h-full bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex flex-col text-right w-1/4 pr-1">
-                                                    <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate">VVSK</span>
-                                                    <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate">${item.value}A</span>
-                                                </div>
-                                            </div>`;
-                                    } 
-                                    else {
-                                        const conf = getAmpConfig(item.value);
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-gradient-to-r from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-row justify-between items-center px-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="${styleStr}">
-                                                <div class="flex flex-col text-left w-1/3 pl-1">
-                                                    ${labelInput}
-                                                    ${phaseInput}
-                                                </div>
-                                                <div class="flex justify-center w-1/3">
-                                                    <div class="w-6 h-5 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex items-center print:border-slate-300">
-                                                        <div class="w-2 h-full bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="text-right w-1/3 pr-1 flex justify-end">
-                                                    <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[11px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
-                                                </div>
-                                            </div>`;
-                                    }
+                                let containerClasses = `koje-item grab-cursor relative z-10 print:bg-white print:shadow-none flex items-center justify-center rounded-sm shadow-md transition-all box-border `;
+                                if (item.type.startsWith('empty-')) {
+                                    containerClasses += `bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 print:border-slate-300`;
+                                } else if (item.type === 'main-switch') {
+                                    containerClasses += `bg-red-600 border-2 border-slate-900 hover:brightness-95 print:border-[1px] print:border-slate-400`;
                                 } else {
-                                    // VAAKAKISKO
-                                    if (item.type.startsWith('empty-')) {
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 rounded-sm flex flex-col justify-between items-center p-1.5 shadow-md hover:bg-slate-200 dark:hover:bg-slate-700 overflow-hidden transition-all relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="${styleStr}">
-                                                ${labelInput}
-                                                <div class="w-full h-px bg-slate-300 dark:bg-slate-600 border-y border-dashed border-slate-400 print:border-slate-300"></div>
-                                                <div class="flex justify-between w-full items-center gap-1">
-                                                    ${phaseInput}
-                                                    <span id="visual-custom-label-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate flex-1">${customNamePrint}</span>
-                                                </div>
-                                            </div>`;
-                                    }
-                                    else if (item.type === 'main-switch') {
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-red-600 border-2 border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10 print:bg-white print:border-[1px] print:border-slate-400 print:shadow-none" style="${styleStr}">
-                                                <div class="flex justify-center w-full px-2 items-center">
-                                                    <span class="text-[14px] font-black text-white print:text-black truncate text-center">PÄÄKYTKIN</span>
-                                                </div>
-                                                <div class="flex justify-center w-full py-1">
-                                                    <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center shadow-inner print:shadow-none print:border-slate-300">
-                                                        <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow-md border-b border-white/20 print:shadow-none"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex justify-center w-full px-2 items-center text-transparent text-xs">0</div>
-                                            </div>`;
-                                    }
-                                    else if (item.type === 'mcb-3p') {
-                                        const conf = getAmpConfig(item.value);
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="${styleStr}">
-                                                <div class="flex justify-between w-full px-2 items-center">
-                                                    <div class="w-2/3">${labelInput}</div>
-                                                    ${phaseInput}
-                                                </div>
-                                                <div class="flex justify-center w-full py-1">
-                                                    <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center print:border-slate-300">
-                                                        <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex justify-between w-full px-2 items-center">
-                                                    <span class="text-[8px] font-bold text-slate-500 dark:text-slate-400">3-vaihe</span>
-                                                    <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
-                                                </div>
-                                            </div>`;
-                                    }
-                                    else if (item.type.startsWith('vvsk-')) {
-                                        const is4p = item.width === 4;
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="${styleStr}">
-                                                <div class="flex justify-between w-full px-2 items-center">
-                                                    <div class="w-2/3">${labelInput}</div>
-                                                    <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold">${is4p ? '4p' : '2p'}</span>
-                                                </div>
-                                                <div class="flex flex-row justify-around items-center w-full py-1">
-                                                    <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow print:shadow-none">T</div>
-                                                    <div class="${is4p ? 'w-10' : 'w-6'} h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
-                                                        <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex flex-col text-center w-full pb-0.5">
-                                                    <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate">VVSK</span>
-                                                    <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate">${item.value}A 30mA</span>
-                                                </div>
-                                            </div>`;
-                                    } 
-                                    else {
-                                        const conf = getAmpConfig(item.value);
-                                        containerHtml += `
-                                            <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="koje-item grab-cursor bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 rounded-sm flex flex-col justify-between items-center p-1 shadow-md hover:brightness-95 overflow-hidden transition-all relative z-10 print:bg-white print:border-slate-300 print:shadow-none" style="${styleStr}">
-                                                <div class="flex flex-col text-center w-full">
-                                                    ${labelInput}
-                                                    ${phaseInput}
-                                                </div>
-                                                <div class="flex justify-center w-full py-1">
-                                                    <div class="w-5 h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
-                                                        <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="text-center w-full pb-0.5">
-                                                    <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
-                                                </div>
-                                            </div>`;
-                                    }
+                                    containerClasses += `bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 hover:brightness-95 print:border-slate-300 print:border-[1px]`;
                                 }
+
+                                let innerContent = '';
+                                if (item.type.startsWith('empty-')) {
+                                    innerContent = `
+                                        ${labelInput}
+                                        <div class="w-full h-px bg-slate-300 dark:bg-slate-600 border-y border-dashed border-slate-400 print:border-slate-300"></div>
+                                        <div class="flex justify-between w-full items-center gap-1 px-1">
+                                            ${phaseInput}
+                                            <span id="visual-custom-label-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate flex-1">${customNamePrint}</span>
+                                        </div>`;
+                                } else if (item.type === 'main-switch') {
+                                    innerContent = `
+                                        <div class="flex justify-center w-full px-2 items-center">
+                                            <span class="text-[14px] font-black text-white print:text-black truncate text-center">PÄÄKYTKIN</span>
+                                        </div>
+                                        <div class="flex justify-center w-full py-1">
+                                            <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center shadow-inner print:shadow-none print:border-slate-300">
+                                                <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow-md border-b border-white/20 print:shadow-none"></div>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-center w-full px-2 items-center text-transparent text-xs">0</div>`;
+                                } else if (item.type === 'mcb-3p') {
+                                    const conf = getAmpConfig(item.value);
+                                    innerContent = `
+                                        <div class="flex justify-between w-full px-2 items-center">
+                                            <div class="w-2/3">${labelInput}</div>
+                                            ${phaseInput}
+                                        </div>
+                                        <div class="flex justify-center w-full py-1">
+                                            <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center print:border-slate-300">
+                                                <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between w-full px-2 items-center">
+                                            <span class="text-[8px] font-bold text-slate-500 dark:text-slate-400">3-vaihe</span>
+                                            <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
+                                        </div>`;
+                                } else if (item.type.startsWith('vvsk-')) {
+                                    const is4p = item.width === 4;
+                                    innerContent = `
+                                        <div class="flex justify-between w-full px-2 items-center">
+                                            <div class="w-2/3">${labelInput}</div>
+                                            <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold">${is4p ? '4p' : '2p'}</span>
+                                        </div>
+                                        <div class="flex flex-row justify-around items-center w-full py-1">
+                                            <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow print:shadow-none">T</div>
+                                            <div class="${is4p ? 'w-10' : 'w-6'} h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
+                                                <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col text-center w-full pb-0.5">
+                                            <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate">VVSK</span>
+                                            <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate">${item.value}A 30mA</span>
+                                        </div>`;
+                                } else {
+                                    const conf = getAmpConfig(item.value);
+                                    innerContent = `
+                                        <div class="flex flex-col text-center w-full px-1">
+                                            ${labelInput}
+                                            ${phaseInput}
+                                        </div>
+                                        <div class="flex justify-center w-full py-1">
+                                            <div class="w-5 h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
+                                                <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                            </div>
+                                        </div>
+                                        <div class="text-center w-full pb-0.5">
+                                            <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
+                                        </div>`;
+                                }
+
+                                let innerWrapper = '';
+                                if (isVerticalLayout) {
+                                    innerWrapper = `<div style="width: ${sizeH}px; height: 100px; transform: rotate(-90deg); transform-origin: center;" class="flex flex-col justify-between py-1 w-full h-full">${innerContent}</div>`;
+                                } else {
+                                    innerWrapper = `<div class="flex flex-col justify-between py-1 w-full h-full">${innerContent}</div>`;
+                                }
+
+                                containerHtml += `
+                                    <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="${containerClasses}" style="width: ${wrapperW}px; height: ${wrapperH}px;" title="Ryhmä ${item.label}">
+                                        ${innerWrapper}
+                                    </div>
+                                `;
                             }
                         });
                         if(isVerticalLayout){
@@ -1199,7 +1131,7 @@
                 containerHtml += `</div>`;
             }
 
-            // COLOR GUIDE
+            // COLOR GUIDE - Piilotettu tulosteessa no-print -luokalla
             let guideHtml = availableAmps.map(amp => {
                 const conf = getAmpConfig(amp);
                 return `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full ${conf.bg} border border-slate-300 shadow-sm"></span> ${amp}A</span>`;
@@ -1207,7 +1139,7 @@
             if (centerType === 'automaatti') guideHtml += `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full bg-blue-600 border border-slate-300 shadow-sm text-[7px] text-white flex justify-center items-center font-bold">T</span> VVSK</span>`;
             colorGuide.innerHTML = guideHtml;
 
-            // RYHMÄLUETTELO
+            // RYHMÄLUETTELO TAULUKON PIIRTO
             for (let i = 1; i <= appState.fuseCount; i++) {
                 const item = getFuse(i);
                 
@@ -1284,7 +1216,7 @@
                 document.documentElement.classList.add('dark');
             }
             updateThemeIcon();
-            changeMainConfig(true); 
+            changeMainConfig(true); // Varmistaa alkulautauksen renderApp
         };
     </script>
 </body>
