@@ -68,7 +68,7 @@
             /* Rivitys (wrap) sallitaan ylileveille kiskostoille tulosteessa */
             #breakerAreaContainer, .scroll-container { overflow: visible !important; flex-wrap: wrap !important; max-width: 100% !important; }
 
-            /* Pakotetaan gridi säilymään (vain tulppasulakekeskukselle tarvittaessa) */
+            /* Pakotetaan gridi säilymään */
             .print-grid { display: grid !important; }
 
             /* Kiskojen tekstin ja rakenteen hallinta tulostuksessa */
@@ -161,17 +161,6 @@
                     </div>
                 </div>
 
-                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block" id="railDivider"></div>
-
-                <div class="flex flex-col gap-2 items-center" id="railCountContainer">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Kiskoja</span>
-                    <div class="flex items-center bg-slate-950 rounded-lg border border-slate-600 overflow-hidden shadow-inner">
-                        <button onclick="adjustCount('railCount', -1)" class="px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">-</button>
-                        <input type="number" id="railCountInput" value="1" onchange="updateCountFromInput('railCount', this.value)" class="w-10 bg-transparent text-center text-white font-black text-base focus:outline-none">
-                        <button onclick="adjustCount('railCount', 1)" class="px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-700 transition font-bold text-xl leading-none">+</button>
-                    </div>
-                </div>
-
                 <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
 
                 <div class="flex flex-col gap-2 items-center">
@@ -217,7 +206,7 @@
             <div id="standaloneInfoContainer" class="w-full max-w-[700px] mx-auto mb-8 hidden print-white-bg"></div>
 
             <div class="w-full overflow-x-auto custom-scrollbar pb-6 scroll-container">
-                <div id="physicalCabinet" class="print-white-bg print:border-slate-300 print:border-[1px] print:p-2 bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-fit min-w-[320px] mx-auto transition-all print-shadow-none">
+                <div id="physicalCabinet" class="print-white-bg print:border-slate-300 print:border-[1px] print:shadow-none print:p-2 bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-fit min-w-[320px] mx-auto transition-all">
                     
                     <!-- YLÄOSA -->
                     <div id="topSection" class="print-white-bg grid grid-cols-12 gap-8 bg-slate-200 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 w-full min-w-[650px] shadow-sm transition-colors print-shadow-none mx-auto max-w-4xl">
@@ -287,7 +276,7 @@
         <section class="print-white-bg bg-white dark:bg-slate-900 p-4 md:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 print-shadow-none print-page-2 transition-colors duration-300 w-full">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-100 dark:border-slate-800 pb-5 mb-8 gap-4">
                 <div class="w-full">
-                    <input type="text" value="RYHMÄLUETTELO" class="text-3xl font-black text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-amber-500 focus:outline-none w-full" placeholder="Keskuksen nimi">
+                    <h2 class="text-3xl font-black text-slate-900 dark:text-white w-full uppercase tracking-widest">RYHMÄLUETTELO</h2>
                 </div>
             </div>
 
@@ -408,7 +397,6 @@
         // --- SOVELLUKSEN DATAMALLI ---
         let appState = {
             fuseCount: 12,
-            railCount: 1,
             rowLimit: 12,
             showTop: true
         };
@@ -446,14 +434,10 @@
         function changeMainConfig(triggerRender = false) {
             const centerType = document.getElementById('centerTypeSelect').value;
             const layoutMode = document.getElementById('layoutModeSelect').value;
-            const rCont = document.getElementById('railCountContainer');
-            const rDiv = document.getElementById('railCountDivider');
             const lCont = document.getElementById('layoutContainer');
             const lDiv = document.getElementById('layoutDivider');
             
             if (centerType === 'tulppa') {
-                rCont.style.display = 'none';
-                if(rDiv) rDiv.style.display = 'none';
                 lCont.style.display = 'none';
                 if(lDiv) lDiv.style.display = 'none';
                 // Oletus rivileveys tulppakeskukselle: 4
@@ -461,13 +445,6 @@
             } else {
                 lCont.style.display = 'flex';
                 if(lDiv) lDiv.style.display = 'block';
-                if (layoutMode === 'horizontal') {
-                    rCont.style.display = 'none';
-                    if(rDiv) rDiv.style.display = 'none';
-                } else {
-                    rCont.style.display = 'flex';
-                    if(rDiv) rDiv.style.display = 'block';
-                }
             }
             if (triggerRender) renderApp();
         }
@@ -654,12 +631,10 @@
             if (item.curve === 'C') item.curve = 'B';
             else if (item.curve === 'B') item.curve = 'D';
             else item.curve = 'C';
-            
-            const el = document.getElementById(`fuse-curve-badge-${id}`);
-            if (el) el.innerHTML = `${item.curve}${item.value}`;
+            renderApp();
         }
 
-        function handleTableTypeChange(idx, val) {
+        function handleTableSelect(idx, val) {
             const item = getFuse(idx);
             const centerType = document.getElementById('centerTypeSelect').value;
             if (centerType === 'tulppa') {
@@ -677,13 +652,23 @@
         }
         
         function handleCurveChange(id, curveValue) { getFuse(id).curve = curveValue; renderApp(); }
-        function updateGroupLabel(id, value) { getFuse(id).label = value; const el = document.getElementById(`fuse-label-${id}`); if (el) el.value = value; }
-        function updatePhase(id, value) { getFuse(id).phase = value; const el = document.getElementById(`fuse-phase-${id}`); if (el) el.value = value; }
-        function saveDescription(id, text) { getFuse(id).description = text; }
         
+        // Reaaliaikainen tekstien päivitys (ei riko focusta)
+        function updateGroupLabel(id, value) { 
+            getFuse(id).label = value; 
+            document.querySelectorAll(`.fuse-label-input-${id}`).forEach(el => { if(el.value !== value) el.value = value; });
+        }
+        function updatePhase(id, value) { 
+            getFuse(id).phase = value; 
+            document.querySelectorAll(`.fuse-phase-input-${id}`).forEach(el => { if(el.value !== value) el.value = value; });
+        }
+        function saveDescription(id, text) { 
+            getFuse(id).description = text; 
+            document.querySelectorAll(`.fuse-desc-input-${id}`).forEach(el => { if(el.value !== text) el.value = text; });
+        }
         function saveCustomName(id, text) {
             getFuse(id).customName = text;
-            const labelName = text || 'Tyhjä';
+            document.querySelectorAll(`.fuse-customname-input-${id}`).forEach(el => { if(el.value !== text) el.value = text; });
             const targetVisualSpan = document.getElementById(`visual-custom-label-${id}`);
             if (targetVisualSpan) {
                 targetVisualSpan.innerHTML = text ? `<span class="no-print">${text}</span><span class="print-only-value">${text}</span>` : '<span class="no-print">Tyhjä</span>';
@@ -697,7 +682,10 @@
 
         function getPrintText(item) {
             const centerType = document.getElementById('centerTypeSelect').value;
-            if (item.type.startsWith('empty-')) return item.customName || '';
+            if (item.type.startsWith('empty-')) {
+                const parts = item.type.split('-');
+                return item.customName ? `Tila: ${item.customName} (${parts[1]} DIN)` : `Tyhjä tila (${parts[1]}mod)`;
+            }
             if (item.type === 'main-switch') return 'PÄÄKYTKIN';
             if (centerType === 'tulppa' || item.type === 'tulppa') return `Tulppasulake ${item.value} A`;
             if (item.type === 'mcb-3p') return `3-Vaihe Johdonsuoja ${item.curve}${item.value}A`;
@@ -714,159 +702,6 @@
             return `width: ${size}px; height: 100px;`;
         }
 
-        // --- MERKINTÄLIUSKOJEN GENERONTI ---
-        function generateLabelStripsHTML(paperSize, orientation) {
-            const centerType = document.getElementById('centerTypeSelect').value;
-            
-            let html = ``;
-
-            if (centerType === 'tulppa') {
-                html += `<div class="flex flex-wrap gap-4 items-start justify-center">`;
-                
-                let tulppaItems = [];
-                for (let i = 1; i <= appState.fuseCount; i++) {
-                    const item = getFuse(i);
-                    if (item.type !== 'empty-1' && item.type !== 'main-switch' && item.value !== 0) {
-                        tulppaItems.push(item);
-                    }
-                }
-                
-                tulppaItems.forEach(item => {
-                    const desc = item.description || item.customName || "";
-                    const bgColor = item.labelColor || '#ffffff';
-                    html += `
-                        <div style="width: 30mm; height: 30mm;" class="border-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
-                            <div class="w-full bg-slate-100 border-b-2 border-black flex items-center justify-center h-[35%] box-border">
-                                <span class="font-black text-[14px] leading-none">${item.label}</span>
-                            </div>
-                            <div class="w-full h-[65%] flex items-center justify-center p-1 box-border" style="background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
-                                <span class="text-[8px] leading-tight text-center break-words">${desc}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                html += `</div>`;
-            } else {
-                let maxMods = 10; 
-                if (paperSize === 'A4' && orientation === 'landscape') maxMods = 14;
-                if (paperSize === 'A3' && orientation === 'portrait') maxMods = 15;
-                if (paperSize === 'A3' && orientation === 'landscape') maxMods = 22;
-
-                let rails = [{ items: [], used: 0 }];
-                let currentRailIndex = 0;
-
-                for (let i = 1; i <= appState.fuseCount; i++) {
-                    const item = getFuse(i);
-                    let w = 1;
-                    if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
-                    else if (item.type === 'main-switch') w = 3;
-                    else if (item.type === 'mcb-3p') w = 3;
-                    else if (item.type.startsWith('vvsk-2-')) w = 2;
-                    else if (item.type.startsWith('vvsk-4-')) w = 4;
-
-                    if (rails[currentRailIndex].used + w > appState.rowLimit) {
-                        const remaining = appState.rowLimit - rails[currentRailIndex].used;
-                        for (let k = 0; k < remaining; k++) {
-                            rails[currentRailIndex].items.push({ type: 'spacer', width: 1 });
-                        }
-                        rails.push({ items: [], used: 0 });
-                        currentRailIndex++;
-                    }
-
-                    rails[currentRailIndex].items.push({ id: item.id, ...item, width: w });
-                    rails[currentRailIndex].used += w;
-                }
-
-                rails.forEach(rail => {
-                    if (rail.used < appState.rowLimit) {
-                        const remaining = appState.rowLimit - rail.used;
-                        for (let k = 0; k < remaining; k++) rail.items.push({ type: 'spacer', width: 1 });
-                    }
-                });
-
-                rails.forEach((rail, idx) => {
-                    let subRails = [];
-                    let currSub = { items: [], used: 0 };
-                    
-                    rail.items.forEach(item => {
-                        if (currSub.used + item.width > maxMods) {
-                            subRails.push(currSub);
-                            currSub = { items: [], used: 0 };
-                        }
-                        currSub.items.push(item);
-                        currSub.used += item.width;
-                    });
-                    if (currSub.items.length > 0) {
-                        subRails.push(currSub);
-                    }
-
-                    subRails.forEach((subRail, subIdx) => {
-                        html += `<div class="mb-6 w-fit mx-auto" style="page-break-inside: avoid; break-inside: avoid;">`;
-                        html += `<div class="flex flex-row border-l-2 border-t-2 border-b-2 border-black box-border">`;
-                        
-                        subRail.items.forEach(item => {
-                            if (item.type === 'spacer') {
-                                html += `<div style="width: 17.5mm; height: 25mm;" class="border-r-2 border-black bg-gray-100 flex flex-col justify-center items-center box-border"></div>`;
-                            } else if (item.type.startsWith('empty-')) {
-                                const desc = item.customName || 'Tyhjä';
-                                const bgColor = item.labelColor || '#ffffff';
-                                html += `
-                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
-                                    <div class="w-full border-b-2 border-black bg-slate-100 flex items-center justify-center h-[35%] box-border">
-                                        <span class="font-black text-[14px] leading-none">${item.label}</span>
-                                    </div>
-                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border" style="background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
-                                        <span class="text-[8px] italic text-gray-500 break-words text-center leading-tight">${desc}</span>
-                                    </div>
-                                </div>`;
-                            } else {
-                                const desc = item.type === 'main-switch' ? 'PÄÄKYTKIN' : (item.description || item.customName || "");
-                                const bgColor = item.labelColor || '#ffffff';
-                                html += `
-                                <div style="width: calc(${item.width} * 17.5mm); height: 25mm;" class="border-r-2 border-black flex flex-col items-center justify-start overflow-hidden relative bg-white box-border print-no-bg">
-                                    <div class="w-full border-b-2 border-black bg-slate-100 flex items-center justify-center h-[35%] box-border">
-                                        <span class="font-black text-[14px] leading-none">${item.label}</span>
-                                    </div>
-                                    <div class="w-full h-[65%] flex items-center justify-center p-1 box-border" style="background-color: ${bgColor} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
-                                        <span class="text-[8px] leading-tight text-center break-words" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">${desc}</span>
-                                    </div>
-                                </div>`;
-                            }
-                        });
-                        
-                        html += `</div></div>`;
-                    });
-                });
-            }
-
-            return html;
-        }
-
-        function printNormal() {
-            setPrintStyles('normal');
-            document.body.classList.remove('print-mode-labels');
-            setTimeout(() => {
-                window.print();
-            }, 500);
-        }
-
-        function printLabelStrips() {
-            const container = document.getElementById('labelStripsContainer');
-            if (!container) return;
-            
-            const paperSize = document.getElementById('printPaperSize').value;
-            const orientation = document.getElementById('printOrientation').value;
-            
-            setPrintStyles('labels', paperSize, orientation);
-            container.innerHTML = generateLabelStripsHTML(paperSize, orientation);
-            document.body.classList.add('print-mode-labels');
-            
-            setTimeout(() => {
-                window.print();
-            }, 500);
-        }
-
         // --- PÄÄRENDERÖINTI ---
         function renderApp() {
             changeMainConfig(false);
@@ -881,34 +716,7 @@
             let containerHtml = "";
             let tableHtml = "";
 
-            if (centerType === 'automaatti' || layoutMode === 'horizontal') {
-                let fits = false;
-                while (!fits && appState.rowLimit < 200) {
-                    let rUsed = new Array(appState.railCount).fill(0);
-                    let cRail = 0;
-                    fits = true;
-
-                    for (let i = 1; i <= appState.fuseCount; i++) {
-                        const item = getFuse(i);
-                        let w = 1;
-                        if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
-                        else if (item.type === 'main-switch') w = 3;
-                        else if (item.type === 'mcb-3p') w = 3;
-                        else if (item.type.startsWith('vvsk-2-')) w = 2;
-                        else if (item.type.startsWith('vvsk-4-')) w = 4;
-
-                        if (rUsed[cRail] + w > appState.rowLimit) {
-                            cRail++;
-                            if (cRail >= appState.railCount) { fits = false; break; }
-                        }
-                        if (fits) rUsed[cRail] += w;
-                    }
-                    if (!fits) appState.rowLimit++;
-                }
-                document.getElementById('rowLimitInput').value = appState.rowLimit;
-            }
-
-            // KISKOJEN LOGIIKKA - TULPPAKESKUS FIXATTU RIVITTYMÄÄN OIKEIN
+            // KISKOJEN LOGIIKKA - ÄLYKÄS JAKAUTUMINEN JOPA RAJATTOMASTI
             if (centerType === 'tulppa') {
                 containerHtml += `<div class="flex flex-col w-full items-center">`;
                 
@@ -925,7 +733,7 @@
                 // Jaetaan tulpat riveille asetetun rowLimitin mukaan
                 for (let i = 0; i < tulppaItems.length; i += appState.rowLimit) {
                     const rowItems = tulppaItems.slice(i, i + appState.rowLimit);
-                    containerHtml += `<div class="flex flex-row flex-wrap justify-center gap-6 mb-6 rail-row w-full print-no-bg">`;
+                    containerHtml += `<div class="grid gap-6 w-full justify-items-center mb-8 rail-row print-no-bg print-grid" style="grid-template-columns: repeat(${appState.rowLimit}, minmax(0, 1fr))">`;
                     
                     rowItems.forEach(item => {
                         const isEmpty = item.type.startsWith('empty');
@@ -1060,10 +868,10 @@
                             }
                             else {
                                 const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
-                                const labelInput = `<input type="text" id="fuse-label-${item.id}" value="${item.label}" onchange="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-full text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 focus:outline-none font-bold text-slate-700 dark:text-slate-300 truncate text-[11px] rounded transition-colors">`;
-                                const phaseInput = `<input type="text" id="fuse-phase-${item.id}" value="${item.phase}" onchange="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="w-8 text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded text-center transition-colors hover:border border-transparent hover:border-slate-300 dark:hover:border-slate-600">`;
+                                const labelInput = `<input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-label-input-${item.id} w-full text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 focus:outline-none font-bold text-slate-700 dark:text-slate-300 truncate text-[11px] rounded transition-colors">`;
+                                const phaseInput = `<input type="text" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-phase-input-${item.id} w-8 text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded text-center transition-colors hover:border border-transparent hover:border-slate-300 dark:hover:border-slate-600">`;
                                 
-                                let containerClasses = `koje-item grab-cursor relative z-10 print:bg-white print:shadow-none flex items-center justify-center rounded-sm shadow-md transition-all box-border `;
+                                let containerClasses = `koje-item grab-cursor relative z-10 print:bg-white print:shadow-none flex items-center justify-center rounded-sm shadow-md transition-all box-border overflow-hidden `;
                                 if (item.type.startsWith('empty-')) {
                                     containerClasses += `bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 print:border-slate-300`;
                                 } else if (item.type === 'main-switch') {
@@ -1075,78 +883,88 @@
                                 let innerContent = '';
                                 if (item.type.startsWith('empty-')) {
                                     innerContent = `
-                                        ${labelInput}
-                                        <div class="w-full h-px bg-slate-300 dark:bg-slate-600 border-y border-dashed border-slate-400 print:border-slate-300"></div>
-                                        <div class="flex justify-between w-full items-center gap-1 px-1">
-                                            ${phaseInput}
-                                            <span id="visual-custom-label-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate flex-1">${customNamePrint}</span>
+                                        <div class="flex flex-col justify-between items-center h-full w-full py-1.5">
+                                            ${labelInput}
+                                            <div class="w-full h-px bg-slate-300 dark:bg-slate-600 border-y border-dashed border-slate-400 print:border-slate-300"></div>
+                                            <div class="flex justify-between w-full items-center gap-1 px-1">
+                                                ${phaseInput}
+                                                <span id="visual-custom-label-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate flex-1">${customNamePrint}</span>
+                                            </div>
                                         </div>`;
                                 } else if (item.type === 'main-switch') {
                                     innerContent = `
-                                        <div class="flex justify-center w-full px-2 items-center">
-                                            <span class="text-[14px] font-black text-white print:text-black truncate text-center">PÄÄKYTKIN</span>
-                                        </div>
-                                        <div class="flex justify-center w-full py-1">
-                                            <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center shadow-inner print:shadow-none print:border-slate-300">
-                                                <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow-md border-b border-white/20 print:shadow-none"></div>
+                                        <div class="flex flex-col justify-between items-center h-full w-full py-1">
+                                            <div class="flex justify-center w-full px-2 items-center">
+                                                <span class="text-[14px] font-black text-white print:text-black truncate text-center">PÄÄKYTKIN</span>
                                             </div>
-                                        </div>
-                                        <div class="flex justify-center w-full px-2 items-center text-transparent text-xs">0</div>`;
+                                            <div class="flex justify-center w-full py-1">
+                                                <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center shadow-inner print:shadow-none print:border-slate-300">
+                                                    <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow-md border-b border-white/20 print:shadow-none"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-center w-full px-2 items-center text-transparent text-xs">0</div>
+                                        </div>`;
                                 } else if (item.type === 'mcb-3p') {
                                     const conf = getAmpConfig(item.value);
                                     innerContent = `
-                                        <div class="flex justify-between w-full px-2 items-center">
-                                            <div class="w-2/3">${labelInput}</div>
-                                            ${phaseInput}
-                                        </div>
-                                        <div class="flex justify-center w-full py-1">
-                                            <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center print:border-slate-300">
-                                                <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                        <div class="flex flex-col justify-between items-center h-full w-full py-1">
+                                            <div class="flex justify-between w-full px-2 items-center">
+                                                <div class="w-2/3">${labelInput}</div>
+                                                ${phaseInput}
                                             </div>
-                                        </div>
-                                        <div class="flex justify-between w-full px-2 items-center">
-                                            <span class="text-[8px] font-bold text-slate-500 dark:text-slate-400">3-vaihe</span>
-                                            <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
+                                            <div class="flex justify-center w-full py-1">
+                                                <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center print:border-slate-300">
+                                                    <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-between w-full px-2 items-center">
+                                                <span class="text-[8px] font-bold text-slate-500 dark:text-slate-400">3-vaihe</span>
+                                                <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
+                                            </div>
                                         </div>`;
                                 } else if (item.type.startsWith('vvsk-')) {
                                     const is4p = item.width === 4;
                                     innerContent = `
-                                        <div class="flex justify-between w-full px-2 items-center">
-                                            <div class="w-2/3">${labelInput}</div>
-                                            <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold">${is4p ? '4p' : '2p'}</span>
-                                        </div>
-                                        <div class="flex flex-row justify-around items-center w-full py-1">
-                                            <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow print:shadow-none">T</div>
-                                            <div class="${is4p ? 'w-10' : 'w-6'} h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
-                                                <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                        <div class="flex flex-col justify-between items-center h-full w-full py-1">
+                                            <div class="flex justify-between w-full px-2 items-center">
+                                                <div class="w-2/3">${labelInput}</div>
+                                                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold">${is4p ? '4p' : '2p'}</span>
                                             </div>
-                                        </div>
-                                        <div class="flex flex-col text-center w-full pb-0.5">
-                                            <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate">VVSK</span>
-                                            <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate">${item.value}A 30mA</span>
+                                            <div class="flex flex-row justify-around items-center w-full py-1">
+                                                <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow print:shadow-none">T</div>
+                                                <div class="${is4p ? 'w-10' : 'w-6'} h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
+                                                    <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex flex-col text-center w-full pb-0.5">
+                                                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate leading-none mb-0.5">VVSK</span>
+                                                <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate leading-none">${item.value}A 30mA</span>
+                                            </div>
                                         </div>`;
                                 } else {
                                     const conf = getAmpConfig(item.value);
                                     innerContent = `
-                                        <div class="flex flex-col text-center w-full px-1">
-                                            ${labelInput}
-                                            ${phaseInput}
-                                        </div>
-                                        <div class="flex justify-center w-full py-1">
-                                            <div class="w-5 h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
-                                                <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                        <div class="flex flex-col justify-between items-center h-full w-full py-1">
+                                            <div class="flex flex-col text-center w-full px-1">
+                                                ${labelInput}
+                                                ${phaseInput}
                                             </div>
-                                        </div>
-                                        <div class="text-center w-full pb-0.5">
-                                            <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
+                                            <div class="flex justify-center w-full py-1">
+                                                <div class="w-5 h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
+                                                    <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                                </div>
+                                            </div>
+                                            <div class="text-center w-full pb-0.5">
+                                                <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
+                                            </div>
                                         </div>`;
                                 }
 
                                 let innerWrapper = '';
                                 if (isVerticalLayout) {
-                                    innerWrapper = `<div style="width: ${sizeH}px; height: 100px; transform: rotate(-90deg); transform-origin: center;" class="flex flex-col justify-between py-1 w-full h-full">${innerContent}</div>`;
+                                    innerWrapper = `<div style="width: ${sizeH}px; height: 100px; transform: rotate(-90deg); transform-origin: center;" class="flex items-center justify-center">${innerContent}</div>`;
                                 } else {
-                                    innerWrapper = `<div class="flex flex-col justify-between py-1 w-full h-full">${innerContent}</div>`;
+                                    innerWrapper = `<div class="w-full h-full">${innerContent}</div>`;
                                 }
 
                                 containerHtml += `
@@ -1166,7 +984,7 @@
                 containerHtml += `</div>`;
             }
 
-            // COLOR GUIDE - Piilotettu tulosteessa no-print -luokalla
+            // COLOR GUIDE
             let guideHtml = availableAmps.map(amp => {
                 const conf = getAmpConfig(amp);
                 return `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full ${conf.bg} border border-slate-300 shadow-sm"></span> ${amp}A</span>`;
@@ -1202,6 +1020,7 @@
                 const descValue = isPlaceholderType ? item.customName : item.description;
                 const descPlace = isPlaceholderType ? "Anna tyhjälle laitteelle vapaa nimi (esim. Kellokytkin)..." : "Ryhmän käyttökohde (kirjoita tähän)...";
                 const onInputEvt = isPlaceholderType ? `saveCustomName(${i}, this.value)` : `saveDescription(${i}, this.value)`;
+                const inputClass = isPlaceholderType ? `fuse-customname-input-${i}` : `fuse-desc-input-${i}`;
                 
                 let curveSelectHtml = '';
                 if (centerType === 'automaatti' && item.type.includes('mcb')) {
@@ -1228,7 +1047,7 @@
                         </td>
                         <td class="py-3 px-4">
                             <div class="flex items-center justify-between gap-3 min-h-[40px]">
-                                <input type="text" value="${descValue}" oninput="${onInputEvt}" placeholder="${descPlace}" class="fuse-customname-input-${i} fuse-desc-input-${i} flex-grow bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-amber-500 focus:outline-none py-1 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 font-sans text-sm ${isPlaceholderType ? 'italic font-medium text-amber-700 dark:text-amber-500' : ''}" ${isMainSwitch ? 'disabled placeholder="-"' : ''}>
+                                <input type="text" value="${descValue}" oninput="${onInputEvt}" placeholder="${descPlace}" class="${inputClass} flex-grow bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-amber-500 focus:outline-none py-1 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 font-sans text-sm ${isPlaceholderType ? 'italic font-medium text-amber-700 dark:text-amber-500' : ''}" ${isMainSwitch ? 'disabled placeholder="-"' : ''}>
                                 <input type="text" value="${item.phase}" oninput="updatePhase(${i}, this.value)" class="fuse-phase-input-${i} w-10 text-center text-xs px-1 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded text-slate-500 dark:text-slate-400 font-mono font-bold focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-amber-500 hover:border-slate-400 transition-colors">
                             </div>
                         </td>
@@ -1250,7 +1069,6 @@
 
         window.onload = function() {
             initData();
-            // Poistettu automaattinen tumman tilan aktivointi. Sivusto aukeaa aina vaaleana.
             document.documentElement.classList.remove('dark'); 
             updateThemeIcon();
             changeMainConfig(true); 
