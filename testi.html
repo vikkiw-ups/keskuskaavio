@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sähkökeskuksen Suunnittelutyökalu PRO V8.1</title>
+    <title>Sähkökeskuksen Suunnittelutyökalu PRO STR</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -126,7 +126,7 @@
                 <div class="text-center md:text-left">
                     <h1 class="text-3xl font-black tracking-wide flex items-center justify-center md:justify-start gap-3 text-white">
                         <span class="inline-block w-5 h-5 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)]"></span>
-                        Sähkökeskus PRO V8.1
+                        Sähkökeskus PRO STR
                     </h1>
                     <p class="text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">Dynaaminen Sijoituskaavio ja Luettelo</p>
                 </div>
@@ -142,8 +142,8 @@
                 <div class="flex flex-col gap-2 items-center">
                     <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Keskustyyppi</span>
                     <select id="centerTypeSelect" onchange="changeMainConfig(true)" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
-                        <option value="tulppa">Tulppasulake (Kierre)</option>
-                        <option value="automaatti" selected>Johdonsuoja (DIN)</option>
+                        <option value="tulppa">Tulppasulake</option>
+                        <option value="automaatti" selected>Johdonsuoja</option>
                     </select>
                 </div>
 
@@ -172,10 +172,10 @@
                 <div id="layoutModeDivider" class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
 
                 <div id="layoutModeContainer" class="flex flex-col gap-2 items-center">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Asettelu</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">keskuksen suunta</span>
                     <select id="layoutModeSelect" onchange="renderApp()" class="bg-slate-950 text-white font-black text-base rounded-lg border border-slate-600 px-5 py-3 cursor-pointer focus:outline-none focus:border-amber-500 transition shadow-inner">
-                        <option value="horizontal" selected>Vaaka (Rinnakkain)</option>
-                        <option value="vertical">Pysty (Allekkain)</option>
+                        <option value="horizontal" selected>Vaakakeskus</option>
+                        <option value="vertical">Pystykeskus</option>
                     </select>
                 </div>
 
@@ -212,11 +212,11 @@
                             <div class="grid grid-cols-2 gap-x-8 gap-y-5 text-left w-full h-full">
                                 <div class="flex flex-col">
                                     <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Keskuksen tunnus</span>
-                                    <input type="text" id="keskusTunnusInput" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" value="PK1 Mökki">
+                                    <input type="text" id="keskusTunnusInput" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" placeholder="RKA12.3">
                                 </div>
                                 <div class="flex flex-col">
                                     <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Malli/Tyyppi</span>
-                                    <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" value="Pinta-asennus">
+                                    <input type="text" class="border-b border-slate-200 dark:border-slate-600 bg-transparent text-sm font-bold text-slate-800 dark:text-white focus:outline-none focus:border-amber-500 py-1" placeholder="Ensto-ABC67">
                                 </div>
                                 <div class="flex flex-col">
                                     <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">Piirtäjä / Asentaja</span>
@@ -261,7 +261,7 @@
             </div>
             
             <div class="text-sm text-slate-400 dark:text-slate-500 mt-6 text-center no-print">
-                <p>💡 Voit <b>raahata (drag & drop)</b> kojeita vaihtaaksesi niiden paikkaa yksittäin. Kaavion ulkoasua voi säätää painamalla "Esikatselu & Asettelu".</p>
+                <p>💡 Voit <b>painaa</b> </p> kojeesta muuttaaksesi sen arvoja: tyyppi, johdonsuojan käyrä, vaihe ja Ryhmänro.</p>
             </div>
         </section>
 
@@ -297,23 +297,24 @@
             <!-- TULOSTUS & ASETUKSET -->
             <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 no-print w-full max-w-5xl mx-auto">
                 <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col items-center justify-center gap-4">
-                    <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">1. Dokumentaation Tulostus</h3>
-                    <p class="text-xs text-slate-500 text-center mb-2">Esikatsele ja säädä rivien järjestystä ennen A4-tulostusta.</p>
+                    <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">1. Keskuskuvan ja ryhmäluettelon Tulostus</h3>
+                    <p class="text-xs text-slate-500 text-center mb-2">Esikatsele ja smuokkaa järjestystä ennen tulostusta.</p>
                     <button onclick="openVisualEditor()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-6 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-2 text-base hover:scale-105 transform w-full">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                        ESIKATSELU JA ASETTELU
+                        ESIKATSELU JA TULOSTA
                     </button>
                 </div>
 
                 <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col items-center justify-center gap-4">
                     <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">2. Merkintäliuskojen Tulostus</h3>
-                    <p class="text-xs text-slate-500 text-center mb-2">Tulostaa leikattavat tarrat keskuskuorikoihin värikoodattuina.</p>
+                    <p class="text-xs text-slate-500 text-center mb-2">Tulosta keskukseen merkintäliuskat <b>Muista tehdä testituloste mittasuhteiden varmistamiseksi!.</b> </p>
                     <div class="flex flex-wrap justify-center gap-4 w-full mb-2">
                         <div class="flex flex-col gap-1 items-center">
                             <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Paperikoko:</span>
                             <select id="printPaperSize" class="bg-white dark:bg-slate-950 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 rounded px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
                                 <option value="A4">A4</option>
                                 <option value="A3">A3</option>
+                                <option value="A5">A5</option>
                             </select>
                         </div>
                         <div class="flex flex-col gap-1 items-center">
@@ -326,7 +327,7 @@
                     </div>
                     <button onclick="printLabelStrips()" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-6 py-4 rounded-xl shadow-lg transition duration-250 flex items-center justify-center gap-2 text-base hover:scale-105 transform w-full">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 7h10v3H7zM5 10h14a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z" /></svg>
-                        TULOSTA MERKINTÄLIUSKAT
+                        TULOSTA
                     </button>
                 </div>
             </div>
@@ -360,7 +361,7 @@
                             <input type="checkbox" checked onchange="toggleVis('preview-cabinet-bg', this.checked)" class="w-4 h-4 accent-amber-500"> Taustalaatikko
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-700">
-                            <input type="checkbox" checked onchange="toggleVis('preview-color-guide', this.checked)" class="w-4 h-4 accent-amber-500"> Väriohjeet
+                            <input type="checkbox" checked onchange="toggleVis('preview-color-guide', this.checked)" class="w-4 h-4 accent-amber-500"> Väriselitteet
                         </label>
                         <label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-slate-700">
                             <input type="checkbox" checked onchange="toggleVis('preview-table', this.checked)" class="w-4 h-4 accent-amber-500"> Ryhmäluettelo
@@ -401,7 +402,7 @@
             <div class="p-4 border-t border-slate-200 bg-slate-50 flex flex-col gap-3">
                 <button onclick="printEditorView()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-black py-3 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4"></path></svg>
-                    TULOSTA NÄMÄ SIVUT
+                    TULOSTA
                 </button>
                 <button onclick="closeVisualEditor()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-lg transition">
                     Sulje Esikatselu
