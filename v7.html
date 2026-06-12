@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sähkökeskuksen Suunnittelutyökalu PRO</title>
+    <title>Sähkökeskuksen Suunnittelutyökalu PRO V8.1</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -26,46 +26,44 @@
             .no-print { display: none !important; }
             .print-shadow-none { box-shadow: none !important; }
             
-            /* Piilotetaan kaikki paitsi aktiivinen tulostustila */
-            body.print-mode-labels .print-page-1,
-            body.print-mode-labels .print-page-2,
-            body.print-mode-labels header,
-            body.print-mode-labels main,
-            body.print-mode-labels #printPreviewModal { display: none !important; }
+            /* Normaalin dokumentaation tulostus */
+            body:not(.print-mode-labels):not(.print-preview-mode) .print-page-1 { page-break-after: always; width: 100% !important; min-height: 95vh; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; }
+            body:not(.print-mode-labels):not(.print-preview-mode) .print-page-2 { page-break-before: always; width: 100% !important; padding-top: 1.5cm !important; }
             
+            /* Merkintäliuskojen tulostustila: PIILOTETAAN KAIKKI MUU */
+            body.print-mode-labels > *:not(#labelStripsContainer) { display: none !important; }
             body.print-mode-labels #labelStripsContainer { display: block !important; width: 100% !important; }
 
-            /* --- VAPAA ESIKATSELUTULOSTUS (VISUAALINEN EDITOR) --- */
-            body.print-preview-mode > header,
-            body.print-preview-mode > main { display: none !important; }
-            body.print-preview-mode #labelStripsContainer { display: none !important; }
-            body.print-preview-mode #printPreviewModal { display: block !important; position: static !important; background: white !important; }
+            /* Vapaan esikatselun tulostustila: PIILOTETAAN KAIKKI MUU PAITSI ESIKATSELU */
+            body.print-preview-mode > *:not(#printPreviewModal) { display: none !important; }
+            body.print-preview-mode #printPreviewModal { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; background: white !important; }
             body.print-preview-mode #printSidebar { display: none !important; }
-            body.print-preview-mode #previewPagesContainer { display: block !important; position: static !important; background: white !important; padding: 0 !important; overflow: visible !important; height: auto !important; }
+            body.print-preview-mode #printPreviewModal > div { position: static !important; width: 100% !important; height: auto !important; display: block !important; border: none !important; box-shadow: none !important; }
+            body.print-preview-mode #previewPagesContainer { display: block !important; position: static !important; background: white !important; padding: 0 !important; overflow: visible !important; height: auto !important; transform: none !important; }
             
-            /* A4 arkin tarkka pakotus tulostimeen */
             body.print-preview-mode .preview-page {
                 box-shadow: none !important;
                 border: none !important;
                 margin: 0 !important;
-                page-break-after: always;
-                page-break-inside: avoid;
+                page-break-after: always !important;
+                page-break-inside: avoid !important;
                 width: 100% !important;
-                height: 100% !important;
+                height: auto !important;
+                min-height: 29.7cm !important; /* A4 pituus */
                 position: relative !important;
+                transform: none !important;
             }
 
-            /* Estetään inputtien rajat tulosteessa */
+            tr { page-break-inside: avoid; }
             input, textarea, select { border: none !important; background: transparent !important; box-shadow: none !important; resize: none !important; color: black !important; }
+            .print-select-wrapper select { display: none !important; }
+            .print-select-wrapper .print-only-value { display: block !important; color: black !important; }
         }
         
         .print-only-value { display: none; }
-        
-        /* Poistetaan selaimen omat nuolet numerokentistä */
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
         
-        /* Mukautettu vierityspalkki työpöydälle */
         .custom-scrollbar::-webkit-scrollbar { height: 14px; width: 14px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 8px; border: 1px solid #cbd5e1; margin: 0 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 8px; border: 2px solid #e2e8f0; }
@@ -73,10 +71,9 @@
         .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; border-color: #334155; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-color: #1e293b; }
 
-        /* Visuaalisen editorin A4 arkin tyylit ruudulla */
         .preview-page {
             width: 21cm;
-            height: 29.7cm;
+            min-height: 29.7cm;
             background: white;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             position: relative;
@@ -89,19 +86,38 @@
             position: absolute;
             cursor: move;
             user-select: none;
-            touch-action: none; /* Estää sivun vierittymisen mobiilissa kun raahataan */
+            touch-action: none;
         }
         .preview-draggable:hover {
             outline: 2px dashed #f59e0b;
         }
         .preview-draggable.dragging {
             opacity: 0.8;
-            z-index: 9999 !important;
             outline: 2px solid #f59e0b;
         }
+        .preview-draggable.active-el {
+            outline: 3px solid #3b82f6 !important;
+            z-index: 8000 !important;
+        }
+        .grab-cursor { cursor: grab; }
+        .grab-cursor:active { cursor: grabbing; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans min-h-screen pb-12 transition-colors duration-300">
+
+    <!-- Kelluva Työkalupalkki elementin muokkaukseen (Esikatselu) -->
+    <div id="elementToolbar" class="fixed z-[10000] bg-slate-900 p-2 rounded-xl shadow-2xl gap-2 hidden no-print text-white text-lg border border-slate-600 transition-all" style="display: none;">
+        <button onclick="changeScale(0.1)" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition" title="Suurenna Kokoa">➕</button>
+        <button onclick="changeScale(-0.1)" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition" title="Pienennä Kokoa">➖</button>
+        <div class="w-px bg-slate-600 mx-1"></div>
+        <button onclick="changeRotate(90)" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition" title="Kierrä Myötäpäivään">↻</button>
+        <button onclick="changeRotate(-90)" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition" title="Kierrä Vastapäivään">↺</button>
+        <div class="w-px bg-slate-600 mx-1"></div>
+        <button onclick="changeZ(1)" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition" title="Tuo Ylemmäs">🔼</button>
+        <button onclick="changeZ(-1)" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition" title="Vie Alemmas">🔽</button>
+        <div class="w-px bg-slate-600 mx-1"></div>
+        <button onclick="deleteActiveElement()" class="p-2 bg-red-600 hover:bg-red-500 rounded-lg transition" title="Poista Elementti">🗑</button>
+    </div>
 
     <!-- Ohjauspaneeli -->
     <header class="bg-slate-900 dark:bg-black text-white shadow-lg mb-8 no-print border-b border-slate-800">
@@ -110,7 +126,7 @@
                 <div class="text-center md:text-left">
                     <h1 class="text-3xl font-black tracking-wide flex items-center justify-center md:justify-start gap-3 text-white">
                         <span class="inline-block w-5 h-5 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)]"></span>
-                        Sähkökeskus PRO
+                        Sähkökeskus PRO V8.1
                     </h1>
                     <p class="text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">Dynaaminen Sijoituskaavio ja Luettelo</p>
                 </div>
@@ -118,7 +134,7 @@
                     <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                     </svg>
-                    <span id="themeText">Tumma Tila</span>
+                    <span id="themeText">Vaalea Tila</span>
                 </button>
             </div>
             
@@ -162,6 +178,17 @@
                         <option value="vertical">Pysty (Allekkain)</option>
                     </select>
                 </div>
+
+                <div class="h-12 w-px bg-slate-600 opacity-50 hidden md:block"></div>
+
+                <div class="flex flex-col gap-2 items-center justify-center h-full pt-1">
+                    <label class="flex items-center gap-3 cursor-pointer text-sm font-black text-slate-300 hover:text-white bg-slate-950 px-5 py-2 rounded-lg border border-slate-600 transition shadow-inner">
+                        <input type="checkbox" id="showTopToggle" checked onchange="toggleTopSection(this.checked)" class="w-4 h-4 accent-amber-500 cursor-pointer"> Keskustiedot
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer text-sm font-black text-slate-300 hover:text-white bg-slate-950 px-5 py-2 rounded-lg border border-slate-600 transition shadow-inner">
+                        <input type="checkbox" id="showFusesToggle" checked onchange="toggleMainFuses(this.checked)" class="w-4 h-4 accent-amber-500 cursor-pointer"> Pääsulakkeet
+                    </label>
+                </div>
             </div>
         </div>
     </header>
@@ -173,8 +200,10 @@
                 Sähkökeskuksen sijoituskaavio
             </h2>
             
+            <div id="standaloneInfoContainer" class="w-full max-w-[700px] mx-auto mb-8 hidden"></div>
+
             <div class="w-full overflow-x-auto custom-scrollbar pb-6 scroll-container flex justify-center">
-                <!-- physicalCabinet on varsinainen renderöity kaappi -->
+                <!-- physicalCabinet -->
                 <div id="physicalCabinet" class="bg-slate-100 dark:bg-slate-800 border-[6px] border-slate-300 dark:border-slate-600 rounded-2xl p-6 shadow-inner relative flex flex-col gap-8 w-max mx-auto min-w-[560px] transition-all">
                     
                     <div id="topSection" class="grid grid-cols-12 gap-8 bg-slate-200 dark:bg-slate-700 p-6 rounded-xl border border-slate-300 dark:border-slate-600 w-full max-w-2xl mx-auto shadow-sm transition-colors">
@@ -225,12 +254,14 @@
                         <!-- Javascript generoi sisällön -->
                     </div>
                     
+                    <button onclick="adjustValue('fuseCount', 1, 1, 9999)" class="no-print mx-auto -mt-4 mb-2 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-700 hover:border-amber-400 dark:hover:bg-amber-900 dark:hover:text-amber-300 rounded-full w-14 h-14 flex items-center justify-center font-bold text-4xl shadow-lg transition-all" title="Lisää uusi ryhmä">+</button>
+
                     <div id="fuseColorGuide" class="no-print text-xs font-bold text-slate-600 dark:text-slate-400 flex flex-wrap justify-center gap-5 px-2 pt-4 border-t-2 border-slate-300 dark:border-slate-600 w-full transition-colors print-shadow-none"></div>
                 </div>
             </div>
             
             <div class="text-sm text-slate-400 dark:text-slate-500 mt-6 text-center no-print">
-                <p>💡 Voit muokata ja vapaasti uudelleenjärjestellä kaikkia elementtejä painamalla alta <b>Esikatselu & Asettelu</b>.</p>
+                <p>💡 Voit <b>raahata (drag & drop)</b> kojeita vaihtaaksesi niiden paikkaa yksittäin. Kaavion ulkoasua voi säätää painamalla "Esikatselu & Asettelu".</p>
             </div>
         </section>
 
@@ -265,7 +296,6 @@
 
             <!-- TULOSTUS & ASETUKSET -->
             <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 no-print w-full max-w-5xl mx-auto">
-                <!-- 1. Esikatselu -->
                 <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col items-center justify-center gap-4">
                     <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">1. Dokumentaation Tulostus</h3>
                     <p class="text-xs text-slate-500 text-center mb-2">Esikatsele ja säädä rivien järjestystä ennen A4-tulostusta.</p>
@@ -275,7 +305,6 @@
                     </button>
                 </div>
 
-                <!-- 2. Liuskan tulostus -->
                 <div class="bg-slate-50 dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col items-center justify-center gap-4">
                     <h3 class="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest text-center">2. Merkintäliuskojen Tulostus</h3>
                     <p class="text-xs text-slate-500 text-center mb-2">Tulostaa leikattavat tarrat keskuskuorikoihin värikoodattuina.</p>
@@ -305,7 +334,6 @@
 
     </main>
     
-    <!-- Piilotettu säiliö merkintäliuskoja varten -->
     <div id="labelStripsContainer" class="bg-white print:bg-white text-black font-sans w-full max-w-full overflow-hidden flex flex-col items-center"></div>
 
     <!-- TULOSTUKSEN VISUAALINEN EDITOR MODAL -->
@@ -317,11 +345,10 @@
                     <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                     Tulosteen Hallinta
                 </h3>
-                <p class="text-[11px] text-slate-400 mt-1">Raahaa elementtejä hiirellä vapaasti.</p>
+                <p class="text-[11px] text-slate-400 mt-1">Raahaa elementtejä vapaasti. Klikkaa valitaksesi.</p>
             </div>
             
             <div class="p-5 flex flex-col gap-6 flex-grow">
-                <!-- Näkyvyys Toggles -->
                 <div>
                     <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 border-b pb-1">Piilota / Näytä</h4>
                     <div class="flex flex-col gap-2">
@@ -343,30 +370,37 @@
                     </div>
                 </div>
 
-                <!-- Työkalut -->
                 <div>
                     <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 border-b pb-1">Työkalut</h4>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="addCustomText()" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-bold py-2 rounded shadow-sm">Lisää Teksti</button>
-                        <button onclick="document.getElementById('imageUploadInput').click()" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-bold py-2 rounded shadow-sm">Lisää Kuva</button>
-                        <button onclick="addNewPage()" class="col-span-2 bg-blue-100 hover:bg-blue-200 border border-blue-300 text-blue-800 text-xs font-bold py-2 rounded shadow-sm flex justify-center items-center gap-1">
+                        <button onclick="addCustomText()" class="sidebar-btn bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-bold py-2 rounded shadow-sm">Lisää Teksti</button>
+                        <button onclick="document.getElementById('imageUploadInput').click()" class="sidebar-btn bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-bold py-2 rounded shadow-sm">Lisää Kuva</button>
+                        <button onclick="addNewPage()" class="sidebar-btn col-span-2 bg-blue-100 hover:bg-blue-200 border border-blue-300 text-blue-800 text-xs font-bold py-2 rounded shadow-sm flex justify-center items-center gap-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             Uusi Tyhjä Sivu
                         </button>
-                        <button onclick="splitLongRows()" class="col-span-2 bg-red-100 hover:bg-red-200 border border-red-300 text-red-800 text-xs font-bold py-2 rounded shadow-sm flex justify-center items-center gap-1" title="Katkaisee yli 14 moduulin rivit kahtia">
+                        <button onclick="splitLongRows()" class="sidebar-btn col-span-2 bg-red-100 hover:bg-red-200 border border-red-300 text-red-800 text-xs font-bold py-2 rounded shadow-sm flex justify-center items-center gap-1" title="Katkaisee ylipitkät rivit">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2-2m-2 2l-7 7m7-7l-7-7"></path></svg>
-                            Jaa pitkät rivit (Max 14/rivi)
+                            Jaa pitkät rivit (Max 14)
+                        </button>
+                        <button onclick="resetVisualEditor()" class="sidebar-btn col-span-2 bg-slate-200 hover:bg-slate-300 border border-slate-400 text-slate-800 text-xs font-bold py-2 rounded shadow-sm flex justify-center items-center gap-1 mt-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Palauta alkuperäinen asettelu
                         </button>
                         <input type="file" id="imageUploadInput" class="hidden" accept="image/*" onchange="addCustomImage(event)">
                     </div>
                 </div>
+                
+                <div class="flex flex-col gap-1 mt-auto">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Esikatselun Koko (%):</span>
+                    <input type="number" id="previewScale" value="100" min="30" max="200" step="5" class="bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-center focus:outline-none focus:ring-2 focus:ring-amber-500" onchange="applyPreviewSettings()">
+                </div>
             </div>
 
-            <!-- Alapainikkeet -->
             <div class="p-4 border-t border-slate-200 bg-slate-50 flex flex-col gap-3">
                 <button onclick="printEditorView()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-black py-3 px-4 rounded-xl shadow-lg flex items-center justify-center gap-2 transition">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4"></path></svg>
-                    TULOSTA
+                    TULOSTA NÄMÄ SIVUT
                 </button>
                 <button onclick="closeVisualEditor()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-lg transition">
                     Sulje Esikatselu
@@ -381,39 +415,19 @@
     </div>
 
     <script>
-        // --- TUMMA TILA & IKONIT ---
-        function updateThemeIcon() {
-            const isDark = document.documentElement.classList.contains('dark');
-            const iconEl = document.getElementById('themeIcon');
-            const textEl = document.getElementById('themeText');
-            if (isDark) {
-                if(textEl) textEl.innerText = "Vaalea Tila";
-                if(iconEl) iconEl.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />`;
-            } else {
-                if(textEl) textEl.innerText = "Tumma Tila";
-                if(iconEl) iconEl.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />`;
-            }
-        }
-
         function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            updateThemeIcon();
+            document.documentElement.classList.remove('dark');
         }
 
-        // TULOSTUKSEN AJAKSI TUMMA TILA POIS PÄÄLTÄ
-        let wasDark = false;
         window.addEventListener('beforeprint', () => {
-            wasDark = document.documentElement.classList.contains('dark');
-            if (wasDark) { document.documentElement.classList.remove('dark'); }
+            document.documentElement.classList.remove('dark');
         });
         window.addEventListener('afterprint', () => {
-            if (wasDark) { document.documentElement.classList.add('dark'); }
             document.body.classList.remove('print-mode-labels');
             document.body.classList.remove('print-preview-mode');
             setPrintStyles('normal'); 
         });
 
-        // Tulostustyylit
         function setPrintStyles(mode, paperSize = 'A4', orientation = 'portrait') {
             let styleEl = document.getElementById('dynamic-print-style');
             if (!styleEl) {
@@ -428,8 +442,7 @@
             }
         }
 
-        // Tila
-        let state = { fuseCount: 12, rowLimit: 12, showTop: true };
+        let state = { fuseCount: 12, rowLimit: 12, showTop: true, showMainFuses: true };
         const fusesData = {};
         
         const availableAmps = [6, 10, 13, 16, 20, 25, 32, 35, 40, 50, 63];
@@ -462,19 +475,6 @@
 
         function changeMainConfig(triggerRender = false) {
             const val = document.getElementById('centerTypeSelect').value;
-            const lCont = document.getElementById('layoutModeContainer');
-            const lDiv = document.getElementById('layoutModeDivider');
-            
-            if (val === 'tulppa') {
-                if(lCont) lCont.style.display = 'none';
-                if(lDiv) lDiv.style.display = 'none';
-                if(state.rowLimit === 12) { state.rowLimit = 4; document.getElementById('rowLimitInput').value = 4; }
-            } else {
-                if(lCont) lCont.style.display = 'flex';
-                if(lDiv) lDiv.style.display = 'block';
-            }
-            
-            // Konvertoidaan laitteet tyypin vaihtuessa
             for (let i = 1; i <= state.fuseCount; i++) {
                 const item = fusesData[i];
                 if (val === 'tulppa') {
@@ -491,7 +491,6 @@
                     }
                 }
             }
-            
             if (triggerRender) renderApp();
         }
 
@@ -500,13 +499,8 @@
             if (newVal >= min && newVal <= max) { 
                 state[key] = newVal;
                 document.getElementById(key + 'Input').value = state[key];
-                
-                if (key === 'rowLimit') {
-                    renderApp(); 
-                } else {
-                    changeMainConfig(false);
-                    renderApp();
-                }
+                if (key !== 'rowLimit') changeMainConfig(false);
+                renderApp();
             }
         }
 
@@ -516,13 +510,8 @@
             if (num > max) num = max;
             state[key] = num;
             document.getElementById(key + 'Input').value = state[key];
-            
-            if (key === 'rowLimit') {
-                renderApp();
-            } else {
-                changeMainConfig(false);
-                renderApp();
-            }
+            if (key !== 'rowLimit') changeMainConfig(false);
+            renderApp();
         }
 
         function toggleTopSection(show) {
@@ -535,6 +524,11 @@
                 topSec.classList.add('hidden');
                 topSec.classList.remove('grid');
             }
+        }
+
+        function toggleMainFuses(show) {
+            state.showMainFuses = show;
+            renderApp();
         }
 
         function getAmpConfig(val) {
@@ -555,7 +549,40 @@
             }
         }
 
-        // --- KOJEEN KLIKKAUS LENNOSSA ---
+        let draggedId = null;
+        function handleDragStart(e, id) {
+            draggedId = id;
+            e.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => e.target.classList.add('opacity-40', 'scale-95'), 10);
+        }
+        function handleDragEnd(e) {
+            e.target.classList.remove('opacity-40', 'scale-95');
+            draggedId = null;
+        }
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('ring-4', 'ring-amber-500', 'z-20', 'scale-105');
+        }
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('ring-4', 'ring-amber-500', 'z-20', 'scale-105');
+        }
+        function handleDrop(e, targetId) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('ring-4', 'ring-amber-500', 'z-20', 'scale-105');
+            if (draggedId && draggedId !== targetId) {
+                let temp = { ...fusesData[draggedId] };
+                fusesData[draggedId] = { ...fusesData[targetId] };
+                fusesData[targetId] = temp;
+                
+                fusesData[draggedId].id = draggedId;
+                fusesData[draggedId].label = draggedId.toString();
+                fusesData[targetId].id = targetId;
+                fusesData[targetId].label = targetId.toString();
+                
+                renderApp();
+            }
+        }
+
         function handleElementClick(e, id) {
             if (!id) return;
             if (e.target.tagName.toLowerCase() === 'input') return;
@@ -611,31 +638,21 @@
             if (item.curve === 'C') item.curve = 'B';
             else if (item.curve === 'B') item.curve = 'D';
             else item.curve = 'C';
-            
-            const el = document.getElementById(`fuse-curve-badge-${id}`);
-            if (el) el.innerHTML = `${item.curve}${item.value}`;
+            renderApp();
         }
 
         function handleTableTypeChange(idx, val) {
             const item = getFuse(idx);
-            const centerType = document.getElementById('centerTypeSelect').value;
-            if (centerType === 'tulppa') {
-                if (val.startsWith('empty-')) { item.type = 'empty-1'; item.value = 0; }
-                else if (val === 'main-switch') { item.type = 'main-switch'; item.value = 0; }
-                else { item.type = 'tulppa'; item.value = parseInt(val); }
-            } else {
-                if (val.startsWith('empty-')) { item.type = val; item.value = 0; } 
-                else if (val.startsWith('vvsk-')) { item.type = val; item.value = parseInt(val.split('-')[2] || 25); } 
-                else if (val.startsWith('mcb-3p')) { item.type = 'mcb-3p'; item.value = parseInt(val.split('-')[2]); } 
-                else if (val === 'main-switch') { item.type = 'main-switch'; item.value = 0; }
-                else { item.type = 'mcb'; item.value = parseInt(val); }
-            }
+            if (val.startsWith('empty-')) { item.type = val; item.value = 0; } 
+            else if (val.startsWith('vvsk-')) { item.type = val; item.value = parseInt(val.split('-')[2] || 25); } 
+            else if (val.startsWith('mcb-3p')) { item.type = 'mcb-3p'; item.value = parseInt(val.split('-')[2]); } 
+            else if (val === 'main-switch') { item.type = 'main-switch'; item.value = 0; }
+            else { item.type = 'mcb'; item.value = parseInt(val); }
             renderApp();
         }
         
         function handleCurveChange(id, curveValue) { getFuse(id).curve = curveValue; renderApp(); }
         
-        // Reaaliaikainen tekstien päivitys
         function updateGroupLabel(id, value) { 
             getFuse(id).label = value; 
             document.querySelectorAll(`.fuse-label-input-${id}`).forEach(el => { if(el.value !== value) el.value = value; });
@@ -678,11 +695,10 @@
 
         function getBoxStyle(widthUnits, isVertical) {
             const size = widthUnits * MOD_BASE + (widthUnits - 1) * MOD_GAP;
-            if (isVertical) return `min-width: 100px; width: 100px; min-height: ${size}px; height: ${size}px;`;
-            return `min-width: ${size}px; width: ${size}px; min-height: 100px; height: 100px;`;
+            if (isVertical) return `width: 100px; height: ${size}px; min-height: ${size}px;`;
+            return `width: ${size}px; min-width: ${size}px; height: 100px;`;
         }
 
-        // --- MERKINTÄLIUSKOJEN GENERONTI ---
         function generateLabelStripsHTML(paperSize, orientation) {
             const centerType = document.getElementById('centerTypeSelect').value;
             const keskusTunnus = document.getElementById('keskusTunnusInput') ? document.getElementById('keskusTunnusInput').value : 'Sähkökeskus';
@@ -815,7 +831,15 @@
             return html;
         }
 
-        // --- MOBIILIYSTÄVÄLLINEN TULOSTUS ---
+        function printNormal() {
+            setPrintStyles('normal');
+            document.body.classList.remove('print-mode-labels');
+            document.body.classList.remove('print-preview-mode');
+            
+            document.body.offsetHeight; 
+            window.print();
+        }
+
         function printLabelStrips() {
             const container = document.getElementById('labelStripsContainer');
             if (!container) return;
@@ -828,7 +852,6 @@
             document.body.classList.add('print-mode-labels');
             document.body.classList.remove('print-preview-mode');
             
-            // Pakotetaan selain päivittämään DOM ennen printtiä (Korjaa mobiili Safarin/Chromen blokit)
             container.offsetHeight; 
             window.print();
         }
@@ -846,42 +869,26 @@
             let containerHtml = "";
             let tableHtml = "";
 
-            if (centerType === 'automaatti' || layoutMode === 'horizontal') {
-                let fits = false;
-                while (!fits && state.rowLimit < 200) {
-                    let rUsed = new Array(state.railCount || 1).fill(0);
-                    let cRail = 0;
-                    fits = true;
-
-                    for (let i = 1; i <= state.fuseCount; i++) {
-                        const item = getFuse(i);
-                        let w = 1;
-                        if (item.type.startsWith('empty-')) w = parseInt(item.type.split('-')[1]);
-                        else if (item.type === 'main-switch') w = 3;
-                        else if (item.type === 'mcb-3p') w = 3;
-                        else if (item.type.startsWith('vvsk-2-')) w = 2;
-                        else if (item.type.startsWith('vvsk-4-')) w = 4;
-
-                        if (rUsed[cRail] + w > state.rowLimit) {
-                            cRail++;
-                            if (cRail >= (state.railCount || 1)) { fits = false; break; }
-                        }
-                        if (fits) rUsed[cRail] += w;
-                    }
-                    if (!fits) state.rowLimit++;
-                }
-                document.getElementById('rowLimitInput').value = state.rowLimit;
+            const paasulakeBlock = document.getElementById('paasulakeBlock');
+            const perustiedotBlock = document.getElementById('perustiedotBlock');
+            if (state.showMainFuses) {
+                if(paasulakeBlock) paasulakeBlock.classList.remove('hidden');
+                if(perustiedotBlock) perustiedotBlock.classList.replace('col-span-12', 'col-span-7');
+            } else {
+                if(paasulakeBlock) paasulakeBlock.classList.add('hidden');
+                if(perustiedotBlock) perustiedotBlock.classList.replace('col-span-7', 'col-span-12');
             }
 
-            // KISKOJEN LOGIIKKA 
+            // KISKOJEN LOGIIKKA
             if (centerType === 'tulppa') {
-                containerHtml += `<div class="flex flex-col w-full items-center">`;
+                containerHtml += `<div class="flex flex-col w-full items-center gap-6">`;
                 
                 let tulppaItems = [];
                 for (let i = 1; i <= state.fuseCount; i++) {
                     tulppaItems.push(getFuse(i));
                 }
 
+                // Jaetaan tulpat gridiin rowLimitin mukaan
                 for (let i = 0; i < tulppaItems.length; i += state.rowLimit) {
                     const rowItems = tulppaItems.slice(i, i + state.rowLimit);
                     containerHtml += `<div class="grid gap-6 w-full justify-items-center mb-8 rail-row print-no-bg print-grid" style="grid-template-columns: repeat(${state.rowLimit}, minmax(0, 1fr))">`;
@@ -890,13 +897,14 @@
                         const isEmpty = item.type.startsWith('empty-') || item.value === 0;
                         const isMainSwitch = item.type === 'main-switch';
                         const conf = getAmpConfig(item.value);
+                        const dragAttrs = `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"`;
                         
                         if (isMainSwitch) {
                             containerHtml += `
-                                <div onclick="handleElementClick(event, ${item.id})" class="koje-item shrink-0 cursor-pointer flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:shadow-none print:border print:border-slate-400" title="PÄÄKYTKIN">
-                                    <span class="text-xs font-black text-red-600 mb-2 truncate">PÄÄKYTKIN</span>
-                                    <div class="w-24 h-24 rounded-xl bg-red-600 border-[4px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:border-slate-400">
-                                        <div class="w-12 h-6 bg-slate-900 rounded shadow-md border-b-2 border-white/20 print:shadow-none"></div>
+                                <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item grab-cursor flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition shadow-sm relative z-10 print:bg-white print:shadow-none print:border print:border-slate-400 w-full" title="PÄÄKYTKIN">
+                                    <span class="text-[10px] font-black text-red-600 mb-2 truncate">PÄÄKYTKIN</span>
+                                    <div class="w-16 h-16 rounded-xl bg-red-600 border-[3px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:border-slate-400">
+                                        <div class="w-8 h-4 bg-slate-900 rounded shadow-md border-b-2 border-white/20 print:shadow-none"></div>
                                     </div>
                                     <span class="text-transparent mt-3">0</span>
                                 </div>`;
@@ -908,20 +916,20 @@
                             const innerCls = isEmpty ? 'shadow-inner print:shadow-none print:bg-slate-200' : 'shadow-sm print:shadow-none';
 
                             containerHtml += `
-                                <div onclick="handleElementClick(event, ${item.id})" class="koje-item shrink-0 cursor-pointer flex flex-col items-center justify-center p-3 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition w-full max-w-[130px] shadow-sm relative z-10 print:bg-white print:shadow-none print:border print:border-slate-400" title="Ryhmä ${item.label}">
-                                    <input type="text" id="fuse-label-${item.id}" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-label-input-${item.id} w-16 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
+                                <div ${dragAttrs} onclick="handleElementClick(event, ${item.id})" class="koje-item grab-cursor flex flex-col items-center justify-center p-2 hover:bg-slate-300/40 dark:hover:bg-slate-600/50 rounded-2xl transition shadow-sm relative z-10 print:bg-white print:shadow-none print:border print:border-slate-400 w-full" title="Ryhmä ${item.label}">
+                                    <input type="text" id="fuse-label-${item.id}" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-label-input-${item.id} w-14 text-sm font-black text-slate-700 dark:text-slate-300 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mb-2 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
                                     
-                                    <div class="w-24 h-24 rounded-full ${isEmpty ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white'} border-[6px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:bg-white print:border-slate-400">
+                                    <div class="w-16 h-16 rounded-full ${isEmpty ? 'bg-slate-200 dark:bg-slate-800' : 'bg-white'} border-[4px] border-slate-300 dark:border-slate-500 shadow-lg flex items-center justify-center relative transition-colors print:shadow-none print:bg-white print:border-slate-400">
                                         ${isEmpty ? 
-                                            `<div class="w-10 h-10 rounded-full bg-slate-300 dark:bg-slate-900 shadow-inner print:bg-slate-200 print:shadow-none print:border print:border-slate-400"></div>` : 
-                                            `<div class="w-8 h-8 rounded-full ${bgCls} border-2 ${borderCls} ${innerCls} flex items-center justify-center print:shadow-none print:border-slate-400"></div>
-                                             <span class="absolute bottom-2 text-[11px] font-black text-slate-800">${printValue}</span>`
+                                            `<div class="w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-900 shadow-inner print:bg-slate-200 print:shadow-none print:border print:border-slate-400"></div>` : 
+                                            `<div class="w-5 h-5 rounded-full ${bgCls} border-2 ${borderCls} ${innerCls} flex items-center justify-center print:shadow-none print:border-slate-400"></div>
+                                             <span class="absolute bottom-1 text-[9px] font-black text-slate-800">${printValue}</span>`
                                         }
                                     </div>
                                     
-                                    <div class="flex flex-col items-center mt-2 w-full">
-                                        <input type="text" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-phase-input-${item.id} w-12 text-xs font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded mt-1 focus:outline-none focus:ring-2 focus:ring-amber-500 border border-transparent hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-                                        ${isEmpty ? `<span id="visual-custom-label-${item.id}" class="text-[8px] font-bold text-slate-500 uppercase truncate w-full text-center mt-1 leading-none h-3">${customNamePrint}</span>` : '<span class="h-3 mt-1 w-full"></span>'}
+                                    <div class="flex flex-col items-center mt-1 w-full">
+                                        <input type="text" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-phase-input-${item.id} w-10 text-[10px] font-bold text-slate-500 dark:text-slate-400 text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors">
+                                        ${isEmpty ? `<span id="visual-custom-label-${item.id}" class="text-[7px] font-bold text-slate-500 uppercase truncate w-full text-center mt-0.5 leading-none h-3">${customNamePrint}</span>` : '<span class="h-3 mt-0.5 w-full"></span>'}
                                     </div>
                                 </div>`;
                         }
@@ -931,9 +939,9 @@
                 containerHtml += `</div>`;
             } 
             else {
-                // AUTOMAATTIKESKUS
-                let rails = [];
-                let currentRail = { items: [], used: 0 };
+                // AUTOMAATTIKESKUS (DIN)
+                let rails = [{ items: [], used: 0 }];
+                let currentRailIndex = 0;
 
                 for (let i = 1; i <= state.fuseCount; i++) {
                     const item = getFuse(i);
@@ -944,178 +952,184 @@
                     else if (item.type.startsWith('vvsk-2-')) w = 2;
                     else if (item.type.startsWith('vvsk-4-')) w = 4;
 
-                    if (currentRail.used + w > state.rowLimit) {
-                        rails.push(currentRail);
-                        currentRail = { items: [], used: 0 };
+                    if (rails[currentRailIndex].used + w > state.rowLimit) {
+                        const remaining = state.rowLimit - rails[currentRailIndex].used;
+                        for (let k = 0; k < remaining; k++) {
+                            rails[currentRailIndex].items.push({ type: 'spacer', width: 1 });
+                        }
+                        
+                        rails.push({ items: [], used: 0 });
+                        currentRailIndex++;
                     }
-                    currentRail.items.push({ id: item.id, ...item, width: w });
-                    currentRail.used += w;
+
+                    rails[currentRailIndex].items.push({ id: item.id, ...item, width: w });
+                    rails[currentRailIndex].used += w;
                 }
-                if (currentRail.used > 0) rails.push(currentRail);
+
+                // Fill last rail
+                rails.forEach(rail => {
+                    if (rail.used < state.rowLimit) {
+                        const remaining = state.rowLimit - rail.used;
+                        for (let k = 0; k < remaining; k++) {
+                            rail.items.push({ type: 'spacer', width: 1 });
+                            rail.used++;
+                        }
+                    }
+                });
 
                 let railsContainerClass = isVerticalLayout ? 'flex flex-row flex-wrap justify-center gap-10 w-fit mx-auto' : 'flex flex-col items-center gap-8 w-fit mx-auto';
                 containerHtml += `<div class="${railsContainerClass}">`;
 
                 rails.forEach((rail, rIndex) => {
-                    let subRails = [];
-                    // Ei pilkota enää ruudulla kiskon pituutta, annetaan CSS flex-wrap hoitaa tarvittaessa
-                    while(rail.used < state.rowLimit) {
-                        rail.items.push({ type: 'spacer', width: 1 });
-                        rail.used++;
+                    const rowNumberLabel = isVerticalLayout ? `Pysty ${rIndex+1}` : `Rivi ${rIndex+1}`;
+
+                    if (isVerticalLayout) {
+                        containerHtml += `
+                            <div class="rail-row relative px-2 py-3 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 shadow-inner flex flex-col items-center print:bg-white print:border-slate-300 print:shadow-none w-max mx-auto">
+                                <span class="absolute top-1 left-2 font-bold text-[10px] text-slate-500 uppercase tracking-widest no-print">${rowNumberLabel}</span>
+                                <div class="flex flex-col gap-[2px] z-10 py-1 w-max items-center">
+                        `;
+                    } else {
+                        containerHtml += `
+                            <div class="rail-row relative py-3 px-2 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 shadow-inner flex flex-col w-max mt-2 print:bg-white print:border-slate-300 print:shadow-none mx-auto">
+                                <span class="absolute top-1 left-2 font-bold text-[10px] text-slate-500 uppercase tracking-widest no-print">${rowNumberLabel}</span>
+                                <div class="relative flex items-center w-max justify-center">
+                                    <div class="flex flex-row flex-wrap gap-[2px] z-10 px-1 justify-center w-max">
+                        `;
                     }
-                    subRails = [rail];
 
-                    subRails.forEach((subRail, subIndex) => {
-                        const rowNumberLabel = isVerticalLayout ? `Pysty ${rIndex+1}` : `Rivi ${rIndex+1}`;
+                    rail.items.forEach((item) => {
+                        let wrapperW = isVerticalLayout ? 100 : (item.width * MOD_BASE + (item.width - 1) * MOD_GAP);
+                        let wrapperH = isVerticalLayout ? (item.width * MOD_BASE + (item.width - 1) * MOD_GAP) : 100;
+                        const dragAttrs = item.type !== 'spacer' ? `draggable="true" ondragstart="handleDragStart(event, ${item.id})" ondragend="handleDragEnd(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, ${item.id})"` : '';
 
-                        if (isVerticalLayout) {
-                            containerHtml += `
-                                <div class="rail-row relative px-2 py-3 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex flex-col items-center print:bg-white print:border-slate-300 print:shadow-none w-max mx-auto">
-                                    <span class="rivi-text absolute top-1 left-2 font-bold text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest no-print">${rowNumberLabel}</span>
-                                    <div class="flex flex-col gap-[2px] z-10 py-1 w-max items-center">
-                            `;
-                        } else {
-                            containerHtml += `
-                                <div class="rail-row relative py-3 px-2 pt-6 rounded-lg border-2 border-slate-350 bg-slate-300/40 dark:bg-slate-800/60 shadow-inner flex flex-col w-max mt-2 print:bg-white print:border-slate-300 print:shadow-none mx-auto">
-                                    <span class="rivi-text font-bold text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest pl-1 mb-1 absolute top-1 left-2 no-print">${rowNumberLabel}</span>
-                                    <div class="relative flex items-center w-max justify-center">
-                                        <div class="flex flex-row flex-wrap gap-[2px] z-10 px-1 justify-center print-grid-wrap w-max">
-                            `;
+                        if (item.type === 'spacer') {
+                            containerHtml += `<div class="shrink-0 bg-slate-200 border border-slate-300 shadow-sm opacity-60 rounded-sm flex items-center justify-center relative z-10 print:bg-white print:border-slate-300 print:shadow-none auto-print-item" style="width: ${wrapperW}px; height: ${wrapperH}px;"></div>`;
                         }
-
-                        subRail.items.forEach((item) => {
-                            const sizeH = item.width * MOD_BASE + (item.width - 1) * MOD_GAP;
-                            let wrapperW = isVerticalLayout ? 100 : sizeH;
-                            let wrapperH = isVerticalLayout ? sizeH : 100;
+                        else {
+                            const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
+                            const labelInput = `<input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-label-input-${item.id} w-full text-center bg-transparent focus:bg-white focus:outline-none font-bold text-slate-700 truncate text-[11px] rounded transition-colors">`;
+                            const phaseInput = `<input type="text" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-phase-input-${item.id} w-8 text-[9px] font-bold text-slate-400 bg-transparent focus:bg-white rounded text-center transition-colors hover:border border-transparent hover:border-slate-300 dark:hover:border-slate-600">`;
                             
-                            if (item.type === 'spacer') {
-                                containerHtml += `<div class="koje-item shrink-0 bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 shadow-sm opacity-60 rounded-sm flex items-center justify-center relative z-10 print:bg-white print:border-slate-300 print:shadow-none auto-print-item" style="${getBoxStyle(item.width, isVerticalLayout)}"></div>`;
+                            let containerClasses = `koje-item shrink-0 grab-cursor relative z-10 print:bg-white print:shadow-none flex items-center justify-center rounded-sm shadow-md transition-all box-border overflow-hidden auto-print-item `;
+                            if (item.type.startsWith('empty-')) {
+                                containerClasses += `bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 print:border-slate-300`;
+                            } else if (item.type === 'main-switch') {
+                                containerClasses += `bg-red-600 border-2 border-slate-900 hover:brightness-95 print:border-[1px] print:border-slate-400`;
+                            } else {
+                                containerClasses += `bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 hover:brightness-95 print:border-slate-300 print:border-[1px]`;
                             }
-                            else {
-                                const customNamePrint = item.customName ? `<span class="no-print">${item.customName}</span><span class="print-only-value">${item.customName}</span>` : `<span class="no-print text-slate-400">Tyhjä</span>`;
-                                const labelInput = `<input type="text" value="${item.label}" oninput="updateGroupLabel(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-label-input-${item.id} w-full text-center bg-transparent focus:bg-white dark:focus:bg-slate-800 focus:outline-none font-bold text-slate-700 dark:text-slate-300 truncate text-[11px] rounded transition-colors">`;
-                                const phaseInput = `<input type="text" value="${item.phase}" oninput="updatePhase(${item.id}, this.value)" onClick="event.stopPropagation()" class="fuse-phase-input-${item.id} w-8 text-[9px] font-bold text-slate-400 dark:text-slate-500 bg-transparent focus:bg-white dark:focus:bg-slate-800 rounded text-center transition-colors hover:border border-transparent hover:border-slate-300 dark:hover:border-slate-600">`;
-                                
-                                let containerClasses = `koje-item shrink-0 cursor-pointer relative z-10 print:bg-white print:shadow-none flex items-center justify-center rounded-sm shadow-md transition-all box-border overflow-hidden auto-print-item `;
-                                if (item.type.startsWith('empty-')) {
-                                    containerClasses += `bg-slate-100 dark:bg-slate-800 border-2 border-slate-400 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 print:border-slate-300`;
-                                } else if (item.type === 'main-switch') {
-                                    containerClasses += `bg-red-600 border-2 border-slate-900 hover:brightness-95 print:border-[1px] print:border-slate-400`;
-                                } else {
-                                    containerClasses += `bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-700 dark:to-slate-800 border-2 border-slate-500 dark:border-slate-900 hover:brightness-95 print:border-slate-300 print:border-[1px]`;
-                                }
 
-                                let innerContent = '';
-                                if (item.type.startsWith('empty-')) {
-                                    innerContent = `
-                                        <div class="flex flex-col justify-between items-center h-full w-full py-1.5">
+                            let innerContent = '';
+                            if (item.type.startsWith('empty-')) {
+                                innerContent = `
+                                    <div class="flex flex-col justify-between items-center h-full w-full py-1.5">
+                                        ${labelInput}
+                                        <div class="w-full h-px bg-slate-300 dark:bg-slate-600 border-y border-dashed border-slate-400 print:border-slate-300"></div>
+                                        <div class="flex justify-between w-full items-center gap-1 px-1">
+                                            ${phaseInput}
+                                            <span id="visual-custom-label-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate flex-1">${customNamePrint}</span>
+                                        </div>
+                                    </div>`;
+                            } else if (item.type === 'main-switch') {
+                                innerContent = `
+                                    <div class="flex flex-col justify-between items-center h-full w-full py-1">
+                                        <div class="flex justify-center w-full px-2 items-center">
+                                            <span class="text-[14px] font-black text-white print:text-black truncate text-center">PÄÄKYTKIN</span>
+                                        </div>
+                                        <div class="flex justify-center w-full py-1">
+                                            <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center shadow-inner print:shadow-none print:border-slate-300">
+                                                <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow-md border-b border-white/20 print:shadow-none"></div>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-center w-full px-2 items-center text-transparent text-xs">0</div>
+                                    </div>`;
+                            } else if (item.type === 'mcb-3p') {
+                                const conf = getAmpConfig(item.value);
+                                innerContent = `
+                                    <div class="flex flex-col justify-between items-center h-full w-full py-1">
+                                        <div class="flex justify-between w-full px-2 items-center">
+                                            <div class="w-2/3">${labelInput}</div>
+                                            ${phaseInput}
+                                        </div>
+                                        <div class="flex justify-center w-full py-1">
+                                            <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center print:border-slate-300">
+                                                <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between w-full px-2 items-center">
+                                            <span class="text-[8px] font-bold text-slate-500 dark:text-slate-400">3-vaihe</span>
+                                            <span onclick="toggleCurve(event, ${item.id})" class="cursor-pointer hover:ring-2 hover:ring-amber-500 text-[10px] ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/10 print:border-slate-300 print:shadow-none print:text-black">${item.curve}${item.value}</span>
+                                        </div>
+                                    </div>`;
+                            } else if (item.type.startsWith('vvsk-')) {
+                                const is4p = item.width === 4;
+                                innerContent = `
+                                    <div class="flex flex-col justify-between items-center h-full w-full py-1">
+                                        <div class="flex justify-between w-full px-2 items-center">
+                                            <div class="w-2/3">${labelInput}</div>
+                                            <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold">${is4p ? '4p' : '2p'}</span>
+                                        </div>
+                                        <div class="flex flex-row justify-around items-center w-full py-1">
+                                            <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow print:shadow-none">T</div>
+                                            <div class="${is4p ? 'w-10' : 'w-6'} h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
+                                                <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col text-center w-full pb-0.5">
+                                            <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate leading-none mb-0.5">VVSK</span>
+                                            <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate leading-none">${item.value}A 30mA</span>
+                                        </div>
+                                    </div>`;
+                            } else {
+                                const conf = getAmpConfig(item.value);
+                                innerContent = `
+                                    <div class="flex flex-col justify-between items-center h-full w-full py-1">
+                                        <div class="flex flex-col text-center w-full px-1">
                                             ${labelInput}
-                                            <div class="w-full h-px bg-slate-300 dark:bg-slate-600 border-y border-dashed border-slate-400 print:border-slate-300"></div>
-                                            <div class="flex justify-between w-full items-center gap-1 px-1">
-                                                ${phaseInput}
-                                                <span id="visual-custom-label-${item.id}" class="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-bold text-right truncate flex-1">${customNamePrint}</span>
+                                            ${phaseInput}
+                                        </div>
+                                        <div class="flex justify-center w-full py-1">
+                                            <div class="w-5 h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
+                                                <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
                                             </div>
-                                        </div>`;
-                                } else if (item.type === 'main-switch') {
-                                    innerContent = `
-                                        <div class="flex flex-col justify-between items-center h-full w-full py-1">
-                                            <div class="flex justify-center w-full px-2 items-center">
-                                                <span class="text-[14px] font-black text-white print:text-black truncate text-center">PÄÄKYTKIN</span>
-                                            </div>
-                                            <div class="flex justify-center w-full py-1">
-                                                <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center shadow-inner print:shadow-none print:border-slate-300">
-                                                    <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow-md border-b border-white/20 print:shadow-none"></div>
-                                                </div>
-                                            </div>
-                                            <div class="flex justify-center w-full px-2 items-center text-transparent text-xs">0</div>
-                                        </div>`;
-                                } else if (item.type === 'mcb-3p') {
-                                    const conf = getAmpConfig(item.value);
-                                    innerContent = `
-                                        <div class="flex flex-col justify-between items-center h-full w-full py-1">
-                                            <div class="flex justify-between w-full px-2 items-center">
-                                                <div class="w-2/3">${labelInput}</div>
-                                                ${phaseInput}
-                                            </div>
-                                            <div class="flex justify-center w-full py-1">
-                                                <div class="w-[70px] h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-1 flex flex-col items-center print:border-slate-300">
-                                                    <div class="w-[90%] h-3 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
-                                                </div>
-                                            </div>
-                                            <div class="flex justify-between w-full px-2 items-center">
-                                                <span class="text-[8px] font-bold text-slate-500 dark:text-slate-400">3-vaihe</span>
-                                                <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
-                                            </div>
-                                        </div>`;
-                                } else if (item.type.startsWith('vvsk-')) {
-                                    const is4p = item.width === 4;
-                                    innerContent = `
-                                        <div class="flex flex-col justify-between items-center h-full w-full py-1">
-                                            <div class="flex justify-between w-full px-2 items-center">
-                                                <div class="w-2/3">${labelInput}</div>
-                                                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold">${is4p ? '4p' : '2p'}</span>
-                                            </div>
-                                            <div class="flex flex-row justify-around items-center w-full py-1">
-                                                <div class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[9px] flex items-center justify-center shadow print:shadow-none">T</div>
-                                                <div class="${is4p ? 'w-10' : 'w-6'} h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
-                                                    <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
-                                                </div>
-                                            </div>
-                                            <div class="flex flex-col text-center w-full pb-0.5">
-                                                <span class="text-[11px] font-bold text-amber-600 dark:text-amber-500 truncate leading-none mb-0.5">VVSK</span>
-                                                <span class="text-[9px] text-slate-600 dark:text-slate-400 font-bold truncate leading-none">${item.value}A 30mA</span>
-                                            </div>
-                                        </div>`;
-                                } else {
-                                    const conf = getAmpConfig(item.value);
-                                    innerContent = `
-                                        <div class="flex flex-col justify-between items-center h-full w-full py-1">
-                                            <div class="flex flex-col text-center w-full px-1">
-                                                ${labelInput}
-                                                ${phaseInput}
-                                            </div>
-                                            <div class="flex justify-center w-full py-1">
-                                                <div class="w-5 h-6 bg-slate-300 dark:bg-slate-900 border border-slate-500 rounded-sm p-0.5 flex flex-col print:border-slate-300">
-                                                    <div class="w-full h-2.5 bg-slate-800 dark:bg-slate-950 rounded-sm shadow print:shadow-none"></div>
-                                                </div>
-                                            </div>
-                                            <div class="text-center w-full pb-0.5">
-                                                <span id="fuse-curve-badge-${item.id}" onclick="toggleCurve(event, ${item.id})" class="text-[10px] cursor-pointer hover:ring-2 hover:ring-amber-500 ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/20 print:border-slate-300 print:shadow-none">${item.curve}${item.value}</span>
-                                            </div>
-                                        </div>`;
-                                }
-
-                                let innerWrapper = '';
-                                if (isVerticalLayout) {
-                                    innerWrapper = `<div style="${getBoxStyle(item.width, false)} position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); transform-origin: center;" class="flex items-center justify-center">${innerContent}</div>`;
-                                } else {
-                                    innerWrapper = `<div class="w-full h-full">${innerContent}</div>`;
-                                }
-
-                                containerHtml += `
-                                    <div onclick="handleElementClick(event, ${item.id})" class="${containerClasses}" style="${getBoxStyle(item.width, isVerticalLayout)}" title="Ryhmä ${item.label}">
-                                        ${innerWrapper}
-                                    </div>
-                                `;
+                                        </div>
+                                        <div class="text-center w-full pb-0.5">
+                                            <span onclick="toggleCurve(event, ${item.id})" class="cursor-pointer hover:ring-2 hover:ring-amber-500 text-[10px] ${conf.text} ${conf.bg} px-1.5 py-0.5 rounded shadow-sm font-mono font-bold border border-black/10 print:border-slate-300 print:shadow-none print:text-black">${item.curve}${item.value}</span>
+                                        </div>
+                                    </div>`;
                             }
-                        });
-                        if(isVerticalLayout){
-                            containerHtml += `</div></div>`;
-                        } else {
-                            containerHtml += `</div></div></div>`;
+
+                            let innerWrapper = '';
+                            if (isVerticalLayout) {
+                                const s = item.width * MOD_BASE + (item.width - 1) * MOD_GAP;
+                                innerWrapper = `<div style="width: ${s}px; height: 100px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); transform-origin: center;" class="flex items-center justify-center">${innerContent}</div>`;
+                            } else {
+                                innerWrapper = `<div class="w-full h-full">${innerContent}</div>`;
+                            }
+
+                            containerHtml += `
+                                <div onclick="handleElementClick(event, ${item.id})" ${dragAttrs} class="${containerClasses}" style="width: ${wrapperW}px; height: ${wrapperH}px;" title="Ryhmä ${item.label}">
+                                    ${innerWrapper}
+                                </div>
+                            `;
                         }
                     });
+                    if(isVerticalLayout){
+                        containerHtml += `</div></div>`;
+                    } else {
+                        containerHtml += `</div></div></div>`;
+                    }
                 });
                 containerHtml += `</div>`;
             }
 
-            // COLOR GUIDE
             if (colorGuide) {
                 let guideHtml = availableAmps.map(amp => {
                     const conf = getAmpConfig(amp);
-                    return `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full ${conf.bg} border border-slate-300 shadow-sm"></span> ${amp}A</span>`;
+                    return `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full ${conf.bg} border border-slate-300 shadow-sm print:shadow-none"></span> ${amp}A</span>`;
                 }).join('');
-                if (centerType === 'automaatti') guideHtml += `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full bg-blue-600 border border-slate-300 shadow-sm text-[7px] text-white flex justify-center items-center font-bold">T</span> VVSK</span>`;
+                if (centerType === 'automaatti') guideHtml += `<span class="flex items-center gap-1.5 text-[10px]"><span class="w-3.5 h-3.5 rounded-full bg-blue-600 border border-slate-300 shadow-sm text-[7px] text-white flex justify-center items-center font-bold print:shadow-none">T</span> VVSK</span>`;
                 colorGuide.innerHTML = guideHtml;
             }
 
@@ -1134,7 +1148,7 @@
                                      <option value="empty-3" ${item.type === 'empty-3' ? 'selected' : ''}>Tyhjä (3 DIN)</option>
                                      <option value="empty-4" ${item.type === 'empty-4' ? 'selected' : ''}>Tyhjä (4 DIN)</option>
                                      <option value="main-switch" ${item.type === 'main-switch' ? 'selected' : ''}>Pääkytkin (3 DIN)</option>
-                                     ${availableAmps.map(amp => `<option value="${amp}" ${item.type === 'mcb' && item.value === amp ? 'selected' : ''}>Johdonsuoja 1v ${amp} A</option>`).join('')}
+                                     ${availableAmps.map(amp => `<option value="${amp}" ${item.type === 'mcb' && item.value === amp ? 'selected' : ''}>Johdonsuoja ${amp} A</option>`).join('')}
                                      ${availableAmps.map(amp => `<option value="mcb-3p-${amp}" ${item.type === 'mcb-3p' && item.value === amp ? 'selected' : ''}>Johdonsuoja 3v ${amp} A</option>`).join('')}
                                      <option value="vvsk-2-25" ${item.type === 'vvsk-2-25' ? 'selected' : ''}>VVSK 2-nap 25 A</option>
                                      <option value="vvsk-2-40" ${item.type === 'vvsk-2-40' ? 'selected' : ''}>VVSK 2-nap 40 A</option>
@@ -1143,39 +1157,26 @@
                 }
 
                 const isPlaceholderType = item.type.startsWith('empty-');
-                const isMainSwitch = item.type === 'main-switch';
                 const descValue = isPlaceholderType ? item.customName : item.description;
                 const descPlace = isPlaceholderType ? "Anna tyhjälle laitteelle vapaa nimi (esim. Kellokytkin)..." : "Ryhmän käyttökohde (kirjoita tähän)...";
                 const onInputEvt = isPlaceholderType ? `saveCustomName(${i}, this.value)` : `saveDescription(${i}, this.value)`;
                 const inputClass = isPlaceholderType ? `fuse-customname-input-${i}` : `fuse-desc-input-${i}`;
                 
-                let curveSelectHtml = '';
-                if (centerType === 'automaatti' && item.type.includes('mcb')) {
-                    curveSelectHtml = `
-                        <select onchange="handleCurveChange(${i}, this.value)" class="no-print ml-2 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-1 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500 hover:border-slate-400">
-                            <option value="B" ${item.curve === 'B' ? 'selected' : ''}>B</option>
-                            <option value="C" ${item.curve === 'C' ? 'selected' : ''}>C</option>
-                            <option value="D" ${item.curve === 'D' ? 'selected' : ''}>D</option>
-                        </select>
-                    `;
-                }
-
                 tableHtml += `
-                    <tr class="hover:bg-slate-50 dark:bg-slate-800 transition border-b border-slate-100 dark:border-slate-800">
-                        <td class="py-3 px-2 text-center bg-slate-50/50 dark:bg-slate-900/50 relative">
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100 dark:border-slate-800">
+                        <td class="py-2 px-2 text-center bg-slate-50/50 dark:bg-slate-900/50 relative">
                             <input type="text" value="${item.label}" oninput="updateGroupLabel(${i}, this.value)" class="fuse-label-input-${i} w-full text-center font-bold text-slate-950 dark:text-white bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:outline-none py-1 text-base">
                         </td>
-                        <td class="py-3 px-3 text-center print-select-wrapper flex justify-center items-center gap-1">
+                        <td class="py-2 px-3 text-center print-select-wrapper flex justify-center items-center gap-1">
                             <select onchange="handleTableTypeChange(${i}, this.value)" id="select-fuse-${i}" class="no-print w-full max-w-[200px] text-center bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500 hover:border-slate-400">
                                 ${selectOptions}
                             </select>
-                            ${curveSelectHtml}
                             <span class="print-only-value font-bold text-slate-900 text-sm">${getPrintText(item)}</span>
                         </td>
-                        <td class="py-3 px-4">
+                        <td class="py-2 px-4">
                             <div class="flex items-center justify-between gap-3 min-h-[40px]">
-                                <input type="text" value="${descValue}" oninput="${onInputEvt}" placeholder="${descPlace}" class="${inputClass} flex-grow bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-amber-500 focus:outline-none py-1 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 font-sans text-sm ${isPlaceholderType ? 'italic font-medium text-amber-700 dark:text-amber-500' : ''}" ${isMainSwitch ? 'disabled placeholder="-"' : ''}>
-                                <input type="text" value="${item.phase}" oninput="updatePhase(${i}, this.value)" class="fuse-phase-input-${i} w-10 text-center text-xs px-1 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded text-slate-500 dark:text-slate-400 font-mono font-bold focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-amber-500 hover:border-slate-400 transition-colors">
+                                <input type="text" value="${descValue}" oninput="${onInputEvt}" placeholder="${descPlace}" class="${inputClass} flex-grow bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 focus:border-amber-500 focus:outline-none py-1 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 font-sans text-sm ${isPlaceholderType ? 'italic font-medium text-amber-700 dark:text-amber-500' : ''}">
+                                <input type="text" value="${item.phase}" onchange="updatePhase(${i}, this.value)" class="fuse-phase-input-${i} w-10 text-center text-xs px-1 py-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded text-slate-500 dark:text-slate-400 font-mono font-bold focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-amber-500 hover:border-slate-400 transition-colors">
                             </div>
                         </td>
                         <td class="py-3 px-2 text-center no-print">
@@ -1185,29 +1186,30 @@
                 `;
             }
 
-            document.getElementById('breakerAreaContainer').innerHTML = containerHtml;
-            document.getElementById('groupTableBody').innerHTML = tableHtml;
+            container.innerHTML = containerHtml;
+            tableBody.innerHTML = tableHtml;
         }
 
         // --- VAPAA VISUAALINEN EDITOR (Esikatselu & Asettelu) ---
+        let activeElement = null;
         let dragActive = null;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
+        let currentScale = 1;
+        let currentRot = 0;
+        let currentZ = 5;
 
         function openVisualEditor() {
             const pContainer = document.getElementById('previewPagesContainer');
             pContainer.innerHTML = '';
             
-            // Luodaan Sivu 1 & Sivu 2
-            const page1 = document.createElement('div');
-            page1.className = "preview-page mx-auto shadow-xl mb-8 border border-slate-300";
-            pContainer.appendChild(page1);
+            pContainer.appendChild(createPageElement());
+            pContainer.appendChild(createPageElement());
 
-            const page2 = document.createElement('div');
-            page2.className = "preview-page mx-auto shadow-xl mb-8 border border-slate-300";
-            pContainer.appendChild(page2);
+            const pages = pContainer.querySelectorAll('.preview-page');
+            const page1 = pages[0];
+            const page2 = pages[1];
 
-            // 1. Taustalaatikko (Kaapin kuoret)
             const cab = document.getElementById('physicalCabinet');
             if (cab) {
                 const cabRect = cab.getBoundingClientRect();
@@ -1223,21 +1225,17 @@
                 page1.appendChild(bg);
             }
 
-            // 2. Yläosa
             makeAbsoluteAndClone({ source: document.getElementById('topSection'), target: page1, classId: 'preview-top-section', zIndex: 10, defaultTop: 60, defaultLeft: 60 });
 
-            // 3. Kiskorivit
-            const rows = document.getElementById('breakerAreaContainer').querySelectorAll('.rail-row, .tulppa-grid');
-            let currentTop = 200;
+            const rows = document.getElementById('breakerAreaContainer').querySelectorAll('.rail-row, .print-grid');
+            let currentTop = 220;
             rows.forEach((r) => {
                 makeAbsoluteAndClone({ source: r, target: page1, classId: 'preview-rail', zIndex: 10, defaultTop: currentTop, defaultLeft: 60 });
-                currentTop += r.getBoundingClientRect().height + 20;
+                currentTop += 130;
             });
 
-            // 4. Väriohje
             makeAbsoluteAndClone({ source: document.getElementById('fuseColorGuide'), target: page1, classId: 'preview-color-guide', zIndex: 10, defaultTop: currentTop + 20, defaultLeft: 60 });
 
-            // 5. Ryhmäluettelo & Huomautukset Sivu 2:lle
             const tableSect = document.getElementById('tableWrap');
             if (tableSect) {
                 const theTable = tableSect.querySelector('.overflow-x-auto');
@@ -1247,23 +1245,39 @@
                 makeAbsoluteAndClone({ source: theRemarks, target: page2, classId: 'preview-remarks', zIndex: 10, defaultTop: 800, defaultLeft: 40 });
             }
 
-            // Näytä Modal
             document.getElementById('printPreviewModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
             
-            // Resetoidaan checkboxit
             document.querySelectorAll('#printSidebar input[type="checkbox"]').forEach(cb => cb.checked = true);
-            
             setupFreeDrag();
+        }
+
+        function createPageElement() {
+            const page = document.createElement('div');
+            page.className = "preview-page mx-auto shadow-xl border border-slate-300 relative group bg-white";
+            
+            const delBtn = document.createElement('button');
+            delBtn.className = "absolute top-2 right-2 bg-red-500 text-white p-2 rounded opacity-0 group-hover:opacity-100 transition no-print z-[9000] shadow-md font-bold text-xs";
+            delBtn.innerHTML = "Poista Sivu";
+            delBtn.onclick = function(e) { 
+                e.stopPropagation(); 
+                page.remove(); 
+                hideToolbar(); 
+            }
+            
+            page.appendChild(delBtn);
+            return page;
         }
 
         function closeVisualEditor() {
             document.getElementById('printPreviewModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
-            document.removeEventListener('mousemove', doFreeDrag);
-            document.removeEventListener('mouseup', endFreeDrag);
-            document.removeEventListener('touchmove', doFreeDrag);
-            document.removeEventListener('touchend', endFreeDrag);
+            hideToolbar();
+        }
+
+        function resetVisualEditor() {
+            hideToolbar();
+            openVisualEditor();
         }
 
         function makeAbsoluteAndClone(config) {
@@ -1283,7 +1297,7 @@
                         el.style.background = 'white';
                         el.style.color = 'black';
                     } else {
-                        el.style.display = 'none'; // Piilotetaan värivalitsin tulostuksesta
+                        el.style.display = 'none'; 
                     }
                 }
             });
@@ -1293,7 +1307,11 @@
             clone.style.left = config.defaultLeft + 'px';
             clone.style.top = config.defaultTop + 'px';
             clone.style.width = rect.width + 'px';
+            
             clone.style.zIndex = config.zIndex || 5;
+            clone.dataset.z = config.zIndex || 5;
+            clone.dataset.scale = 1;
+            clone.dataset.rot = 0;
 
             config.target.appendChild(clone);
         }
@@ -1302,7 +1320,6 @@
             document.addEventListener('mousedown', startFreeDrag);
             document.addEventListener('mousemove', doFreeDrag);
             document.addEventListener('mouseup', endFreeDrag);
-            
             document.addEventListener('touchstart', startFreeDrag, {passive: false});
             document.addEventListener('touchmove', doFreeDrag, {passive: false});
             document.addEventListener('touchend', endFreeDrag);
@@ -1311,18 +1328,27 @@
         function startFreeDrag(e) {
             if (!document.getElementById('printPreviewModal').classList.contains('hidden')) {
                 const target = e.target.closest('.preview-draggable');
+                
+                if (!target && !e.target.closest('#elementToolbar') && !e.target.closest('.sidebar-btn')) {
+                    hideToolbar();
+                    return;
+                }
+
                 if (!target) return;
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
 
                 dragActive = target;
                 dragActive.classList.add('dragging');
                 
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                showToolbar(dragActive, clientX, clientY);
 
                 const rect = dragActive.getBoundingClientRect();
-                dragOffsetX = clientX - rect.left;
-                dragOffsetY = clientY - rect.top;
+                
+                const scale = parseFloat(document.getElementById('previewScale').value) / 100 || 1;
+                dragOffsetX = (clientX - rect.left) / scale;
+                dragOffsetY = (clientY - rect.top) / scale;
             }
         }
 
@@ -1348,12 +1374,19 @@
             }
 
             const pageRect = targetPage.getBoundingClientRect();
-            
-            const newLeft = clientX - pageRect.left - dragOffsetX;
-            const newTop = clientY - pageRect.top - dragOffsetY;
+            const scale = parseFloat(document.getElementById('previewScale').value) / 100 || 1;
+
+            const newLeft = (clientX - pageRect.left) / scale - dragOffsetX;
+            const newTop = (clientY - pageRect.top) / scale - dragOffsetY;
 
             dragActive.style.left = newLeft + 'px';
             dragActive.style.top = newTop + 'px';
+            
+            const tb = document.getElementById('elementToolbar');
+            if(!tb.classList.contains('hidden')){
+                tb.style.left = clientX + 'px';
+                tb.style.top = (clientY - 60) + 'px';
+            }
         }
 
         function endFreeDrag() {
@@ -1362,6 +1395,51 @@
                 dragActive = null;
             }
         }
+
+        function showToolbar(el, x, y) {
+            activeElement = el;
+            const tb = document.getElementById('elementToolbar');
+            tb.style.display = 'flex';
+            tb.classList.remove('hidden');
+            
+            tb.style.left = (x + 20) + 'px';
+            tb.style.top = (y - 60) + 'px'; 
+            
+            currentScale = parseFloat(el.dataset.scale) || 1;
+            currentRot = parseInt(el.dataset.rot) || 0;
+            currentZ = parseInt(el.dataset.z) || parseInt(window.getComputedStyle(el).zIndex) || 5;
+            if(isNaN(currentZ)) currentZ = 5;
+            
+            document.querySelectorAll('.preview-draggable').forEach(d => d.classList.remove('active-el'));
+            el.classList.add('active-el');
+        }
+
+        function hideToolbar() {
+            const tb = document.getElementById('elementToolbar');
+            tb.style.display = 'none';
+            tb.classList.add('hidden');
+            if(activeElement) activeElement.classList.remove('active-el');
+            activeElement = null;
+        }
+
+        function applyTransforms() {
+            if(!activeElement) return;
+            activeElement.dataset.scale = currentScale;
+            activeElement.dataset.rot = currentRot;
+            activeElement.dataset.z = currentZ;
+            activeElement.style.transform = `scale(${currentScale}) rotate(${currentRot}deg)`;
+            activeElement.style.zIndex = currentZ;
+            activeElement.style.setProperty('z-index', currentZ, 'important');
+        }
+
+        function changeScale(ds) { currentScale += ds; applyTransforms(); }
+        function changeRotate(dr) { currentRot += dr; applyTransforms(); }
+        function changeZ(dz) { 
+            currentZ += dz; 
+            if (currentZ < 1) currentZ = 1;
+            applyTransforms(); 
+        }
+        function deleteActiveElement() { if(activeElement) activeElement.remove(); hideToolbar(); }
 
         function toggleVis(className, isVisible) {
             document.querySelectorAll('.' + className).forEach(el => {
@@ -1375,11 +1453,16 @@
                 const div = document.createElement('div');
                 div.className = "preview-draggable text-xl font-black text-slate-800 p-2 bg-white/80 rounded border border-dashed border-slate-400";
                 div.innerText = text;
+                div.dataset.scale = 1;
+                div.dataset.rot = 0;
+                div.dataset.z = 50;
                 div.style.position = 'absolute';
                 div.style.left = '100px';
                 div.style.top = '100px';
                 div.style.zIndex = '50';
-                document.querySelector('.preview-page').appendChild(div);
+                
+                const page = document.querySelector('.preview-page');
+                if(page) page.appendChild(div);
             }
         }
 
@@ -1391,23 +1474,32 @@
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     img.className = "preview-draggable w-48 rounded shadow-sm border border-slate-200 p-1 bg-white";
+                    img.dataset.scale = 1;
+                    img.dataset.rot = 0;
+                    img.dataset.z = 50;
                     img.style.position = 'absolute';
                     img.style.left = '100px';
                     img.style.top = '100px';
                     img.style.zIndex = '50';
-                    document.querySelector('.preview-page').appendChild(img);
+                    
+                    const page = document.querySelector('.preview-page');
+                    if(page) page.appendChild(img);
                 }
                 reader.readAsDataURL(file);
             }
         }
 
         function addNewPage() {
-            const page = document.createElement('div');
-            page.className = "preview-page mx-auto shadow-xl mb-8 border border-slate-300";
+            const page = createPageElement();
             document.getElementById('previewPagesContainer').appendChild(page);
-            
-            // Skrollaa alas uudelle sivulle
             page.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function applyPreviewSettings() {
+            const scale = document.getElementById('previewScale').value / 100;
+            const wrapper = document.getElementById('previewPagesContainer');
+            wrapper.style.transform = `scale(${scale})`;
+            wrapper.style.transformOrigin = 'top center';
         }
 
         function splitLongRows() {
@@ -1424,7 +1516,7 @@
                 items.forEach(item => {
                     let w = 1;
                     if(item.className.match(/col-span-(\d+)/)) w = parseInt(item.className.match(/col-span-(\d+)/)[1]);
-                    if(item.style.width && parseInt(item.style.width) > 50) w = Math.round(parseInt(item.style.width) / 40); // Oletus 40px/DIN
+                    if(item.style.width && parseInt(item.style.width) > 50) w = Math.round(parseInt(item.style.width) / 40); 
                     
                     if (currentWidth + w > maxItems && currentChunk.length > 0) {
                         chunks.push(currentChunk);
@@ -1449,14 +1541,14 @@
                         
                         if (newContainer.classList.contains('grid')) {
                             let cWidth = chunk.reduce((sum, el) => {
-                                let w=1; 
-                                if(el.className.match(/col-span-(\d+)/)) w=parseInt(el.className.match(/col-span-(\d+)/)[1]);
-                                return sum+w;
+                                let cw=1; 
+                                if(el.className.match(/col-span-(\d+)/)) cw=parseInt(el.className.match(/col-span-(\d+)/)[1]);
+                                return sum+cw;
                             }, 0);
                             newContainer.style.gridTemplateColumns = `repeat(${cWidth}, minmax(0, 1fr))`;
                         }
                         
-                        newRow.style.width = 'auto'; // Pakotetaan sopiva leveys
+                        newRow.style.width = 'auto';
                         
                         const labelSpan = newRow.querySelector('.rivi-text');
                         if (labelSpan) labelSpan.innerText += ` (Osa ${index+1})`;
@@ -1467,23 +1559,24 @@
                         
                         parentPage.appendChild(newRow);
                     });
-                    
                     row.remove(); 
                 }
             });
         }
 
         function printEditorView() {
-            // Poista valintarajaukset
-            if (dragActive) {
-                dragActive.classList.remove('dragging', 'ring-2', 'ring-amber-500');
-                dragActive = null;
-            }
-            
+            hideToolbar();
+            const pContainer = document.getElementById('previewPagesContainer');
+            const oldTransform = pContainer.style.transform;
+            pContainer.style.transform = 'none';
+
             document.body.classList.add('print-preview-mode');
-            document.body.offsetHeight; // reflow
-            window.print();
-            document.body.classList.remove('print-preview-mode');
+            
+            setTimeout(() => {
+                window.print();
+                document.body.classList.remove('print-preview-mode');
+                pContainer.style.transform = oldTransform;
+            }, 200);
         }
 
         window.onload = function() {
