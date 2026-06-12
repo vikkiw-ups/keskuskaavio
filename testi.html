@@ -804,7 +804,11 @@
         function printNormal() {
             setPrintStyles('normal');
             document.body.classList.remove('print-mode-labels');
-            setTimeout(() => { window.print(); }, 500);
+            
+            // Pakotetaan DOM:in välitön päivitys ennen tulostuskutsua
+            document.body.offsetHeight; 
+            
+            window.print();
         }
 
         function printLabelStrips() {
@@ -812,10 +816,16 @@
             if (!container) return;
             const paperSize = document.getElementById('printPaperSize').value;
             const orientation = document.getElementById('printOrientation').value;
+            
             setPrintStyles('labels', paperSize, orientation);
             container.innerHTML = generateLabelStripsHTML(paperSize, orientation);
             document.body.classList.add('print-mode-labels');
-            setTimeout(() => { window.print(); }, 500);
+            
+            // Pakotetaan DOM:in välitön päivitys, jotta mobiiliselaimet (erityisesti iOS) 
+            // eivät estä tulostusikkunaa luulemalla sitä ponnahdusikkunaksi.
+            container.offsetHeight; 
+            
+            window.print();
         }
 
         // --- PÄÄRENDERÖINTI ---
