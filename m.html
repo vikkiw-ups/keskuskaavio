@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kesä-Mölkky Pro</title>
+    <title>Kesä-Mölkky Ultra</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         ::-webkit-scrollbar { width: 0px; background: transparent; }
@@ -16,7 +16,6 @@
         .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .toast-exit { transform: translateY(-100%); opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* Animaatio maaliin päässeille pelaajille */
         @keyframes shine {
             0% { background-position: -200% center; }
             100% { background-position: 200% center; }
@@ -25,6 +24,14 @@
             background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.8) 50%, transparent 80%);
             background-size: 200% auto;
             animation: shine 3s linear infinite;
+        }
+        
+        @keyframes pulse-critical {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        .critical-points {
+            animation: pulse-critical 2s infinite;
         }
     </style>
 </head>
@@ -37,8 +44,10 @@
     </div>
 
     <script>
-        // --- ÄÄNIEFEKTIT (Web Audio API) ---
+        // --- ÄÄNIEFEKTIT JA PUHE (Web Audio API & Web Speech API) ---
         let audioCtx;
+        let synth = window.speechSynthesis;
+        let finnishVoice = null;
 
         function initAudio() {
             if (!audioCtx) {
@@ -47,9 +56,35 @@
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+            
+            if (synth.getVoices().length === 0) {
+                synth.onvoiceschanged = () => {
+                    findFinnishVoice();
+                };
+            } else {
+                findFinnishVoice();
+            }
         }
 
-        // Apufunktio äänten soittamiseen
+        function findFinnishVoice() {
+            const voices = synth.getVoices();
+            finnishVoice = voices.find(voice => voice.lang.includes('fi')) || voices[0];
+        }
+
+        function speakText(text, delay = 300) {
+            if (!synth) return;
+            
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                if (finnishVoice) utterance.voice = finnishVoice;
+                utterance.lang = 'fi-FI';
+                utterance.rate = 1.1;
+                utterance.pitch = 1.0;
+                synth.speak(utterance);
+            }, delay);
+        }
+
+        // Äänieffektit
         function playOscillator(freq, type, time, duration, vol, endFreq = null) {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
@@ -70,7 +105,6 @@
         function playHitSound() {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
-            // Puinen kolahdus (kaksi nopeaa iskua)
             playOscillator(600, 'triangle', t, 0.1, 0.3, 100);
             playOscillator(800, 'sine', t + 0.05, 0.1, 0.2, 200);
         }
@@ -78,14 +112,12 @@
         function playMissSound() {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
-            // Sääliä herättävä laskeva ääni
             playOscillator(300, 'sawtooth', t, 0.5, 0.1, 50);
         }
 
         function playOverSound() {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
-            // Dramaattinen "Trombone" liuku alas
             playOscillator(200, 'triangle', t, 0.8, 0.3, 40);
             playOscillator(300, 'square', t, 0.8, 0.1, 50);
         }
@@ -93,7 +125,6 @@
         function playEliminateSound() {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
-            // Mahtipontinen matala romahdus/räjähdys
             playOscillator(100, 'square', t, 1.5, 0.4, 10);
             playOscillator(150, 'sawtooth', t, 1.0, 0.3, 20);
         }
@@ -101,27 +132,34 @@
         function playEpicWinSound() {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
-            // Eeppinen voittofanfaari (C-duuri soinnut arpeggiona)
             const chords = [
-                { f: [261.63, 329.63, 392.00], d: 0.2, timeOffset: 0 },       // C
-                { f: [349.23, 440.00, 523.25], d: 0.2, timeOffset: 0.25 },    // F
-                { f: [392.00, 493.88, 587.33], d: 0.2, timeOffset: 0.5 },     // G
-                { f: [523.25, 659.25, 783.99], d: 1.2, timeOffset: 0.75 }     // High C (pitkä)
+                { f: [261.63, 329.63, 392.00], d: 0.2, timeOffset: 0 },
+                { f: [349.23, 440.00, 523.25], d: 0.2, timeOffset: 0.25 },
+                { f: [392.00, 493.88, 587.33], d: 0.2, timeOffset: 0.5 },
+                { f: [523.25, 659.25, 783.99], d: 1.2, timeOffset: 0.75 }
             ];
 
             chords.forEach(chord => {
                 chord.f.forEach(freq => {
                     playOscillator(freq, 'square', t + chord.timeOffset, chord.d, 0.1);
-                    playOscillator(freq + 2, 'sine', t + chord.timeOffset, chord.d, 0.15); // Paksuutta
+                    playOscillator(freq + 2, 'sine', t + chord.timeOffset, chord.d, 0.15);
                 });
             });
         }
 
+        function playWarningSound() {
+            if (!audioCtx) return;
+            const t = audioCtx.currentTime;
+            // Varoitusääni kahdelle hudille (kaksi nopeaa, matalaa piippausta)
+            playOscillator(400, 'square', t, 0.1, 0.2);
+            playOscillator(400, 'square', t + 0.2, 0.1, 0.2);
+        }
 
         // --- SOVELLUKSEN TILA (STATE) ---
         let state = {
             view: 'setup',
             targetScore: 50,
+            dropScore: 25,
             players: [
                 { name: "Pelaaja 1", score: 0, consecutiveMisses: 0, eliminated: false, finished: false, rank: null, history: [] },
                 { name: "Pelaaja 2", score: 0, consecutiveMisses: 0, eliminated: false, finished: false, rank: null, history: [] }
@@ -141,6 +179,7 @@
             let colors = 'bg-green-600 text-white shadow-green-900/20';
             if (type === 'error') colors = 'bg-red-600 text-white shadow-red-900/20 border border-red-500';
             if (type === 'warning') colors = 'bg-amber-500 text-white shadow-amber-900/20';
+            if (type === 'danger') colors = 'bg-red-500 text-white shadow-red-900/20 animate-pulse'; // Uusi tyyli varoitukselle
             if (type === 'epic') colors = 'bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 text-white shadow-2xl border-2 border-yellow-200 text-lg py-4';
 
             toast.className = `px-5 py-3 rounded-2xl shadow-xl font-bold text-sm text-center w-full toast-enter ${colors}`;
@@ -157,7 +196,7 @@
                 toast.classList.remove('toast-enter-active');
                 toast.classList.add('toast-exit');
                 setTimeout(() => toast.remove(), 300);
-            }, type === 'epic' ? 5000 : 3000); // Epic näkyy pidempään
+            }, type === 'epic' ? 5000 : 3000);
         }
 
         function saveState() {
@@ -170,6 +209,23 @@
 
         function getActivePlayers() {
             return state.players.filter(p => !p.eliminated && !p.finished);
+        }
+
+        function handleTurnStart() {
+            const cp = state.players[state.currentPlayerIndex];
+            const neededPoints = state.targetScore - cp.score;
+            let speechDelay = 300;
+
+            if (cp.consecutiveMisses === 2) {
+                playWarningSound();
+                speakText("Kaksi hutia, varo!", speechDelay);
+                showToast(`⚠️ Varo! Kolmas huti pudottaa!`, 'danger');
+                speechDelay += 2000; // Lisää viivettä seuraavalle puheelle
+            }
+
+            if (neededPoints <= 12 && neededPoints > 0) {
+                speakText(`Tarvitsee ${neededPoints}`, speechDelay);
+            }
         }
 
         function nextPlayer() {
@@ -187,11 +243,22 @@
                 (state.players[state.currentPlayerIndex].eliminated || state.players[state.currentPlayerIndex].finished) 
                 && attempts <= state.players.length
             );
+
+            handleTurnStart();
         }
 
         // --- TAPAHTUMANKÄSITTELIJÄT ---
 
-        function updateTarget(e) { state.targetScore = parseInt(e.target.value) || 50; }
+        function updateTarget(e) { 
+            state.targetScore = parseInt(e.target.value) || 50; 
+            state.dropScore = Math.floor(state.targetScore / 2);
+            render();
+        }
+        
+        function updateDrop(e) {
+            state.dropScore = parseInt(e.target.value) || 0;
+        }
+
         function updatePlayerName(index, e) { state.players[index].name = e.target.value; }
 
         function addPlayer() {
@@ -207,8 +274,17 @@
             render();
         }
 
+        function shufflePlayers() {
+            for (let i = state.players.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [state.players[i], state.players[j]] = [state.players[j], state.players[i]];
+            }
+            showToast("Heittojärjestys sekoitettu!", "success");
+            render();
+        }
+
         function startGame() {
-            initAudio(); // Aktivoidaan äänet aloituksessa
+            initAudio();
             if (state.players.length === 0) {
                 showToast("Lisää ainakin yksi pelaaja!", "warning");
                 return;
@@ -222,6 +298,9 @@
             state.currentRank = 0;
             gameHistory = [];
             state.view = 'playing';
+            
+            handleTurnStart(); // Tarkista ensimmäisen pelaajan tilanne alussa
+            
             render();
         }
 
@@ -231,17 +310,21 @@
                 state.players = prevState.players;
                 state.currentPlayerIndex = prevState.currentPlayerIndex;
                 state.currentRank = prevState.currentRank;
+                synth.cancel();
                 render();
             }
         }
 
         function finishGameEarly() {
-            state.view = 'end';
-            render();
+            if(confirm("Haluatko varmasti lopettaa pelin tähän tilanteeseen?")) {
+                state.view = 'end';
+                render();
+            }
         }
 
         function backToSetup() {
             if(confirm("Haluatko varmasti palata alkuun? Nykyinen peli menetetään.")) {
+                synth.cancel();
                 state.view = 'setup';
                 gameHistory = [];
                 render();
@@ -249,18 +332,20 @@
         }
 
         function resetGame() {
+            synth.cancel();
             state.view = 'setup';
             gameHistory = [];
             render();
         }
 
         function scoreTurn(points) {
-            initAudio(); // Varmistus
+            initAudio();
             const p = state.players[state.currentPlayerIndex];
             if (p.eliminated || p.finished) return;
 
             saveState();
             p.history.push(points);
+            synth.cancel(); // Mykistää mahdollisen parhaillaan puhuttavan äänen
 
             if (points === 0) {
                 p.consecutiveMisses += 1;
@@ -285,15 +370,14 @@
                     
                     const actCount = getActivePlayers().length;
                     if (actCount > 0) {
-                        showToast(`🏆 MAHTAVAA! ${p.name} on maalissa sijalla ${p.rank}! Peli jatkuu muiden osalta.`, 'epic');
+                        showToast(`🏆 MAHTAVAA! ${p.name} on maalissa sijalla ${p.rank}! Peli jatkuu.`, 'epic');
                     } else {
                         showToast(`🏆 ${p.name} saavutti maalin! Kaikki ovat valmiita!`, 'epic');
                     }
                 } else if (p.score > state.targetScore) {
-                    const dropTo = Math.floor(state.targetScore / 2);
-                    p.score = dropTo;
+                    p.score = state.dropScore;
                     playOverSound();
-                    showToast(`Meni yli! ${p.name} tipahtaa ${dropTo} pisteeseen.`, 'error');
+                    showToast(`Meni yli! ${p.name} tipahtaa ${state.dropScore} pisteeseen.`, 'error');
                 } else {
                     playHitSound();
                 }
@@ -310,25 +394,45 @@
             <div class="space-y-6 pb-10">
                 <div class="text-center pt-4">
                     <h1 class="text-5xl font-black text-green-900 mb-2 drop-shadow-md tracking-tight">
-                        Mölkky Pro 👑
+                        Mölkky Ultra 🎯
                     </h1>
-                    <p class="text-green-800 font-medium">Jatka peliä ensimmäisen voiton jälkeen!</p>
+                    <p class="text-green-800 font-medium">Täydelliset tilastot & puheääni</p>
                 </div>
 
-                <div class="bg-white/70 backdrop-blur-md p-5 rounded-3xl shadow-lg border border-white/40">
-                    <label class="block text-sm font-black text-green-900 mb-3 uppercase tracking-wide">Tavoitepisteet</label>
-                    <input type="number" value="${state.targetScore}" onchange="updateTarget(event)" class="w-full text-2xl p-4 rounded-2xl border-0 ring-4 ring-green-200/50 focus:ring-green-400 bg-white shadow-inner text-center font-black text-green-900 transition-all outline-none">
-                    <p class="text-xs text-green-700 mt-3 text-center opacity-80 font-medium">
-                        Yliheitosta pisteet putoavat puoleen (${Math.floor(state.targetScore/2)}).
-                    </p>
+                <!-- Asetukset -->
+                <div class="bg-white/70 backdrop-blur-md p-5 rounded-3xl shadow-lg border border-white/40 space-y-4">
+                    <div>
+                        <label class="block text-sm font-black text-green-900 mb-2 uppercase tracking-wide">Tavoitepisteet</label>
+                        <input type="number" value="${state.targetScore}" onchange="updateTarget(event)" class="w-full text-2xl p-3 rounded-2xl border-0 ring-4 ring-green-200/50 focus:ring-green-400 bg-white shadow-inner text-center font-black text-green-900 transition-all outline-none">
+                    </div>
+                    
+                    <div class="pt-2 border-t border-green-200/50">
+                        <label class="block text-sm font-black text-amber-800 mb-2 uppercase tracking-wide flex justify-between">
+                            <span>Yliheiton rangaistus</span>
+                            <span class="text-xs opacity-70">(Pudotus)</span>
+                        </label>
+                        <div class="flex items-center gap-3">
+                            <span class="text-amber-800 font-bold opacity-70">Tippuu </span>
+                            <input type="number" value="${state.dropScore}" onchange="updateDrop(event)" class="w-full text-xl p-3 rounded-2xl border-0 ring-2 ring-amber-200/50 focus:ring-amber-400 bg-amber-50 shadow-inner text-center font-black text-amber-900 transition-all outline-none">
+                            <span class="text-amber-800 font-bold opacity-70"> pist.</span>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Pelaajat -->
                 <div class="bg-white/70 backdrop-blur-md p-5 rounded-3xl shadow-lg border border-white/40 space-y-3">
-                    <label class="block text-sm font-black text-green-900 mb-3 uppercase tracking-wide">Pelaajat</label>
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="block text-sm font-black text-green-900 uppercase tracking-wide">Pelaajat</label>
+                        <button onclick="shufflePlayers()" class="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded-lg font-bold hover:bg-green-200 transition-colors flex items-center gap-1 active:scale-95" title="Sekoita heittojärjestys">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                            Sekoita
+                        </button>
+                    </div>
                     
                     <div class="space-y-3">
                         ${state.players.map((p, i) => `
                             <div class="flex items-center gap-2 group">
+                                <div class="flex-shrink-0 w-6 text-center font-black text-gray-400 text-sm">${i+1}.</div>
                                 <div class="flex-grow">
                                     <input type="text" value="${p.name}" onchange="updatePlayerName(${i}, event)" class="w-full p-4 rounded-2xl border-0 ring-2 ring-green-100 focus:ring-green-400 bg-white font-bold text-gray-800 shadow-sm outline-none transition-all" placeholder="Pelaajan nimi">
                                 </div>
@@ -353,37 +457,48 @@
 
         function renderGame() {
             const cp = state.players[state.currentPlayerIndex];
-            const hasFinishedPlayers = state.players.some(p => p.finished);
+            const neededForCp = state.targetScore - cp.score;
+            const isCritical = neededForCp <= 12 && neededForCp > 0;
+            const twoMisses = cp.consecutiveMisses === 2;
 
             return `
             <div class="space-y-6 pb-6">
                 
                 <!-- Yläpalkki -->
-                <div class="flex justify-between items-center bg-white/80 backdrop-blur-md px-4 py-3 rounded-2xl shadow-sm border border-white/50">
-                    <button onclick="backToSetup()" class="text-green-700 hover:text-green-900 p-2 -ml-2 rounded-xl hover:bg-green-50 transition-colors active:scale-95" title="Alkuun">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                <div class="flex justify-between items-center bg-white/80 backdrop-blur-md px-2 py-2 rounded-2xl shadow-sm border border-white/50">
+                    <button onclick="backToSetup()" class="text-green-700 hover:text-green-900 p-2 rounded-xl hover:bg-green-50 transition-colors active:scale-95 flex items-center gap-1" title="Alkuun">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     </button>
+                    
                     <div class="font-black text-green-900 flex items-center gap-2">
                         <span class="text-sm uppercase tracking-wider opacity-70">Tavoite</span>
                         <span class="bg-green-200 px-3 py-1 rounded-lg text-green-900 text-lg">${state.targetScore}</span>
                     </div>
-                    <div class="flex">
-                        <button onclick="undoTurn()" class="text-amber-600 hover:text-amber-800 p-2 rounded-xl hover:bg-amber-50 transition-colors active:scale-95 ${gameHistory.length === 0 ? 'opacity-30 cursor-not-allowed' : ''}" ${gameHistory.length === 0 ? 'disabled' : ''} title="Peruuta">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                        </button>
-                        <button onclick="finishGameEarly()" class="text-red-600 hover:text-red-800 p-2 -mr-2 rounded-xl hover:bg-red-50 transition-colors active:scale-95" title="Lopeta peli">
-                           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    
+                    <div class="flex gap-1">
+                        <button onclick="undoTurn()" class="text-amber-600 hover:text-amber-800 p-2 rounded-xl hover:bg-amber-50 transition-colors active:scale-95 ${gameHistory.length === 0 ? 'opacity-30 cursor-not-allowed' : ''}" ${gameHistory.length === 0 ? 'disabled' : ''} title="Peruuta heitto">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
                         </button>
                     </div>
                 </div>
 
                 <!-- Vuorossa oleva pelaaja -->
-                <div class="bg-white p-6 rounded-3xl shadow-xl text-center border-b-8 border-green-500 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-yellow-300"></div>
-                    <p class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Vuorossa</p>
+                <div class="bg-white p-6 rounded-3xl shadow-xl text-center border-b-8 ${twoMisses ? 'border-red-500 animate-pulse' : 'border-green-500'} relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${twoMisses ? 'from-red-400 to-red-300' : 'from-green-400 to-yellow-300'}"></div>
+                    <p class="text-sm font-bold ${twoMisses ? 'text-red-400' : 'text-gray-400'} uppercase tracking-widest mb-1">Vuorossa</p>
                     <h2 class="text-4xl font-black text-gray-800 mb-2 truncate">${cp.name}</h2>
-                    <div class="text-6xl font-black text-green-600 mb-3 drop-shadow-sm">
-                        ${cp.score} <span class="text-2xl text-gray-300 font-bold ml-1">p</span>
+                    
+                    <div class="flex justify-center items-end gap-4 mb-4">
+                        <div class="text-6xl font-black text-green-600 drop-shadow-sm leading-none">
+                            ${cp.score}
+                        </div>
+                        
+                        <div class="flex flex-col items-center ${isCritical ? 'critical-points' : ''} mb-1">
+                            <span class="text-[10px] font-bold ${isCritical ? 'text-amber-500' : 'text-gray-400'} uppercase tracking-widest leading-none">Puuttuu</span>
+                            <span class="text-2xl font-black ${isCritical ? 'text-amber-500 bg-amber-100 px-3 py-1 rounded-xl mt-1' : 'text-gray-500'}">
+                                ${neededForCp}
+                            </span>
+                        </div>
                     </div>
                     
                     <!-- Hudimittari -->
@@ -393,7 +508,7 @@
                                 <div class="w-4 h-4 rounded-full border-2 ${i <= cp.consecutiveMisses ? 'bg-red-500 border-red-600' : 'bg-gray-100 border-gray-200'} transition-colors duration-300"></div>
                             `).join('')}
                         </div>
-                        <span class="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-wider">Hudit</span>
+                        <span class="text-[10px] ${twoMisses ? 'text-red-500' : 'text-gray-400'} font-bold uppercase mt-1 tracking-wider">Hudit</span>
                     </div>
                 </div>
 
@@ -401,7 +516,7 @@
                 <div>
                     <div class="grid grid-cols-3 gap-3 mb-3">
                         ${[1,2,3,4,5,6,7,8,9,10,11,12].map(num => `
-                            <button onclick="scoreTurn(${num})" class="relative overflow-hidden bg-gradient-to-b from-amber-50 to-amber-200 hover:from-amber-100 hover:to-amber-300 text-amber-900 border-2 border-amber-300 border-b-4 font-black text-3xl py-5 rounded-2xl shadow-sm transition-all transform active:scale-95 active:border-b-2 flex items-center justify-center select-none touch-manipulation">
+                            <button onclick="scoreTurn(${num})" class="relative overflow-hidden bg-gradient-to-b from-amber-50 to-amber-200 hover:from-amber-100 hover:to-amber-300 text-amber-900 border-2 border-amber-300 border-b-4 font-black text-3xl py-5 rounded-2xl shadow-sm transition-all transform active:scale-95 active:border-b-2 flex items-center justify-center select-none touch-manipulation ${num === neededForCp ? 'ring-4 ring-amber-400 ring-opacity-50' : ''}">
                                 <span class="relative z-10 drop-shadow-sm">${num}</span>
                             </button>
                         `).join('')}
@@ -411,32 +526,49 @@
                     </button>
                 </div>
 
-                <!-- Tulostaulukko -->
-                <div class="bg-white/80 rounded-3xl p-5 shadow-lg backdrop-blur-md border border-white/50">
-                    <h3 class="font-black text-green-900 mb-4 text-lg flex items-center justify-between uppercase tracking-wide">
+                <!-- Tulostaulukko ja lopetuspainike -->
+                <div class="bg-white/80 rounded-3xl p-4 shadow-lg backdrop-blur-md border border-white/50 space-y-4">
+                    <h3 class="font-black text-green-900 text-sm flex items-center justify-between uppercase tracking-wide border-b border-green-200 pb-2">
                         Tilanne
-                        <span class="text-xs font-bold text-green-700 bg-green-200/50 px-2 py-1 rounded-lg">Pisteet</span>
+                        <div class="flex gap-4 text-xs opacity-70">
+                            <span>Pist.</span>
+                            <span>Puuttuu</span>
+                        </div>
                     </h3>
                     <div class="space-y-2">
-                        ${state.players.map((p, i) => `
-                            <div class="flex justify-between items-center p-3 rounded-2xl ${i === state.currentPlayerIndex && !p.eliminated && !p.finished ? 'bg-gradient-to-r from-green-100 to-green-50 ring-2 ring-green-400 shadow-sm' : p.finished ? 'bg-amber-100 border-amber-300 border shadow-inner relative overflow-hidden' : p.eliminated ? 'opacity-40 bg-gray-100 grayscale' : 'bg-white shadow-sm'} transition-all">
+                        ${state.players.map((p, i) => {
+                            const needed = state.targetScore - p.score;
+                            return `
+                            <div class="flex justify-between items-center p-2 rounded-2xl ${i === state.currentPlayerIndex && !p.eliminated && !p.finished ? 'bg-gradient-to-r from-green-100 to-green-50 ring-2 ring-green-400 shadow-sm' : p.finished ? 'bg-amber-100 border-amber-300 border shadow-inner relative overflow-hidden' : p.eliminated ? 'opacity-40 bg-gray-100 grayscale' : 'bg-white shadow-sm'} transition-all">
                                 ${p.finished ? '<div class="absolute inset-0 bg-shine opacity-30"></div>' : ''}
-                                <div class="flex items-center gap-3 overflow-hidden relative z-10">
-                                    <div class="w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center font-black text-sm ${p.finished ? 'bg-amber-400 text-white' : i === state.currentPlayerIndex && !p.eliminated ? 'bg-green-500 text-white shadow-inner' : 'bg-gray-200 text-gray-500'}">
+                                
+                                <div class="flex items-center gap-3 overflow-hidden relative z-10 flex-grow">
+                                    <div class="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center font-black text-xs ${p.finished ? 'bg-amber-400 text-white' : i === state.currentPlayerIndex && !p.eliminated ? 'bg-green-500 text-white shadow-inner' : 'bg-gray-200 text-gray-500'}">
                                         ${p.finished ? '👑' : i+1}
                                     </div>
                                     <div class="truncate">
-                                        <div class="font-bold text-gray-800 text-lg truncate ${p.eliminated ? 'line-through' : ''}">${p.name}</div>
-                                        ${p.eliminated ? '<div class="text-[10px] text-red-600 font-bold uppercase tracking-widest leading-none mt-1">Pudonnut</div>' : p.finished ? `<div class="text-[10px] text-amber-700 font-black uppercase tracking-widest leading-none mt-1">${p.rank}. SIJA</div>` : ''}
+                                        <div class="font-bold text-gray-800 text-base truncate ${p.eliminated ? 'line-through' : ''}">${p.name}</div>
                                     </div>
                                 </div>
-                                <div class="flex flex-col items-end pl-2 relative z-10">
-                                    <div class="text-2xl font-black ${p.finished ? 'text-amber-600' : p.score >= state.targetScore - 10 ? 'text-amber-500 drop-shadow-sm' : 'text-gray-700'}">
+                                
+                                <div class="flex items-center gap-4 relative z-10 pl-2">
+                                    <div class="text-xl font-black w-8 text-right ${p.finished ? 'text-amber-600' : 'text-gray-700'}">
                                         ${p.score}
+                                    </div>
+                                    <div class="text-sm font-bold w-10 text-center ${p.finished ? 'text-amber-500' : p.eliminated ? 'text-transparent' : needed <= 12 ? 'text-amber-600 bg-amber-100 rounded px-1' : 'text-gray-400'}">
+                                        ${p.finished ? 'MAALI' : p.eliminated ? '-' : needed}
                                     </div>
                                 </div>
                             </div>
-                        `).join('')}
+                        `}).join('')}
+                    </div>
+                    
+                    <!-- Selkeä lopetuspainike -->
+                    <div class="pt-2">
+                        <button onclick="finishGameEarly()" class="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 font-bold py-3 rounded-xl transition-colors active:scale-95">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg>
+                            Lopeta peli ja näytä tulokset
+                        </button>
                     </div>
                 </div>
                 
@@ -445,7 +577,6 @@
         }
 
         function renderEnd() {
-            // Järjestetään pelaajat: ensin sijoituksen mukaan (valmiit), sitten pisteiden (aktiiviset), lopuksi pudonneet
             const sortedPlayers = [...state.players].sort((a, b) => {
                 if (a.finished && !b.finished) return -1;
                 if (!a.finished && b.finished) return 1;
@@ -467,14 +598,12 @@
                     ${hasFinished ? `
                         <div class="text-7xl mb-4 animate-bounce drop-shadow-lg">🏆</div>
                         <h1 class="text-4xl font-black text-green-800 mb-2 uppercase tracking-wide">Peli ohi!</h1>
-                        <p class="text-lg font-bold text-green-600 mb-8">Huippusuoritus!</p>
                     ` : `
                         <div class="text-7xl mb-4 opacity-80">💀</div>
                         <h1 class="text-4xl font-black text-red-800 mb-2 uppercase tracking-wide">Peli keskeytetty</h1>
-                        <p class="text-lg font-bold text-gray-500 mb-8">Kukaan ei päässyt maaliin.</p>
                     `}
 
-                    <div class="text-left mb-8 bg-gray-50 p-5 rounded-3xl border border-gray-200 shadow-inner">
+                    <div class="text-left mb-8 bg-gray-50 p-5 rounded-3xl border border-gray-200 shadow-inner mt-6">
                         <h3 class="font-black text-gray-400 uppercase tracking-widest text-sm mb-4 border-b-2 border-gray-100 pb-2">Lopulliset sijoitukset</h3>
                         <div class="space-y-3">
                             ${sortedPlayers.map((p, i) => `
@@ -487,11 +616,10 @@
                                             ${p.name}
                                         </span>
                                     </div>
-                                    <div class="text-right">
+                                    <div class="text-right flex items-center gap-2">
                                         <span class="font-black text-xl block ${p.finished ? 'text-amber-500' : p.eliminated ? 'text-gray-300' : 'text-gray-500'}">
                                             ${p.eliminated ? 'X' : p.score + ' p'}
                                         </span>
-                                        ${!p.finished && !p.eliminated ? `<span class="text-[10px] text-gray-400 uppercase font-bold">Kesk.</span>` : ''}
                                     </div>
                                 </div>
                             `).join('')}
@@ -519,9 +647,11 @@
 
         // --- ALUSTUS ---
         window.updateTarget = updateTarget;
+        window.updateDrop = updateDrop;
         window.updatePlayerName = updatePlayerName;
         window.addPlayer = addPlayer;
         window.removePlayer = removePlayer;
+        window.shufflePlayers = shufflePlayers;
         window.startGame = startGame;
         window.scoreTurn = scoreTurn;
         window.backToSetup = backToSetup;
