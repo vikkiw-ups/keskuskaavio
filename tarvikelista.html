@@ -200,7 +200,6 @@
         <h2 style="margin-bottom: 0.5rem;">Tuotekirjasto</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">Kirjaudu sisään sähköpostillasi.</p>
         
-        <!-- KORJAUS: Ota oletustoiminto kiinni jo HTML:n puolella (onsubmit), jotta sivu ei voi päivittyä! -->
         <form id="loginForm" onsubmit="event.preventDefault(); if(window.submitLogin) window.submitLogin(); return false;">
             <input type="email" id="emailInput" placeholder="nimi@esimerkki.fi" required>
             <button type="submit" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Kirjaudu sisään</button>
@@ -213,6 +212,7 @@
         <div class="nav-links">
             <button id="navHome" class="nav-btn active" onclick="switchTab('home')">Tuotteet</button>
             <button id="navGroups" class="nav-btn" onclick="switchTab('groups')">Ryhmät</button>
+            <button id="navUsers" class="nav-btn" onclick="switchTab('users')">Käyttäjät</button>
         </div>
         <div style="display: flex; align-items: center; gap: 1rem;">
             <span id="userEmailDisplay" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;"></span>
@@ -245,6 +245,27 @@
             <button onclick="openModal('groupModal')">+ Uusi ryhmä</button>
         </div>
         <div id="groupsList" class="groups-layout"></div>
+    </main>
+
+    <!-- KÄYTTÄJÄT VÄLILEHTI (UUSI) -->
+    <main id="usersTab" class="container hidden">
+        <div style="max-width: 600px; margin: 0 auto;">
+            <h2 style="margin-bottom: 1.5rem;">Käyttöoikeuksien hallinta</h2>
+            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Salli pääsy uudelle tilille</h3>
+                <form id="addUserForm" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <input type="email" id="newAllowedEmail" placeholder="esim. tyontekija@rentola.fi" required style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <button type="submit">Salli pääsy</button>
+                </form>
+            </div>
+            
+            <div style="background: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Sallitut tilit</h3>
+                <div id="allowedUsersList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- JS generoi listan tänne -->
+                </div>
+            </div>
+        </div>
     </main>
 
     <div id="productModal" class="modal-overlay">
@@ -323,7 +344,6 @@
     </footer>
 
     <script type="module">
-        // KORJAUS: Muutettu versio vakaaseen 10.12.0 (12.16.0 ei ole olemassa ja siksi selain kaatoi koodin)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -337,11 +357,11 @@
             measurementId: "G-XGYPLWV6R2"
         };
 
-        // Globaalit muuttujat
         window.currentUser = null;
-        window.appData = { products: [], groups: [] };
+        window.appData = { products: [], groups: [], allowedUsers: [] };
         let db;
         let isCloudActive = false;
+        let unsubCloud = null;
 
         try {
             const app = initializeApp(firebaseConfig);
@@ -360,7 +380,6 @@
 
         const defaultImageStr = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpolyline points='3.27 6.96 12 12.01 20.73 6.96'/%3E%3Cline x1='12' y1='22.08' x2='12' y2='12'/%3E%3C/svg%3E";
 
-        // HTML-koodin kutsuma kirjautumisfunktio
         window.submitLogin = function() {
             const email = document.getElementById('emailInput').value.trim().toLowerCase();
             if(email) window.login(email);
@@ -378,23 +397,20 @@
             
             if (isCloudActive && db) {
                 try {
-                    // Pilvitila: Kuuntele tietokantaa
-                    onSnapshot(doc(db, "rentola", "kirjasto"), (docSnap) => {
+                    unsubCloud = onSnapshot(doc(db, "rentola", "kirjasto"), (docSnap) => {
+                        if (!window.currentUser) return; // Varmistus uloskirjauksen jälkeisiin päivityksiin
                         if (docSnap.exists()) {
                             window.appData = docSnap.data();
                         } else {
-                            window.appData = { products: [], groups: [] };
+                            window.appData = { products: [], groups: [], allowedUsers: [] };
                             ensureDefaultGroup();
                         }
-                        finalizeLogin();
+                        checkAuthAndFinalize();
                     }, (error) => {
-                        console.warn("Pilven lukuvirhe (tarkista Firestore Rules):", error);
-                        alert("Pilven luku estetty. Varmista Firebasen 'Rules' säädöt. Käytetään selaimen muistia.");
+                        console.warn("Pilven lukuvirhe:", error);
                         fallbackToLocal();
                     });
-                } catch(e) {
-                    fallbackToLocal();
-                }
+                } catch(e) { fallbackToLocal(); }
             } else {
                 fallbackToLocal();
             }
@@ -406,12 +422,13 @@
                 try { window.appData = JSON.parse(savedData); } catch(e) { }
             }
             ensureDefaultGroup();
-            finalizeLogin();
+            checkAuthAndFinalize();
         }
 
         function ensureDefaultGroup() {
             if (!window.appData.groups) window.appData.groups = [];
             if (!window.appData.products) window.appData.products = [];
+            if (!window.appData.allowedUsers) window.appData.allowedUsers = [];
             
             if (window.appData.groups.filter(g => g.owner === window.currentUser).length === 0) {
                 window.appData.groups.push({ id: Date.now().toString(), name: "Oletus", owner: window.currentUser, sharedWith: [], hiddenBy: [] });
@@ -419,36 +436,59 @@
             }
         }
 
-        function finalizeLogin() {
+        // TARKISTETAAN ONKO KÄYTTÄJÄ SALLITTU
+        function checkAuthAndFinalize() {
+            if (!window.appData.allowedUsers) window.appData.allowedUsers = [];
+            
+            // Ensimmäinen kirjautuja saa aina oikeuden ja hänestä tulee 'admin'
+            if (window.appData.allowedUsers.length === 0) {
+                window.appData.allowedUsers.push(window.currentUser);
+                window.saveData();
+            } 
+            // Jos käyttäjä ei ole sallittujen listalla, estetään sisäänpääsy
+            else if (!window.appData.allowedUsers.includes(window.currentUser)) {
+                alert(`Pääsy evätty!\n\nSähköpostiosoitettasi (${window.currentUser}) ei ole sallittu järjestelmässä.\nPyydä pääkäyttäjää lisäämään sinut.`);
+                window.logout();
+                return;
+            }
+
+            // Jos kaikki ok, päästetään sisään
             document.getElementById('loginView').classList.add('hidden');
             document.getElementById('appHeader').classList.remove('hidden');
-            window.switchTab('home');
+            
+            // Jos sivu vasta ladataan, mennään etusivulle
+            if (document.getElementById('homeTab').classList.contains('hidden') && 
+                document.getElementById('groupsTab').classList.contains('hidden') && 
+                document.getElementById('usersTab').classList.contains('hidden')) {
+                window.switchTab('home');
+            } else {
+                // Muutoin päivitetään vain näkyvä välilehti taustalta tulleen päivityksen myötä
+                window.updateSelects();
+                window.renderProducts();
+                window.renderGroups();
+                window.renderUsers();
+            }
             window.updateSelects();
         }
 
         window.logout = function() {
+            if (unsubCloud) { unsubCloud(); unsubCloud = null; }
             window.currentUser = null;
             localStorage.removeItem('currentUser');
             document.getElementById('appHeader').classList.add('hidden');
             document.getElementById('homeTab').classList.add('hidden');
             document.getElementById('groupsTab').classList.add('hidden');
+            document.getElementById('usersTab').classList.add('hidden');
             document.getElementById('loginView').classList.remove('hidden');
             document.getElementById('emailInput').value = '';
         }
 
         window.saveData = async function() {
             if (isCloudActive && db) {
-                try { 
-                    await setDoc(doc(db, "rentola", "kirjasto"), window.appData); 
-                } 
-                catch (e) { 
-                    console.error(e);
-                    alert("Virhe pilvitallennuksessa! Tietoja ei voida tallentaa pilveen (Tarkista Rules). Tallennetaan selaimeen.");
-                    localStorage.setItem('appData', JSON.stringify(window.appData));
-                }
+                try { await setDoc(doc(db, "rentola", "kirjasto"), window.appData); } 
+                catch (e) { localStorage.setItem('appData', JSON.stringify(window.appData)); }
             } else {
-                try { localStorage.setItem('appData', JSON.stringify(window.appData)); } 
-                catch (e) { alert("Paikallinen muisti täynnä!"); }
+                try { localStorage.setItem('appData', JSON.stringify(window.appData)); } catch (e) {}
             }
         }
 
@@ -456,10 +496,15 @@
         window.switchTab = function(tabId) {
             document.getElementById('homeTab').classList.toggle('hidden', tabId !== 'home');
             document.getElementById('groupsTab').classList.toggle('hidden', tabId !== 'groups');
+            document.getElementById('usersTab').classList.toggle('hidden', tabId !== 'users');
+            
             document.getElementById('navHome').classList.toggle('active', tabId === 'home');
             document.getElementById('navGroups').classList.toggle('active', tabId === 'groups');
+            document.getElementById('navUsers').classList.toggle('active', tabId === 'users');
+            
             if(tabId === 'home') window.renderProducts();
             if(tabId === 'groups') window.renderGroups();
+            if(tabId === 'users') window.renderUsers();
             window.scrollTo(0, 0);
         }
 
@@ -599,10 +644,10 @@
                             <button class="icon-btn" onclick="event.stopPropagation(); deleteProduct('${p.id}')" style="color: var(--danger-color)">🗑️</button>
                         ` : ''}
                     </div>
-                    <div class="img-wrapper" onclick="copyNum('${p.number}')">
+                    <div class="img-wrapper" onclick="event.stopPropagation(); copyNum('${p.number}')">
                         <img src="${imgSrc}" class="${imgClass}" loading="lazy">
                     </div>
-                    <div class="product-info" onclick="copyNum('${p.number}')">
+                    <div class="product-info" onclick="event.stopPropagation(); copyNum('${p.number}')">
                         <div class="product-name">${p.name}</div>
                         <div class="product-number">${p.number}</div>
                         <div class="keywords">
@@ -623,6 +668,8 @@
         window.updateSelects = function() {
             const pGroup = document.getElementById('pGroup');
             const filterGroup = document.getElementById('filterGroup');
+            if(!pGroup || !filterGroup) return;
+            
             pGroup.innerHTML = ''; filterGroup.innerHTML = '<option value="all">Kaikki ryhmät (Ei piilotetut)</option>';
             const visible = getVisibleGroups();
             const writableGroups = visible.filter(g => g.owner === window.currentUser);
@@ -632,7 +679,9 @@
         }
 
         window.renderGroups = function() {
-            const list = document.getElementById('groupsList'); list.innerHTML = '';
+            const list = document.getElementById('groupsList'); 
+            if(!list) return;
+            list.innerHTML = '';
             const groups = getVisibleGroups();
             if(groups.length === 0) { list.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Ei ryhmiä.</p>`; return; }
 
@@ -663,6 +712,50 @@
             });
         }
 
+        // --- KÄYTTÄJIEN HALLINTA ---
+        window.renderUsers = function() {
+            const list = document.getElementById('allowedUsersList');
+            if(!list) return;
+            list.innerHTML = '';
+            
+            if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
+            
+            window.appData.allowedUsers.forEach(email => {
+                const isMe = email === window.currentUser;
+                list.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <span style="font-weight: 500;">${email} ${isMe ? '<span style="color:var(--text-muted); font-size:0.8rem; margin-left: 5px;">(Sinä)</span>' : ''}</span>
+                        ${!isMe ? `<button class="btn-danger btn-small" onclick="removeAllowedUser('${email}')">Poista pääsy</button>` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('addUserForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('newAllowedEmail').value.trim().toLowerCase();
+            if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
+            
+            if(!window.appData.allowedUsers.includes(email)) {
+                window.appData.allowedUsers.push(email);
+                window.saveData();
+                window.renderUsers();
+                e.target.reset();
+            } else {
+                alert("Tämä sähköposti on jo listalla.");
+            }
+        });
+
+        window.removeAllowedUser = function(email) {
+            if(confirm(`Haluatko varmasti poistaa käyttöoikeuden tililtä:\n${email}?`)) {
+                window.appData.allowedUsers = window.appData.allowedUsers.filter(e => e !== email);
+                window.saveData();
+                window.renderUsers();
+            }
+        }
+
+
+        // Ryhmien formien event-listenerit
         document.getElementById('addGroupForm').addEventListener('submit', (e) => {
             e.preventDefault(); const name = document.getElementById('gName').value.trim();
             if(name) { window.appData.groups.push({ id: Date.now().toString(), name: name, owner: window.currentUser, sharedWith: [], hiddenBy: [] });
@@ -720,18 +813,51 @@
             else p.favorites.push(window.currentUser);
             window.saveData(); window.renderProducts();
         }
+
+        // --- KORJATTU KOPIOINTI FUNKTIO ---
         window.copyNum = function(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const t = document.getElementById('toast'); t.textContent = `Kopioitu: ${text}`;
-                t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000);
-            }).catch(() => alert(`Tuotenumero: ${text}`));
+            const showToast = (copiedText) => {
+                const t = document.getElementById('toast'); 
+                t.textContent = `Kopioitu: ${copiedText}`;
+                t.classList.add('show'); 
+                setTimeout(() => t.classList.remove('show'), 2000);
+            };
+
+            const fallbackCopy = (textToCopy) => {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                // Vältetään selaimen rullaaminen laittamalla elementti ylös
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.position = "fixed";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(textToCopy);
+                } catch (err) {
+                    alert(`Tuotenumero: ${textToCopy}`);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            // Jos sivu on avattu omalta koneelta (ei https), navigator.clipboard on usein estetty selaimessa.
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text)
+                    .then(() => showToast(text))
+                    .catch(() => fallbackCopy(text));
+            } else {
+                fallbackCopy(text);
+            }
         }
 
         ['searchInput', 'filterGroup', 'filterFav'].forEach(id => {
-            document.getElementById(id).addEventListener('input', window.renderProducts);
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('input', window.renderProducts);
         });
 
-        // Käynnistetään sovellus, kun kaikki koodi on luettu onnistuneesti
+        // Käynnistys
         window.init();
     </script>
 </body>
