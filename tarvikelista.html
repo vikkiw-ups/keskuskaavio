@@ -199,7 +199,9 @@
         </div>
         <h2 style="margin-bottom: 0.5rem;">Tuotekirjasto</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">Kirjaudu sisään sähköpostillasi.</p>
-        <form id="loginForm">
+        
+        <!-- KORJAUS: Ota oletustoiminto kiinni jo HTML:n puolella (onsubmit), jotta sivu ei voi päivittyä! -->
+        <form id="loginForm" onsubmit="event.preventDefault(); if(window.submitLogin) window.submitLogin(); return false;">
             <input type="email" id="emailInput" placeholder="nimi@esimerkki.fi" required>
             <button type="submit" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Kirjaudu sisään</button>
         </form>
@@ -321,12 +323,10 @@
     </footer>
 
     <script type="module">
-        // 1. Päivitetty Firebase versioon 12.16.0
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+        // KORJAUS: Muutettu versio vakaaseen 10.12.0 (12.16.0 ei ole olemassa ja siksi selain kaatoi koodin)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        // 2. Tunnuksesi juuri sellaisenaan
         const firebaseConfig = {
             apiKey: "AIzaSyAOu20oNkHxm_tEB7TicvakRfA5fkVWFec",
             authDomain: "tarvikelistastr.firebaseapp.com",
@@ -343,10 +343,8 @@
         let db;
         let isCloudActive = false;
 
-        // Firebase Alustus try-catch lohkon sisällä, ettei kirjautuminen kaadu virheeseen
         try {
             const app = initializeApp(firebaseConfig);
-            const analytics = getAnalytics(app);
             db = getFirestore(app);
             isCloudActive = true;
             
@@ -362,9 +360,15 @@
 
         const defaultImageStr = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpolyline points='3.27 6.96 12 12.01 20.73 6.96'/%3E%3Cline x1='12' y1='22.08' x2='12' y2='12'/%3E%3C/svg%3E";
 
+        // HTML-koodin kutsuma kirjautumisfunktio
+        window.submitLogin = function() {
+            const email = document.getElementById('emailInput').value.trim().toLowerCase();
+            if(email) window.login(email);
+        }
+
         window.init = function() {
             const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) login(savedUser);
+            if (savedUser) window.login(savedUser);
         }
 
         window.login = function(email) {
@@ -385,7 +389,7 @@
                         finalizeLogin();
                     }, (error) => {
                         console.warn("Pilven lukuvirhe (tarkista Firestore Rules):", error);
-                        alert("Tietokannan lukuoikeus puuttuu. Varmista Firebasesta, että Firestore Database on luotu ja 'rules' sallii lukemisen. Käytetään selaimen muistia.");
+                        alert("Pilven luku estetty. Varmista Firebasen 'Rules' säädöt. Käytetään selaimen muistia.");
                         fallbackToLocal();
                     });
                 } catch(e) {
@@ -439,7 +443,7 @@
                 } 
                 catch (e) { 
                     console.error(e);
-                    alert("Virhe pilvitallennuksessa! Tietoja ei voida tallentaa pilveen. Tallennetaan selaimeen.");
+                    alert("Virhe pilvitallennuksessa! Tietoja ei voida tallentaa pilveen (Tarkista Rules). Tallennetaan selaimeen.");
                     localStorage.setItem('appData', JSON.stringify(window.appData));
                 }
             } else {
@@ -727,15 +731,7 @@
             document.getElementById(id).addEventListener('input', window.renderProducts);
         });
 
-        // 3. Korjattu kirjautumispainikkeen kuuntelija
-        const loginFormElement = document.getElementById('loginForm');
-        if (loginFormElement) {
-            loginFormElement.addEventListener('submit', (e) => {
-                e.preventDefault();
-                window.login(document.getElementById('emailInput').value.trim().toLowerCase());
-            });
-        }
-
+        // Käynnistetään sovellus, kun kaikki koodi on luettu onnistuneesti
         window.init();
     </script>
 </body>
