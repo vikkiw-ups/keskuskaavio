@@ -176,7 +176,9 @@
             border-left: 4px solid var(--success-color);
         }
         #toast.show { bottom: 2rem; }
-        #cloudStatus { text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem; }
+        #cloudStatus { text-align: center; font-size: 0.85rem; margin-top: 1.5rem; padding: 0.5rem; border-radius: 6px; }
+        .status-cloud { background: #dcfce7; color: #166534; }
+        .status-local { background: #fee2e2; color: #991b1b; }
 
         footer {
             background: #0f172a; color: #94a3b8; text-align: center; padding: 1.5rem;
@@ -201,7 +203,7 @@
             <input type="email" id="emailInput" placeholder="nimi@esimerkki.fi" required>
             <button type="submit" style="width: 100%; padding: 1rem; font-size: 1.1rem;">Kirjaudu sisään</button>
         </form>
-        <div id="cloudStatus">☁️ Toimii paikallisesti. Määritä Firebase koodiin laitteiden väliseen jakoon.</div>
+        <div id="cloudStatus">Alustetaan yhteyttä...</div>
     </div>
 
     <header id="appHeader" class="hidden">
@@ -243,7 +245,6 @@
         <div id="groupsList" class="groups-layout"></div>
     </main>
 
-    <!-- Modaalit pysyvät samana -->
     <div id="productModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -319,15 +320,13 @@
         <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.7;">Tuotekirjasto &copy; 2026</p>
     </footer>
 
-    <!-- HUOM: Script tyyppi on nyt 'module' jotta Firebase toimii -->
     <script type="module">
-          import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-          import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+        // 1. Päivitetty Firebase versioon 12.16.0
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
-        // ==========================================
-        // PILVITALLENNUKSEN ASETUKSET (FIREBASE)
-        // ==========================================
-        // Vaihda apiKey alle, jotta sovellus yhdistää pilveen!
+        // 2. Tunnuksesi juuri sellaisenaan
         const firebaseConfig = {
             apiKey: "AIzaSyAOu20oNkHxm_tEB7TicvakRfA5fkVWFec",
             authDomain: "tarvikelistastr.firebaseapp.com",
@@ -338,21 +337,30 @@
             measurementId: "G-XGYPLWV6R2"
         };
 
-        const isCloudEnabled = firebaseConfig.apiKey !== "AIzaSyAOu20oNkHxm_tEB7TicvakRfA5fkVWFec";
+        // Globaalit muuttujat
+        window.currentUser = null;
+        window.appData = { products: [], groups: [] };
         let db;
-        
-        if (isCloudEnabled) {
+        let isCloudActive = false;
+
+        // Firebase Alustus try-catch lohkon sisällä, ettei kirjautuminen kaadu virheeseen
+        try {
             const app = initializeApp(firebaseConfig);
+            const analytics = getAnalytics(app);
             db = getFirestore(app);
-            document.getElementById('cloudStatus').innerHTML = "☁️ Yhdistetty pilvitietokantaan!";
-            document.getElementById('cloudStatus').style.color = "var(--success-color)";
+            isCloudActive = true;
+            
+            const statusEl = document.getElementById('cloudStatus');
+            statusEl.innerHTML = "☁️ Pilvitietokanta kytketty";
+            statusEl.className = "status-cloud";
+        } catch (error) {
+            console.error("Firebase alustus epäonnistui:", error);
+            const statusEl = document.getElementById('cloudStatus');
+            statusEl.innerHTML = "⚠️ Pilvi ei käytössä. Toimitaan paikallisesti.";
+            statusEl.className = "status-local";
         }
 
         const defaultImageStr = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpolyline points='3.27 6.96 12 12.01 20.73 6.96'/%3E%3Cline x1='12' y1='22.08' x2='12' y2='12'/%3E%3C/svg%3E";
-
-        // Globaalit muuttujat ikkunaobjektiin (koska type="module")
-        window.currentUser = null;
-        window.appData = { products: [], groups: [] };
 
         window.init = function() {
             const savedUser = localStorage.getItem('currentUser');
@@ -364,29 +372,43 @@
             localStorage.setItem('currentUser', email);
             document.getElementById('userEmailDisplay').textContent = email;
             
-            if (isCloudEnabled) {
-                // Pilvitila: Kuuntele tietokantaa reaaliajassa!
-                onSnapshot(doc(db, "rentola", "kirjasto"), (docSnap) => {
-                    if (docSnap.exists()) {
-                        window.appData = docSnap.data();
-                    } else {
-                        window.appData = { products: [], groups: [] };
-                        ensureDefaultGroup();
-                    }
-                    finalizeLogin();
-                });
-            } else {
-                // Paikallinen tila
-                const savedData = localStorage.getItem('appData');
-                if (savedData) {
-                    try { window.appData = JSON.parse(savedData); } catch(e) { }
+            if (isCloudActive && db) {
+                try {
+                    // Pilvitila: Kuuntele tietokantaa
+                    onSnapshot(doc(db, "rentola", "kirjasto"), (docSnap) => {
+                        if (docSnap.exists()) {
+                            window.appData = docSnap.data();
+                        } else {
+                            window.appData = { products: [], groups: [] };
+                            ensureDefaultGroup();
+                        }
+                        finalizeLogin();
+                    }, (error) => {
+                        console.warn("Pilven lukuvirhe (tarkista Firestore Rules):", error);
+                        alert("Tietokannan lukuoikeus puuttuu. Varmista Firebasesta, että Firestore Database on luotu ja 'rules' sallii lukemisen. Käytetään selaimen muistia.");
+                        fallbackToLocal();
+                    });
+                } catch(e) {
+                    fallbackToLocal();
                 }
-                ensureDefaultGroup();
-                finalizeLogin();
+            } else {
+                fallbackToLocal();
             }
         }
 
+        function fallbackToLocal() {
+            const savedData = localStorage.getItem('appData');
+            if (savedData) {
+                try { window.appData = JSON.parse(savedData); } catch(e) { }
+            }
+            ensureDefaultGroup();
+            finalizeLogin();
+        }
+
         function ensureDefaultGroup() {
+            if (!window.appData.groups) window.appData.groups = [];
+            if (!window.appData.products) window.appData.products = [];
+            
             if (window.appData.groups.filter(g => g.owner === window.currentUser).length === 0) {
                 window.appData.groups.push({ id: Date.now().toString(), name: "Oletus", owner: window.currentUser, sharedWith: [], hiddenBy: [] });
                 window.saveData();
@@ -411,9 +433,15 @@
         }
 
         window.saveData = async function() {
-            if (isCloudEnabled) {
-                try { await setDoc(doc(db, "rentola", "kirjasto"), window.appData); } 
-                catch (e) { alert("Virhe pilvitallennuksessa! Tarkista Firebase oikeudet."); console.error(e); }
+            if (isCloudActive && db) {
+                try { 
+                    await setDoc(doc(db, "rentola", "kirjasto"), window.appData); 
+                } 
+                catch (e) { 
+                    console.error(e);
+                    alert("Virhe pilvitallennuksessa! Tietoja ei voida tallentaa pilveen. Tallennetaan selaimeen.");
+                    localStorage.setItem('appData', JSON.stringify(window.appData));
+                }
             } else {
                 try { localStorage.setItem('appData', JSON.stringify(window.appData)); } 
                 catch (e) { alert("Paikallinen muisti täynnä!"); }
@@ -549,7 +577,7 @@
                 return true;
             });
 
-            if(filtered.length === 0) { grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">Ei tuotteita.</div>`; return; }
+            if(filtered.length === 0) { grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">Ei tuotteita näillä hakuehdoilla.</div>`; return; }
 
             filtered.forEach(p => {
                 const groupName = window.appData.groups.find(g => g.id === p.groupId)?.name || 'Ei ryhmää';
@@ -699,11 +727,14 @@
             document.getElementById(id).addEventListener('input', window.renderProducts);
         });
 
-        // Pakotetaan login-kuuntelija tänne moduuliin
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            window.login(document.getElementById('emailInput').value.trim().toLowerCase());
-        });
+        // 3. Korjattu kirjautumispainikkeen kuuntelija
+        const loginFormElement = document.getElementById('loginForm');
+        if (loginFormElement) {
+            loginFormElement.addEventListener('submit', (e) => {
+                e.preventDefault();
+                window.login(document.getElementById('emailInput').value.trim().toLowerCase());
+            });
+        }
 
         window.init();
     </script>
