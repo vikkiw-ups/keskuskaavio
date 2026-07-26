@@ -2,108 +2,172 @@
 <html lang="fi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
 <title>Keskussuunnittelija</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ================= TOKENS ================= */
+/* ========== TOKENS ========== */
 :root{
-  --shell:#14161a; --panel:#1b1e24; --panel2:#22262e; --line:#2c3038; --line2:#3a3f49;
-  --ink:#eceef2; --muted:#959cab;
-  --red:#dc2f26; --red-hi:#ef4a3f; --red-dim:#2c1615; --red-line:#5f2621; --red-txt:#ff9086;
-  --ui:"Barlow Condensed","Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --bg:#eef1f4; --card:#fff; --ink:#14171c; --ink2:#5d6674; --ink3:#8b94a3;
+  --line:#e3e7ec; --line2:#ccd3dc;
+  --red:#d92d20; --red-d:#a81f14; --red-l:#fdeceb;
+  --slate:#334155; --steel:#64748b; --mist:#94a3b8;
+  --disp:"Space Grotesk","Inter",system-ui,sans-serif;
   --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:14px; --sh:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);
+  --safe:env(safe-area-inset-bottom,0px);
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{margin:0;background:var(--shell);color:var(--ink);font-family:var(--body);font-size:13px;overflow:hidden}
-button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
-:focus-visible{outline:2px solid var(--red-hi);outline-offset:1px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;overflow:hidden;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,select,textarea{font-family:inherit;font-size:16px;color:inherit}
+h1,h2,h3{font-family:var(--disp);font-weight:600;margin:0}
+:focus-visible{outline:2.5px solid var(--red);outline-offset:2px}
 
-/* ================= SHELL ================= */
+/* ========== RUNKO ========== */
 #app{display:flex;flex-direction:column;height:100%}
-#topbar{display:flex;align-items:center;gap:16px;padding:0 14px;height:52px;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto}
-.brand{display:flex;align-items:center;gap:9px;font-family:var(--ui);font-weight:600;font-size:17px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
-.brand i{width:22px;height:22px;display:grid;place-items:center;background:var(--red);color:#fff;font-style:normal;font-size:14px;border-radius:3px}
-.tabs{display:flex;gap:2px;background:#15181d;padding:3px;border-radius:5px}
-.tabs button{background:transparent;border:0;padding:7px 16px;border-radius:3px;color:var(--muted);font-family:var(--ui);font-size:14.5px;letter-spacing:.05em;text-transform:uppercase}
-.tabs button:hover{color:var(--ink)}
-.tabs button.active{background:var(--red);color:#fff;font-weight:600}
-.spacer{flex:1}
-.btn{background:var(--panel2);border:1px solid var(--line2);border-radius:4px;padding:7px 13px;font-family:var(--ui);font-size:14px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
-.btn:hover{background:#2b303a;border-color:#4c525e}
-.btn.primary{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
-.btn.primary:hover{background:var(--red-hi);border-color:var(--red-hi)}
-.btn.ghost{background:transparent}
-.btn.sm{padding:5px 10px;font-size:13px}
-.btn.danger:hover{background:#3a1c1a;border-color:var(--red-line);color:var(--red-txt)}
+.appbar{flex:0 0 auto;height:56px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line)}
+.mark{width:30px;height:30px;flex:0 0 auto;border-radius:8px;background:var(--red);color:#fff;display:grid;place-items:center;font-size:16px}
+.idbtn{flex:1;min-width:0;text-align:left;padding:5px 8px;border-radius:9px}
+.idbtn:active{background:var(--bg)}
+.idbtn b{display:block;font-family:var(--disp);font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.idbtn small{display:block;font-size:12.5px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.abtn{flex:0 0 auto;height:40px;min-width:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line2);font-size:14px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.abtn:active{background:var(--bg)}
+.abtn.solid{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+.abtn.solid:active{background:var(--red-d)}
+.deskonly{display:none}
 
-#main{flex:1;display:flex;min-height:0}
-aside{background:var(--panel);width:280px;flex:0 0 280px;overflow-y:auto;border-right:1px solid var(--line)}
-#right{border-right:0;border-left:1px solid var(--line)}
-aside::-webkit-scrollbar,#stage::-webkit-scrollbar{width:9px;height:9px}
-aside::-webkit-scrollbar-thumb,#stage::-webkit-scrollbar-thumb{background:#343a45;border-radius:5px}
+#main{flex:1;min-height:0;position:relative}
+.pane{display:none;position:absolute;inset:0;flex-direction:column;overflow:hidden}
+.pane.on{display:flex}
+.scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.wrap{padding:14px 14px calc(24px + var(--safe));max-width:640px;margin:0 auto}
 
-details.sec{border-bottom:1px solid var(--line)}
-details.sec>summary{list-style:none;cursor:pointer;padding:13px 14px;font-family:var(--ui);text-transform:uppercase;letter-spacing:.1em;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:9px;user-select:none}
-details.sec>summary::-webkit-details-marker{display:none}
-details.sec>summary::after{content:"";width:6px;height:6px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg);margin-left:auto;opacity:.6}
-details.sec[open]>summary::after{transform:rotate(-135deg)}
-details.sec[open]>summary{color:var(--ink);border-bottom:1px solid var(--line)}
-.secbody{padding:14px}
+/* ========== ALAPALKKI ========== */
+.tabbar{flex:0 0 auto;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:var(--safe)}
+.tabbar button{flex:1;padding:9px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink3);font-size:11.5px;font-weight:500;letter-spacing:.02em}
+.tabbar button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button.on{color:var(--red)}
 
-.field{margin-bottom:11px}
-.field:last-child{margin-bottom:0}
-.field label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-family:var(--ui)}
-input[type=text],input[type=number],select,textarea{background:#15181d;border:1px solid var(--line2);border-radius:4px;padding:7px 9px;width:100%}
-input:hover,select:hover{border-color:#525a68}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.check{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;cursor:pointer}
-.check input{width:16px;height:16px;accent-color:var(--red);flex:0 0 auto}
-.hint{font-size:11.5px;color:var(--muted);line-height:1.55;margin:12px 0 0}
-.hint b{color:#c3c9d4}
-kbd{font-family:var(--mono);background:#22262e;border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:1px 5px;font-size:11px}
+/* ========== KORTIT ========== */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden}
+.cardhead{display:flex;align-items:center;gap:10px;padding:13px 14px 11px}
+.badge{width:26px;height:26px;flex:0 0 auto;border-radius:7px;background:var(--slate);color:#fff;display:grid;place-items:center;font-family:var(--mono);font-size:12.5px;font-weight:600}
+.cardhead .t{flex:1;min-width:0}
+.cardhead .t b{display:block;font-family:var(--disp);font-size:16.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cardhead .t small{display:block;font-size:12.5px;color:var(--ink3);font-family:var(--mono)}
+.cardhead .t small.over{color:var(--red);font-weight:600}
+.more{width:38px;height:38px;flex:0 0 auto;border-radius:10px;display:grid;place-items:center;font-size:19px;color:var(--ink2)}
+.more:active{background:var(--bg)}
 
-/* rivilista */
-.rowitem{border:1px solid var(--line2);border-radius:5px;padding:10px;margin-bottom:8px;background:#191c22}
-.rowitem.active{border-color:var(--red);background:#1d1a1c}
-.rowitem .top{display:flex;align-items:center;gap:8px}
-.rowitem .no{width:20px;height:20px;flex:0 0 auto;display:grid;place-items:center;border-radius:3px;background:#2c3038;color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:600}
-.rowitem.active .no{background:var(--red);color:#fff}
-.rowitem input.rname{flex:1;min-width:0;background:transparent;border:0;border-bottom:1px solid transparent;padding:2px 0;font-family:var(--ui);font-size:15px;border-radius:0}
-.rowitem input.rname:hover,.rowitem input.rname:focus{border-bottom-color:var(--line2)}
-.rowitem .btns{display:flex;gap:3px;opacity:.55}
-.rowitem:hover .btns,.rowitem.active .btns{opacity:1}
-.ib{width:24px;height:24px;background:transparent;border:1px solid var(--line2);border-radius:3px;display:grid;place-items:center;color:var(--muted);font-size:12px;line-height:1;padding:0}
-.ib:hover{color:var(--ink);background:#2b303a}
-.rowitem .cfg{display:flex;align-items:center;gap:8px;margin-top:9px}
-.rowitem .cfg select{width:auto;flex:1;padding:5px 6px;font-size:12.5px}
-.rowitem .cfg input{width:56px;padding:5px 6px;font-family:var(--mono);font-size:12.5px;text-align:center}
-.rowitem .cfg span{font-size:11.5px;color:var(--muted)}
-.usage{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
-.usage.over{color:var(--red-txt)}
+/* moduulipalkki */
+.modbar{display:flex;gap:2px;height:14px;margin:0 14px 12px;border-radius:4px;overflow:hidden}
+.mb{display:block;border-radius:2px;min-width:3px}
+.mb.prot{background:var(--slate)} .mb.rcd{background:var(--red)} .mb.sw{background:var(--steel)}
+.mb.other{background:var(--mist)} .mb.blank{background:repeating-linear-gradient(45deg,#dfe4ea 0 3px,#eef1f4 3px 6px)}
+.mb.free{background:#e6eaef}
+.modbar.over{outline:2px solid var(--red);outline-offset:1px}
 
-/* paletti */
-.palgroup+.palgroup{margin-top:14px}
-.palgroup h4{margin:0 0 7px;font-family:var(--ui);font-size:11.5px;letter-spacing:.11em;text-transform:uppercase;color:#6d7482}
-.palbtn{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:#191c22;border:1px solid var(--line2);border-radius:4px;padding:8px 10px;font-size:12.8px;line-height:1.3;margin-bottom:4px}
-.palbtn:hover{background:#23272f;border-color:#565d6b}
-.palbtn .w{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--red-txt);background:var(--red-dim);border:1px solid var(--red-line);border-radius:3px;padding:2px 5px;flex:0 0 auto}
+/* kojerivit */
+.devrow{display:flex;align-items:center;border-top:1px solid var(--line)}
+.devmain{flex:1;min-width:0;display:flex;align-items:center;gap:11px;padding:11px 4px 11px 14px;text-align:left}
+.devmain:active{background:var(--bg)}
+.gnum{width:30px;height:30px;flex:0 0 auto;border-radius:8px;display:grid;place-items:center;font-family:var(--mono);font-size:13px;font-weight:600;background:var(--bg);color:var(--ink2)}
+.gnum.has{background:var(--red-l);color:var(--red-d)}
+.devtx{flex:1;min-width:0}
+.devtx b{display:block;font-size:14.8px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.devtx small{display:block;font-size:13px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.devtx small.none{font-style:italic;opacity:.75}
+.arr{width:38px;height:44px;flex:0 0 auto;display:grid;place-items:center;color:var(--ink3);font-size:17px}
+.arr:active{background:var(--bg);color:var(--ink)}
+.arr:disabled{opacity:.25}
+.arr.last{margin-right:6px}
+.addbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-top:1px solid var(--line);color:var(--red);font-weight:600;font-size:14.5px}
+.addbtn:active{background:var(--red-l)}
+.emptyrow{padding:16px 14px;color:var(--ink3);font-size:14px;border-top:1px solid var(--line)}
 
-/* stage */
-#stage{flex:1;min-width:0;display:flex;flex-direction:column;background:#0e1013;overflow:auto}
-.stagebar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(20,22,26,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(4px)}
-.zoomv{font-family:var(--mono);min-width:48px;text-align:center;font-size:12px;color:var(--muted)}
-#holder{margin:26px auto 60px}
+.stack{display:flex;gap:10px}
+.stack>*{flex:1}
+.bigbtn{padding:13px;border-radius:12px;border:1.5px dashed var(--line2);background:var(--card);font-weight:600;font-size:14.5px;color:var(--ink2)}
+.bigbtn:active{background:#e9edf1}
+.linkbtn{display:block;width:100%;padding:13px;margin-top:10px;border-radius:12px;background:var(--card);box-shadow:var(--sh);font-weight:600;font-size:14.5px}
+.linkbtn:active{background:var(--bg)}
+.sectitle{font-family:var(--disp);font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin:22px 0 9px 4px}
+.sectitle:first-child{margin-top:4px}
+.note{font-size:13px;color:var(--ink3);line-height:1.55;margin:10px 4px 0}
+.note b{color:var(--ink2)}
+
+/* ========== ESIKATSELU ========== */
+.pvtop{flex:0 0 auto;background:var(--card);border-bottom:1px solid var(--line);padding:10px 12px}
+.seg{display:flex;background:var(--bg);border-radius:11px;padding:3px;gap:2px}
+.seg button{flex:1;padding:9px 6px;border-radius:8px;font-size:14px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.seg button.on{background:var(--card);color:var(--red);box-shadow:var(--sh)}
+.pvtools{display:flex;gap:9px;margin-top:9px}
+.pvtools .abtn{height:44px}
+.pvtools .abtn.solid{flex:1}
+#stage{flex:1;overflow:auto;background:#dfe3e8;position:relative;padding:16px 0 24px}
+#holder{margin:0 auto}
 #scaler{transform-origin:top left}
-.sheet{display:none;background:#fff;color:#1a1d22;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.sheet.active{display:block}
+.sheetpaper{display:none;background:#fff;color:#1a1d22;position:relative;box-shadow:0 6px 26px rgba(16,24,40,.22)}
+.sheetpaper.on{display:block}
+.zoompill{position:sticky;bottom:10px;float:right;margin-right:12px;display:inline-flex;align-items:center;gap:2px;background:rgba(255,255,255,.96);border:1px solid var(--line2);border-radius:24px;padding:4px;box-shadow:var(--sh);z-index:6}
+.zoompill button{width:38px;height:38px;border-radius:19px;display:grid;place-items:center;font-size:18px;color:var(--ink2)}
+.zoompill button:active{background:var(--bg)}
+.zoompill span{font-family:var(--mono);font-size:12.5px;min-width:46px;text-align:center;color:var(--ink2)}
 
-/* ============ PIIRUSTUS ============ */
+/* ========== SHEET ========== */
+#scrim{position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:40;opacity:0;transition:opacity .18s}
+#scrim.on{opacity:1}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--card);border-radius:20px 20px 0 0;max-height:90vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .24s cubic-bezier(.32,.72,0,1);box-shadow:0 -8px 40px rgba(16,24,40,.2)}
+#sheet.on{transform:translateY(0)}
+[hidden]{display:none!important}
+.shgrip{width:38px;height:4px;border-radius:2px;background:var(--line2);margin:8px auto 0;flex:0 0 auto}
+.shhead{display:flex;align-items:center;gap:10px;padding:10px 14px 12px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.shhead h2{flex:1;font-size:18px}
+.shclose{height:38px;padding:0 14px;border-radius:10px;background:var(--bg);font-weight:600;font-size:14px}
+.shbody{overflow-y:auto;padding:14px 14px calc(18px + var(--safe));overscroll-behavior:contain}
+
+.f{margin-bottom:15px}
+.f>label{display:block;font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);margin-bottom:7px}
+.f input[type=text],.f input[type=number],.f textarea{width:100%;padding:12px 13px;border:1.5px solid var(--line2);border-radius:11px;background:var(--card)}
+.f input:focus,.f textarea:focus{border-color:var(--red);outline:none}
+.f textarea{resize:vertical;min-height:78px;line-height:1.4}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:10px 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);font-size:14.5px;font-weight:500;font-family:var(--mono);min-width:48px;text-align:center}
+.chip.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+.chip.wide{font-family:var(--body)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.stepper{display:flex;align-items:center;gap:0;border:1.5px solid var(--line2);border-radius:11px;overflow:hidden}
+.stepper button{width:52px;height:48px;font-size:22px;color:var(--ink2)}
+.stepper button:active{background:var(--bg)}
+.stepper span{flex:1;text-align:center;font-family:var(--mono);font-size:16px;font-weight:600}
+.rowbtn{display:flex;align-items:center;gap:12px;width:100%;padding:14px;border-radius:12px;background:var(--bg);margin-bottom:8px;font-size:15px;font-weight:500;text-align:left}
+.rowbtn:active{background:#e4e9ee}
+.rowbtn.warn{color:var(--red)}
+.rowbtn:disabled{opacity:.4}
+.rowbtn .w{margin-left:auto;font-family:var(--mono);font-size:12.5px;color:var(--ink3);background:var(--card);border:1px solid var(--line2);border-radius:6px;padding:2px 7px}
+.rowbtn.warn .w{color:var(--red)}
+.pickhead{display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;scrollbar-width:none}
+.pickhead::-webkit-scrollbar{display:none}
+.pickhead button{flex:0 0 auto;padding:8px 13px;border-radius:20px;background:var(--bg);font-size:13.5px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.pickhead button.on{background:var(--ink);color:#fff}
+.swrow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.swrow:last-child{border-bottom:0}
+.swrow span{flex:1;font-size:15px}
+.sw{width:50px;height:30px;flex:0 0 auto;border-radius:15px;background:var(--line2);position:relative;transition:background .15s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.sw.on{background:var(--red)}
+.sw.on::after{transform:translateX(20px)}
+#toast{position:fixed;left:50%;bottom:calc(80px + var(--safe));transform:translate(-50%,10px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:24px;font-size:14px;font-weight:500;z-index:60;opacity:0;transition:.2s;pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ========== PAPERI (tuloste 1:1) ========== */
 .frame{position:absolute;inset:8mm;border:.4mm solid #23272e}
 .drawarea{position:absolute;left:4mm;right:4mm;top:4mm;bottom:36mm;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .panelwrap{position:relative}
@@ -114,12 +178,11 @@ kbd{font-family:var(--mono);background:#22262e;border:1px solid var(--line2);bor
 .rowblock:last-child{margin-bottom:0}
 .rowhead{display:flex;align-items:center;gap:2mm;margin-bottom:1.4mm}
 .rowhead .no{font-family:var(--mono);font-weight:700;font-size:2.7mm;color:#fff;background:#23272e;padding:.4mm 1.4mm;border-radius:.5mm}
-.rowhead .nm{font-family:var(--ui);font-size:3.2mm;letter-spacing:.09em;text-transform:uppercase;color:#3d444e}
+.rowhead .nm{font-family:var(--disp);font-size:3.2mm;letter-spacing:.06em;text-transform:uppercase;color:#3d444e}
 .rail{display:flex;align-items:stretch;position:relative;background:#fff;border:.25mm solid #aab1ba}
 .rail::before{content:"";position:absolute;left:0;right:0;top:19mm;height:7mm;background:repeating-linear-gradient(90deg,#e8ebef 0 2mm,#dee2e7 2mm 4mm);border-top:.25mm solid #aab1ba;border-bottom:.25mm solid #aab1ba;z-index:0}
 .slot{flex:0 0 auto;height:45mm;border-right:.2mm dashed #ccd2d9;z-index:1}
 .slot:last-child{border-right:0}
-
 .dev{position:relative;z-index:2;height:45mm;flex:0 0 auto;background:#fff;border:.35mm solid #23272e;display:flex;flex-direction:column;overflow:hidden;cursor:pointer}
 .dev.sel{outline:.8mm solid var(--red);outline-offset:-.35mm;z-index:4}
 .dev .term{height:7mm;flex:0 0 auto;background:repeating-linear-gradient(90deg,#f5f7f9 0 4.6mm,#d5dae1 4.6mm 12.9mm,#f5f7f9 12.9mm 17.5mm);border-bottom:.25mm solid #808993}
@@ -132,7 +195,7 @@ kbd{font-family:var(--mono);background:#22262e;border:1px solid var(--line2);bor
 .rate{font-family:var(--mono);font-weight:600;font-size:3.2mm;line-height:1;z-index:2;letter-spacing:-.02em}
 .sub{font-family:var(--mono);font-size:2.3mm;line-height:1;color:#5b626c;z-index:2}
 .tbtn{width:5mm;height:3.4mm;border:.3mm solid #23272e;border-radius:.4mm;display:grid;place-items:center;font-family:var(--mono);font-size:2.2mm;background:#edf0f3;z-index:2}
-.vname{font-family:var(--ui);font-size:2.7mm;letter-spacing:.05em;text-transform:uppercase;text-align:center;line-height:1.05;z-index:2}
+.vname{font-family:var(--disp);font-size:2.7mm;letter-spacing:.03em;text-transform:uppercase;text-align:center;line-height:1.05;z-index:2}
 .vname.rot{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap}
 .win{border:.3mm solid #23272e;background:#e9edf1;height:9mm;width:calc(100% - 4mm);display:grid;place-items:center;font-family:var(--mono);font-size:2.7mm;z-index:2}
 .lampdot{width:7mm;height:7mm;border-radius:50%;border:.4mm solid #23272e;background:radial-gradient(circle at 38% 34%,#ffb0a6,#d33128)}
@@ -145,73 +208,65 @@ kbd{font-family:var(--mono);background:#22262e;border:1px solid var(--line2);bor
 .fusedot{width:8.5mm;height:8.5mm;border-radius:50%;border:.3mm solid #3a3f47}
 .dev.form-fuse .rate{font-size:3.5mm}
 .swflag{position:absolute;top:1mm;right:1mm;font-family:var(--mono);font-size:2.2mm;border:.25mm solid #23272e;padding:0 .7mm;z-index:3}
-
-/* liuska */
 .strip{display:flex;border:.3mm solid #23272e;background:#fff;margin-top:1.6mm}
 .strip.cut{border-style:dashed}
 .strip .cell{flex:0 0 auto;border-right:.2mm solid #bfc6ce;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4mm;overflow:hidden;padding:.4mm .6mm;text-align:center;line-height:1.12}
 .strip .cell:last-child{border-right:0}
-.strip .cell .g{font-family:var(--mono);font-weight:700;font-size:calc(var(--fs)*1.1);letter-spacing:-.02em}
-.strip .cell .d{font-family:var(--ui);font-size:var(--fs);letter-spacing:.01em;overflow-wrap:anywhere}
+.strip .cell .g{font-family:var(--mono);font-weight:700;font-size:calc(var(--fs)*1.1)}
+.strip .cell .d{font-family:var(--disp);font-size:var(--fs);overflow-wrap:anywhere}
 .strip.vert .cell{writing-mode:vertical-rl;transform:rotate(180deg);flex-direction:row;gap:.8mm}
 .strip.vert .cell .d{white-space:nowrap}
-
-/* nimiö */
 .titleblock{position:absolute;right:0;bottom:0;width:112mm;border:.4mm solid #23272e;background:#fff;display:grid;grid-template-columns:24mm 1fr 20mm 1fr}
 .titleblock .c{border-right:.25mm solid #b4bbc3;border-bottom:.25mm solid #b4bbc3;padding:1mm 1.5mm;min-height:6.4mm;display:flex;align-items:center}
-.titleblock .k{font-family:var(--ui);font-size:2.5mm;letter-spacing:.08em;text-transform:uppercase;color:#6d7480;background:#f5f6f8}
+.titleblock .k{font-family:var(--disp);font-size:2.5mm;letter-spacing:.06em;text-transform:uppercase;color:#6d7480;background:#f5f6f8}
 .titleblock .v{font-size:3mm;font-weight:600}
 .titleblock .r{border-right:0}
 .titleblock .b{border-bottom:0}
 .notesbox{position:absolute;left:0;bottom:0;width:calc(100% - 114mm);border:.4mm solid #23272e;background:#fff;padding:1.6mm 2mm;height:30mm;overflow:hidden}
-.notesbox h6{margin:0 0 1mm;font-family:var(--ui);font-size:2.5mm;letter-spacing:.08em;text-transform:uppercase;color:#6d7480}
+.notesbox h6{margin:0 0 1mm;font-family:var(--disp);font-size:2.5mm;letter-spacing:.06em;text-transform:uppercase;color:#6d7480}
 .notesbox p{margin:0;font-size:2.8mm;line-height:1.4;white-space:pre-wrap}
-
-/* ============ LIUSKAT / LUETTELO ============ */
-.sheet.flow{padding:10mm;height:auto}
+.sheetpaper.flow{padding:10mm;height:auto}
 .sheetHead{margin:0 0 6mm}
-.sheetHead h1{margin:0;font-family:var(--ui);text-transform:uppercase;letter-spacing:.12em;font-size:5mm;font-weight:600}
+.sheetHead h1{font-family:var(--disp);text-transform:uppercase;letter-spacing:.1em;font-size:5mm}
 .sheetHead p{margin:1mm 0 0;font-size:3mm;color:#5b626c}
 .stripblock{margin-bottom:8mm;page-break-inside:avoid;break-inside:avoid}
-.stripcap{font-family:var(--ui);font-size:3mm;letter-spacing:.08em;text-transform:uppercase;color:#5b626c;margin-bottom:1.4mm}
+.stripcap{font-family:var(--disp);font-size:3mm;letter-spacing:.06em;text-transform:uppercase;color:#5b626c;margin-bottom:1.4mm}
 .stripcap b{color:#1a1d22}
 table.glist{width:100%;border-collapse:collapse;font-size:3mm}
-table.glist th{background:#f2f4f6;font-family:var(--ui);text-transform:uppercase;letter-spacing:.06em;font-size:2.7mm;text-align:left}
+table.glist th{background:#f2f4f6;font-family:var(--disp);text-transform:uppercase;letter-spacing:.05em;font-size:2.7mm;text-align:left}
 table.glist th,table.glist td{border:.25mm solid #9aa2ac;padding:1.2mm 1.8mm;vertical-align:top}
 table.glist td.n{font-family:var(--mono);white-space:nowrap}
-table.glist tr.sep td{background:#eaedf1;font-family:var(--ui);text-transform:uppercase;letter-spacing:.08em;font-size:2.7mm;font-weight:600}
+table.glist tr.sep td{background:#eaedf1;font-family:var(--disp);text-transform:uppercase;letter-spacing:.06em;font-size:2.7mm;font-weight:600}
 
-/* inspector */
-.empty{padding:18px 14px;color:var(--muted);line-height:1.6}
-.insphead{padding:14px;border-bottom:1px solid var(--line);background:#191c22}
-.insphead h3{margin:0 0 5px;font-family:var(--ui);font-size:16px;font-weight:600;letter-spacing:.03em}
-.insphead span{font-family:var(--mono);font-size:11px;color:var(--red-txt);background:var(--red-dim);border:1px solid var(--red-line);border-radius:3px;padding:2px 6px}
-.wbtns{display:flex;gap:4px}
-.wbtns button{flex:1;background:#15181d;border:1px solid var(--line2);border-radius:4px;padding:7px 0;font-family:var(--mono);font-size:12px;color:var(--muted)}
-.wbtns button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
-.dropmark{position:absolute;top:0;bottom:0;width:1.2mm;background:var(--red);z-index:9;pointer-events:none}
-.dev.dragging{opacity:.35}
-
-@media (max-width:1180px){aside{width:250px;flex-basis:250px}}
-@media (max-width:860px){
-  #main{flex-direction:column}
-  aside{width:auto;flex-basis:auto;max-height:40vh;border:0;border-top:1px solid var(--line)}
-  #stage{order:-1;min-height:44vh}
-  #topbar{gap:10px;padding:0 10px}
-  .brand span{display:none}
+/* ========== TYÖPÖYTÄ ========== */
+@media (min-width:900px){
+  body{font-size:14.5px}
+  .deskonly{display:inline-flex}
+  .tabbar{display:none}
+  #main{display:grid;grid-template-columns:400px 1fr}
+  .pane{position:relative;display:flex}
+  #paneInfo{display:none}
+  #paneEdit{border-right:1px solid var(--line);background:var(--card)}
+  #paneEdit .wrap{max-width:none;padding:16px}
+  .card{box-shadow:none;border:1px solid var(--line)}
+  #sheet{left:50%;right:auto;bottom:auto;top:50%;width:460px;max-height:82vh;border-radius:18px;transform:translate(-50%,-46%) scale(.97);opacity:0;transition:opacity .16s,transform .16s}
+  #sheet.on{transform:translate(-50%,-50%) scale(1);opacity:1}
+  .shgrip{display:none}
+  #toast{bottom:28px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
-/* ================= TULOSTUS ================= */
+/* ========== TULOSTUS ========== */
 @media print{
   html,body{overflow:visible;background:#fff;height:auto}
-  #topbar,#left,#right,.stagebar,.no-print{display:none!important}
+  .appbar,.tabbar,.pvtop,.zoompill,#scrim,#sheet,#toast,#paneEdit,#paneInfo,.no-print{display:none!important}
   #app,#main{display:block;height:auto}
-  #stage{overflow:visible;background:#fff;display:block}
+  #panePreview{display:block!important;position:static}
+  #stage{overflow:visible;background:#fff;padding:0;display:block}
   #holder{margin:0!important;width:auto!important;height:auto!important}
   #scaler{transform:none!important}
-  .sheet{box-shadow:none!important;margin:0}
-  .sheet.flow{padding:0!important;width:auto!important;min-height:0!important}
+  .sheetpaper{box-shadow:none!important;margin:0}
+  .sheetpaper.flow{padding:0!important;width:auto!important;min-height:0!important}
   .dev.sel{outline:none!important}
   .rowblock,.stripblock{page-break-inside:avoid}
 }
@@ -220,142 +275,76 @@ table.glist tr.sep td{background:#eaedf1;font-family:var(--ui);text-transform:up
 <body>
 <div id="app">
 
-<header id="topbar">
-  <div class="brand"><i>⌁</i><span>Keskussuunnittelija</span></div>
-  <nav class="tabs" id="tabs">
-    <button data-view="drawing" class="active">Piirustus</button>
-    <button data-view="labels">Liuskat</button>
-    <button data-view="list">Ryhmäluettelo</button>
-  </nav>
-  <div class="spacer"></div>
-  <button class="btn ghost" id="btnOpen">Avaa</button>
-  <button class="btn ghost" id="btnSave">Tallenna</button>
-  <button class="btn primary" id="btnPrint">Tulosta / PDF</button>
-  <input type="file" id="fileIn" accept=".json,application/json" hidden>
+<header class="appbar">
+  <div class="mark">⌁</div>
+  <button class="idbtn" id="btnInfo"><b id="idName">JK1</b><small id="idSub">Keskuksen tiedot</small></button>
+  <button class="abtn deskonly" id="btnMore2">Työ</button>
+  <button class="abtn solid deskonly" id="btnPrint2">Tulosta / PDF</button>
 </header>
 
 <div id="main">
-  <aside id="left">
-    <details class="sec" open>
-      <summary>Rivit</summary>
-      <div class="secbody">
-        <div id="rowlist"></div>
-        <div class="grid2" style="margin-top:10px">
-          <button class="btn sm" id="addDin">+ Kiskorivi</button>
-          <button class="btn sm" id="addTulppa">+ Sulakerivi</button>
-        </div>
-        <button class="btn sm" id="autoNum" style="width:100%;margin-top:6px">Numeroi ryhmät 1…n</button>
+  <!-- ===== RIVIT ===== -->
+  <section class="pane on" id="paneEdit">
+    <div class="scroll"><div class="wrap">
+      <div id="rows"></div>
+      <div class="stack" style="margin-top:4px">
+        <button class="bigbtn" id="addDin">+ Kiskorivi</button>
+        <button class="bigbtn" id="addTulppa">+ Sulakerivi</button>
       </div>
-    </details>
-
-    <details class="sec" open>
-      <summary>Lisää koje</summary>
-      <div class="secbody" id="palette"></div>
-    </details>
-
-    <details class="sec">
-      <summary>Keskuksen tiedot</summary>
-      <div class="secbody" id="metaForm">
-        <div class="field"><label>Kohde</label><input type="text" data-meta="kohde"></div>
-        <div class="field"><label>Osoite</label><input type="text" data-meta="osoite"></div>
-        <div class="grid2">
-          <div class="field"><label>Keskustunnus</label><input type="text" data-meta="tunnus"></div>
-          <div class="field"><label>Piirustusnro</label><input type="text" data-meta="pno"></div>
-        </div>
-        <div class="grid2">
-          <div class="field"><label>Suunnittelija</label><input type="text" data-meta="tekija"></div>
-          <div class="field"><label>Päiväys</label><input type="text" data-meta="pvm"></div>
-        </div>
-        <div class="grid2">
-          <div class="field"><label>Nimellisvirta</label><input type="text" data-meta="ivirta" placeholder="3x25 A"></div>
-          <div class="field"><label>Kotelointi</label><input type="text" data-meta="ip" placeholder="IP34"></div>
-        </div>
-        <div class="field"><label>Huomautukset</label><textarea rows="3" data-meta="huom"></textarea></div>
-        <p class="hint">Tyhjät kentät jätetään pois tulosteesta.</p>
-      </div>
-    </details>
-
-    <details class="sec" open>
-      <summary>Arkki ja malli</summary>
-      <div class="secbody">
-        <div class="field"><label>Keskuksen malli</label>
-          <select id="form">
-            <option value="vaaka">Vaakamalli — rivit päällekkäin</option>
-            <option value="pysty">Pystymalli — kiskot pystyssä</option>
-          </select>
-        </div>
-        <div class="grid2">
-          <div class="field"><label>Paperikoko</label><select id="paper"><option>A4</option><option>A3</option></select></div>
-          <div class="field"><label>Suunta</label><select id="orient"><option value="landscape">Vaaka</option><option value="portrait">Pysty</option></select></div>
-        </div>
-        <div class="field"><label>Piirustuksen mittakaava</label>
-          <select id="scalemode">
-            <option value="fit">Sovita arkille</option>
-            <option value="1">1:1</option><option value="0.75">75 %</option><option value="0.5">50 %</option>
-          </select>
-        </div>
-      </div>
-    </details>
-
-    <details class="sec">
-      <summary>Merkintäliuskat</summary>
-      <div class="secbody" id="optForm">
-        <div class="grid2">
-          <div class="field"><label>Korkeus (mm)</label><input type="number" step="0.5" min="4" max="40" data-opt="stripH"></div>
-          <div class="field"><label>Teksti (mm)</label><input type="number" step="0.1" min="1.5" max="8" data-opt="fs"></div>
-        </div>
-        <div class="grid2">
-          <div class="field"><label>Moduuli (mm)</label><input type="number" step="0.1" min="8" max="40" data-opt="mod"></div>
-          <div class="field"><label>Kopioita</label><input type="number" min="1" max="4" data-opt="copies"></div>
-        </div>
-        <label class="check"><input type="checkbox" data-opt="showGroup">Ryhmänumero liuskaan</label>
-        <label class="check"><input type="checkbox" data-opt="vert">Pystysuora teksti</label>
-        <label class="check"><input type="checkbox" data-opt="showEmpty">Näytä vapaat moduulit</label>
-        <p class="hint">Liuskat tulostuvat aina todellisessa koossa. Valitse tulostusikkunassa <b>mittakaava 100 %</b>, älä "sovita sivulle".</p>
-      </div>
-    </details>
-
-    <details class="sec">
-      <summary>Pohjat</summary>
-      <div class="secbody">
-        <button class="btn sm" data-tpl="asunto" style="width:100%;margin-bottom:6px">Asunnon ryhmäkeskus</button>
-        <button class="btn sm" data-tpl="tulppa" style="width:100%;margin-bottom:6px">Tulppasulakekeskus</button>
-        <button class="btn sm" data-tpl="tyhja" style="width:100%">Tyhjä pohja</button>
-        <p class="hint"><kbd>Del</kbd> poistaa · <kbd>←</kbd><kbd>→</kbd> siirtää · <kbd>Esc</kbd> poistaa valinnan</p>
-      </div>
-    </details>
-  </aside>
-
-  <section id="stage">
-    <div class="stagebar no-print">
-      <button class="btn sm" id="zOut">−</button><span class="zoomv" id="zVal">100 %</span><button class="btn sm" id="zIn">+</button>
-      <button class="btn sm" id="zFit">Sovita</button>
-    </div>
-    <div id="holder"><div id="scaler">
-      <div class="sheet active" id="sheetDrawing" data-view="drawing"></div>
-      <div class="sheet flow" id="sheetLabels" data-view="labels"></div>
-      <div class="sheet flow" id="sheetList" data-view="list"></div>
+      <button class="linkbtn" id="autoNum">Numeroi ryhmät 1…n</button>
+      <p class="note">Napauta kojetta muokataksesi sitä. Nuolilla vaihdat järjestystä. Palkki kortin yläreunassa näyttää, paljonko kiskosta on käytössä.</p>
     </div></div>
   </section>
 
-  <aside id="right"><div id="inspector"></div></aside>
-</div>
+  <!-- ===== KUVA ===== -->
+  <section class="pane" id="panePreview">
+    <div class="pvtop">
+      <div class="seg" id="viewSeg">
+        <button data-view="drawing" class="on">Piirustus</button>
+        <button data-view="labels">Liuskat</button>
+        <button data-view="list">Luettelo</button>
+      </div>
+      <div class="pvtools">
+        <button class="abtn solid" id="btnPrint">Tulosta / PDF</button>
+        <button class="abtn" id="btnPaper">Arkki</button>
+      </div>
+    </div>
+    <div id="stage">
+      <div id="holder"><div id="scaler">
+        <div class="sheetpaper on" id="paperDrawing" data-view="drawing"></div>
+        <div class="sheetpaper flow" id="paperLabels" data-view="labels"></div>
+        <div class="sheetpaper flow" id="paperList" data-view="list"></div>
+      </div></div>
+      <div class="zoompill no-print">
+        <button id="zOut">−</button><span id="zVal">100 %</span><button id="zIn">+</button><button id="zFit" style="font-size:14px">↕</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TIEDOT (mobiili) ===== -->
+  <section class="pane" id="paneInfo">
+    <div class="scroll"><div class="wrap" id="infoWrap"></div></div>
+  </section>
 </div>
 
-<datalist id="dlDesc">
-  <option>Valaistus</option><option>Pistorasiat</option><option>Keittiö</option><option>Liesi</option><option>Sauna</option>
-  <option>Lämminvesivaraaja</option><option>Astianpesukone</option><option>Pesukone</option><option>Kylmälaitteet</option>
-  <option>Ilmanvaihto</option><option>Lattialämmitys</option><option>Autolämmitys</option><option>Ulkovalaistus</option>
-  <option>ATK / antenni</option><option>Varaus</option>
-</datalist>
-<datalist id="dlCable">
-  <option>MMJ 3x1,5S</option><option>MMJ 3x2,5S</option><option>MMJ 5x1,5S</option><option>MMJ 5x2,5S</option>
-  <option>MMJ 5x6S</option><option>MCMK 4x10+10</option><option>MMO 4x16</option>
-</datalist>
-<datalist id="dlRating">
-  <option>6A</option><option>10A</option><option>13A</option><option>16A</option><option>20A</option><option>25A</option>
-  <option>32A</option><option>35A</option><option>40A</option><option>50A</option><option>63A</option><option>80A</option>
-</datalist>
+<nav class="tabbar" id="tabbar">
+  <button data-pane="paneEdit" class="on">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/></svg>Rivit</button>
+  <button data-pane="panePreview">
+    <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Kuva</button>
+  <button data-pane="paneInfo">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>Tiedot</button>
+</nav>
+</div>
+
+<div id="scrim" hidden></div>
+<div id="sheet" hidden role="dialog" aria-modal="true">
+  <div class="shgrip"></div>
+  <div class="shhead"><h2 id="shTitle"></h2><button class="shclose" id="shClose">Valmis</button></div>
+  <div class="shbody" id="shBody"></div>
+</div>
+<div id="toast"></div>
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
 
 <script>
 "use strict";
@@ -367,51 +356,54 @@ const PAPER = { A4: { w: 210, h: 297 }, A3: { w: 297, h: 420 } };
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const FUSECOL = { "2A": "#f2a0c4", "4A": "#8b5a2b", "6A": "#2fa84f", "10A": "#d92c2c", "16A": "#9aa0a6",
   "20A": "#2b6ce0", "25A": "#f2c200", "35A": "#1a1a1a", "50A": "#f7f7f7", "63A": "#b87333" };
+const RATINGS = ["6A","10A","13A","16A","20A","25A","32A","35A","40A","50A","63A","80A"];
 
 /* ---------- kojeluettelo ---------- */
 const CATALOG = [
-  { key:"js1",  name:"Johdonsuoja 1-nap.",        short:"JS",   w:1, form:"breaker", prot:1, cat:"Suojalaitteet", def:{curve:"C",rating:"16A"}, fields:["curve","rating","cable"] },
-  { key:"js1n", name:"Johdonsuoja 1-nap. + N",    short:"JS+N", w:2, form:"breaker", prot:1, cat:"Suojalaitteet", def:{curve:"C",rating:"16A"}, fields:["curve","rating","cable"] },
-  { key:"js2",  name:"Johdonsuoja 2-nap.",        short:"JS",   w:2, form:"breaker", prot:1, cat:"Suojalaitteet", def:{curve:"C",rating:"16A"}, fields:["curve","rating","cable"] },
-  { key:"js3",  name:"Johdonsuoja 3-nap.",        short:"JS",   w:3, form:"breaker", prot:1, cat:"Suojalaitteet", def:{curve:"C",rating:"16A"}, fields:["curve","rating","cable"] },
-  { key:"rcbo", name:"Vikavirtajohdonsuoja",      short:"RCBO", w:2, form:"rcbo",    prot:1, cat:"Suojalaitteet", def:{curve:"C",rating:"16A",ma:"30mA"}, fields:["curve","rating","ma","cable"] },
-  { key:"rcd2", name:"Vikavirtasuoja 2-nap.",     short:"VVSK", w:2, form:"rcd",             cat:"Suojalaitteet", def:{rating:"40A",ma:"30mA"}, fields:["rating","ma"] },
-  { key:"rcd4", name:"Vikavirtasuoja 4-nap.",     short:"VVSK", w:4, form:"rcd",             cat:"Suojalaitteet", def:{rating:"40A",ma:"30mA"}, fields:["rating","ma"] },
-  { key:"spd",  name:"Ylijännitesuoja T2",        short:"SPD",  w:4, form:"surge",           cat:"Suojalaitteet", def:{rating:"T2"}, fields:["rating"] },
-  { key:"main3",name:"Pääkytkin 3-nap.",          short:"PK",   w:3, form:"switch",          cat:"Kytkimet", def:{rating:"63A"}, fields:["rating"] },
-  { key:"main4",name:"Kuormanerotin 4-nap.",      short:"PK",   w:4, form:"switch",          cat:"Kytkimet", def:{rating:"63A"}, fields:["rating"] },
-  { key:"fsw",  name:"Kytkinvaroke 3-nap.",       short:"KV",   w:3, form:"switch",          cat:"Kytkimet", def:{rating:"35A"}, fields:["rating"] },
-  { key:"ohj",  name:"Ohjauskytkin",              short:"OK",   w:1, form:"switch",          cat:"Kytkimet", def:{}, fields:[] },
-  { key:"kont", name:"Kontaktori",                short:"K",    w:2, form:"device",          cat:"Kytkimet", def:{rating:"25A"}, fields:["rating"] },
-  { key:"pva",  name:"Porrasvaloautomaatti",      short:"PVA",  w:1, form:"device",          cat:"Ohjaus ja mittaus", def:{}, fields:[] },
-  { key:"kello",name:"Kellokytkin",               short:"KELLO",w:2, form:"meter",           cat:"Ohjaus ja mittaus", def:{}, fields:[] },
-  { key:"rele", name:"Asennusrele",               short:"REL",  w:1, form:"device",          cat:"Ohjaus ja mittaus", def:{}, fields:[] },
-  { key:"hama", name:"Hämäräkytkin",              short:"HÄM",  w:1, form:"device",          cat:"Ohjaus ja mittaus", def:{}, fields:[] },
-  { key:"dim",  name:"Himmennin",                 short:"DIM",  w:1, form:"device",          cat:"Ohjaus ja mittaus", def:{}, fields:[] },
-  { key:"trafo",name:"Ovikellomuuntaja 8 V",      short:"TR",   w:2, form:"device",          cat:"Ohjaus ja mittaus", def:{}, fields:[] },
-  { key:"mitt", name:"Energiamittari",            short:"kWh",  w:4, form:"meter",           cat:"Ohjaus ja mittaus", def:{}, fields:[] },
-  { key:"lamp", name:"Merkkilamppu",              short:"",     w:1, form:"lamp",            cat:"Ohjaus ja mittaus", def:{}, fields:[] },
-  { key:"nkisko",name:"Nollakisko (N)",           short:"N",    w:2, form:"bus",             cat:"Kiskot ja tarvikkeet", def:{}, fields:[] },
-  { key:"pekisko",name:"PE-kisko",                short:"PE",   w:2, form:"bus",             cat:"Kiskot ja tarvikkeet", def:{}, fields:[] },
-  { key:"rlii", name:"Riviliittimet",             short:"RL",   w:1, form:"terminal",        cat:"Kiskot ja tarvikkeet", def:{}, fields:[] },
-  { key:"peite",name:"Peitelevy / vapaa",         short:"",     w:1, form:"blank",           cat:"Kiskot ja tarvikkeet", def:{}, fields:[] },
-  { key:"muu",  name:"Muu koje",                  short:"?",    w:1, form:"device",          cat:"Kiskot ja tarvikkeet", def:{}, fields:["rating"] },
-  { key:"tulppa", name:"Tulppasulake",            short:"TS",   w:2, form:"fuse", prot:1, kinds:["tulppa"], cat:"Tulppasulakkeet", def:{rating:"16A"}, fields:["rating","cable"] },
-  { key:"tulppak",name:"Kytkintulppasulake",      short:"KTS",  w:2, form:"fuse", sw:1, prot:1, kinds:["tulppa"], cat:"Tulppasulakkeet", def:{rating:"16A"}, fields:["rating","cable"] },
-  { key:"tpaa",   name:"Pääkytkin",               short:"PK",   w:2, form:"switch", kinds:["tulppa"], cat:"Tulppasulakkeet", def:{rating:"25A"}, fields:["rating"] },
-  { key:"trima",  name:"Nollarima",               short:"N",    w:2, form:"bus",    kinds:["tulppa"], cat:"Tulppasulakkeet", def:{}, fields:[] },
-  { key:"ttyhja", name:"Tyhjä paikka",            short:"",     w:2, form:"blank",  kinds:["tulppa"], cat:"Tulppasulakkeet", def:{}, fields:[] }
+  { key:"js1",  name:"Johdonsuoja 1-nap.",     short:"JS",   w:1, form:"breaker", prot:1, cat:"Suojat", def:{curve:"C",rating:"16A"}, fields:["curve","rating","cable"] },
+  { key:"js1n", name:"Johdonsuoja 1-nap. + N", short:"JS+N", w:2, form:"breaker", prot:1, cat:"Suojat", def:{curve:"C",rating:"16A"}, fields:["curve","rating","cable"] },
+  { key:"js2",  name:"Johdonsuoja 2-nap.",     short:"JS",   w:2, form:"breaker", prot:1, cat:"Suojat", def:{curve:"C",rating:"16A"}, fields:["curve","rating","cable"] },
+  { key:"js3",  name:"Johdonsuoja 3-nap.",     short:"JS",   w:3, form:"breaker", prot:1, cat:"Suojat", def:{curve:"C",rating:"16A"}, fields:["curve","rating","cable"] },
+  { key:"rcbo", name:"Vikavirtajohdonsuoja",   short:"RCBO", w:2, form:"rcbo",    prot:1, cat:"Suojat", def:{curve:"C",rating:"16A",ma:"30mA"}, fields:["curve","rating","ma","cable"] },
+  { key:"rcd2", name:"Vikavirtasuoja 2-nap.",  short:"VVSK", w:2, form:"rcd",  cat:"Suojat", def:{rating:"40A",ma:"30mA"}, fields:["rating","ma"] },
+  { key:"rcd4", name:"Vikavirtasuoja 4-nap.",  short:"VVSK", w:4, form:"rcd",  cat:"Suojat", def:{rating:"40A",ma:"30mA"}, fields:["rating","ma"] },
+  { key:"spd",  name:"Ylijännitesuoja T2",     short:"SPD",  w:4, form:"surge",cat:"Suojat", def:{rating:"T2"}, fields:["rating"] },
+  { key:"main3",name:"Pääkytkin 3-nap.",       short:"PK",   w:3, form:"switch",cat:"Kytkimet", def:{rating:"63A"}, fields:["rating"] },
+  { key:"main4",name:"Kuormanerotin 4-nap.",   short:"PK",   w:4, form:"switch",cat:"Kytkimet", def:{rating:"63A"}, fields:["rating"] },
+  { key:"fsw",  name:"Kytkinvaroke 3-nap.",    short:"KV",   w:3, form:"switch",cat:"Kytkimet", def:{rating:"35A"}, fields:["rating"] },
+  { key:"ohj",  name:"Ohjauskytkin",           short:"OK",   w:1, form:"switch",cat:"Kytkimet", def:{}, fields:[] },
+  { key:"kont", name:"Kontaktori",             short:"K",    w:2, form:"device",cat:"Kytkimet", def:{rating:"25A"}, fields:["rating"] },
+  { key:"pva",  name:"Porrasvaloautomaatti",   short:"PVA",  w:1, form:"device",cat:"Ohjaus", def:{}, fields:[] },
+  { key:"kello",name:"Kellokytkin",            short:"KELLO",w:2, form:"meter", cat:"Ohjaus", def:{}, fields:[] },
+  { key:"rele", name:"Asennusrele",            short:"REL",  w:1, form:"device",cat:"Ohjaus", def:{}, fields:[] },
+  { key:"hama", name:"Hämäräkytkin",           short:"HÄM",  w:1, form:"device",cat:"Ohjaus", def:{}, fields:[] },
+  { key:"dim",  name:"Himmennin",              short:"DIM",  w:1, form:"device",cat:"Ohjaus", def:{}, fields:[] },
+  { key:"trafo",name:"Ovikellomuuntaja 8 V",   short:"TR",   w:2, form:"device",cat:"Ohjaus", def:{}, fields:[] },
+  { key:"mitt", name:"Energiamittari",         short:"kWh",  w:4, form:"meter", cat:"Ohjaus", def:{}, fields:[] },
+  { key:"lamp", name:"Merkkilamppu",           short:"",     w:1, form:"lamp",  cat:"Ohjaus", def:{}, fields:[] },
+  { key:"nkisko",name:"Nollakisko (N)",        short:"N",    w:2, form:"bus",   cat:"Kiskot", def:{}, fields:[] },
+  { key:"pekisko",name:"PE-kisko",             short:"PE",   w:2, form:"bus",   cat:"Kiskot", def:{}, fields:[] },
+  { key:"rlii", name:"Riviliittimet",          short:"RL",   w:1, form:"terminal",cat:"Kiskot", def:{}, fields:[] },
+  { key:"peite",name:"Peitelevy / vapaa",      short:"",     w:1, form:"blank", cat:"Kiskot", def:{}, fields:[] },
+  { key:"muu",  name:"Muu koje",               short:"?",    w:1, form:"device",cat:"Kiskot", def:{}, fields:["rating"] },
+  { key:"tulppa", name:"Tulppasulake",         short:"TS",   w:2, form:"fuse", prot:1, kinds:["tulppa"], cat:"Sulakkeet", def:{rating:"16A"}, fields:["rating","cable"] },
+  { key:"tulppak",name:"Kytkintulppasulake",   short:"KTS",  w:2, form:"fuse", sw:1, prot:1, kinds:["tulppa"], cat:"Sulakkeet", def:{rating:"16A"}, fields:["rating","cable"] },
+  { key:"tpaa",   name:"Pääkytkin",            short:"PK",   w:2, form:"switch", kinds:["tulppa"], cat:"Sulakkeet", def:{rating:"25A"}, fields:["rating"] },
+  { key:"trima",  name:"Nollarima",            short:"N",    w:2, form:"bus",   kinds:["tulppa"], cat:"Sulakkeet", def:{}, fields:[] },
+  { key:"ttyhja", name:"Tyhjä paikka",         short:"",     w:2, form:"blank", kinds:["tulppa"], cat:"Sulakkeet", def:{}, fields:[] }
 ];
 CATALOG.forEach(c => { if (!c.kinds) c.kinds = ["din"]; });
 const CAT = Object.fromEntries(CATALOG.map(c => [c.key, c]));
+const tint = k => { const f = CAT[k].form;
+  if (f === "rcd" || f === "rcbo") return "rcd";
+  if (f === "breaker" || f === "fuse") return "prot";
+  if (f === "switch") return "sw";
+  if (f === "blank") return "blank";
+  return "other"; };
 
 /* ---------- tila ---------- */
-function newDev(key, over) {
-  return Object.assign({ id: uid(), key, w: CAT[key].w, group: "", desc: "", cable: "" }, CAT[key].def, over || {});
-}
-function newRow(kind, name, modules) {
-  return { id: uid(), kind, name: name || "Rivi", modules: modules || 12, devices: [] };
-}
+const newDev = (key, over) => Object.assign({ id: uid(), key, w: CAT[key].w, group: "", desc: "", cable: "" }, CAT[key].def, over || {});
+const newRow = (kind, name, modules) => ({ id: uid(), kind, name: name || "Rivi", modules: modules || 12, devices: [] });
 function template(which) {
   const base = {
     meta: { kohde: "", osoite: "", tunnus: "JK1", pno: "", tekija: "", pvm: new Date().toLocaleDateString("fi-FI"), ivirta: "", ip: "", huom: "" },
@@ -423,123 +415,105 @@ function template(which) {
   if (which === "tulppa") {
     base.meta.tunnus = "RK";
     const r1 = newRow("tulppa", "Sulakerivi 1", 12);
-    r1.devices = [ newDev("tpaa", { desc: "Pääkytkin" }),
+    r1.devices = [newDev("tpaa", { desc: "Pääkytkin" }),
       newDev("tulppa", { rating: "25A", group: "1", desc: "Liesi L1", cable: "MMJ 5x2,5S" }),
       newDev("tulppa", { rating: "25A", group: "1", desc: "Liesi L2" }),
       newDev("tulppa", { rating: "25A", group: "1", desc: "Liesi L3" }),
-      newDev("trima", { desc: "Nollarima" }), newDev("ttyhja") ];
+      newDev("trima", { desc: "Nollarima" }), newDev("ttyhja")];
     const r2 = newRow("tulppa", "Sulakerivi 2", 12);
-    r2.devices = [ newDev("tulppa", { rating: "10A", group: "2", desc: "Valaistus OH", cable: "MMJ 3x1,5S" }),
+    r2.devices = [newDev("tulppa", { rating: "10A", group: "2", desc: "Valaistus OH", cable: "MMJ 3x1,5S" }),
       newDev("tulppa", { rating: "10A", group: "3", desc: "Valaistus MH" }),
       newDev("tulppa", { rating: "16A", group: "4", desc: "Pistorasiat OH", cable: "MMJ 3x2,5S" }),
       newDev("tulppa", { rating: "16A", group: "5", desc: "Keittiö" }),
-      newDev("tulppa", { rating: "16A", group: "6", desc: "Kylmälaitteet" }), newDev("ttyhja") ];
+      newDev("tulppa", { rating: "16A", group: "6", desc: "Kylmälaitteet" }), newDev("ttyhja")];
     base.rows = [r1, r2];
     return base;
   }
   const a = newRow("din", "Kiskorivi 1", 12);
-  a.devices = [ newDev("main4", { rating: "63A", desc: "Pääkytkin" }), newDev("spd", { desc: "Ylijännitesuoja" }),
-    newDev("mitt", { desc: "Energiamittari" }) ];
+  a.devices = [newDev("main4", { rating: "63A", desc: "Pääkytkin" }), newDev("spd", { desc: "Ylijännitesuoja" }), newDev("mitt", { desc: "Energiamittari" })];
   const b = newRow("din", "Kiskorivi 2", 12);
-  b.devices = [ newDev("rcd4", { rating: "40A", ma: "30mA", desc: "Vikavirtasuoja" }),
+  b.devices = [newDev("rcd4", { rating: "40A", ma: "30mA", desc: "Vikavirtasuoja" }),
     newDev("js1", { rating: "10A", curve: "B", group: "1", desc: "Valaistus OH", cable: "MMJ 3x1,5S" }),
     newDev("js1", { rating: "10A", curve: "B", group: "2", desc: "Valaistus MH", cable: "MMJ 3x1,5S" }),
     newDev("js1", { rating: "16A", curve: "C", group: "3", desc: "Pistorasiat OH", cable: "MMJ 3x2,5S" }),
     newDev("js1", { rating: "16A", curve: "C", group: "4", desc: "Pistorasiat MH", cable: "MMJ 3x2,5S" }),
     newDev("js1", { rating: "16A", curve: "C", group: "5", desc: "Keittiö", cable: "MMJ 3x2,5S" }),
     newDev("js1", { rating: "16A", curve: "C", group: "6", desc: "Kylmälaitteet", cable: "MMJ 3x2,5S" }),
-    newDev("peite") ];
+    newDev("peite")];
   const c = newRow("din", "Kiskorivi 3", 12);
-  c.devices = [ newDev("js3", { rating: "16A", curve: "C", group: "7", desc: "Liesi", cable: "MMJ 5x2,5S" }),
+  c.devices = [newDev("js3", { rating: "16A", curve: "C", group: "7", desc: "Liesi", cable: "MMJ 5x2,5S" }),
     newDev("js3", { rating: "16A", curve: "C", group: "8", desc: "Sauna", cable: "MMJ 5x2,5S" }),
     newDev("rcbo", { rating: "16A", ma: "30mA", group: "9", desc: "Ulkopistorasiat", cable: "MMJ 3x2,5S" }),
-    newDev("nkisko", { desc: "Nollakisko" }), newDev("pekisko", { desc: "PE-kisko" }) ];
+    newDev("nkisko", { desc: "Nollakisko" }), newDev("pekisko", { desc: "PE-kisko" })];
   base.rows = [a, b, c];
   return base;
 }
 
 let state = template("asunto");
 let view = "drawing";
-let sel = { row: state.rows[1].id, dev: null };
+let selDev = null;
 let zoom = 1, zoomAuto = true;
 
 const MOD = () => state.opts.mod || 17.5;
 const rowById = id => state.rows.find(r => r.id === id);
 const findDev = id => { for (const r of state.rows) { const d = r.devices.find(x => x.id === id); if (d) return { row: r, dev: d }; } return null; };
 const used = r => r.devices.reduce((s, d) => s + d.w, 0);
+const label = d => [d.curve && d.curve !== "-" ? d.curve : "", d.rating || ""].join("");
 
-/* ---------- sivupalkki ---------- */
-function renderRowList() {
-  $("#rowlist").innerHTML = state.rows.map((r, i) => {
-    const u = used(r);
-    return `<div class="rowitem ${r.id === sel.row ? "active" : ""}" data-row="${r.id}">
-      <div class="top">
-        <span class="no">${i + 1}</span>
-        <input class="rname" data-rf="name" value="${esc(r.name)}">
-        <span class="btns">
-          <button class="ib" data-ract="up" title="Ylös">↑</button>
-          <button class="ib" data-ract="down" title="Alas">↓</button>
-          <button class="ib" data-ract="dup" title="Monista">⧉</button>
-          <button class="ib" data-ract="del" title="Poista">✕</button>
-        </span>
+/* ============ MUOKKAUSNÄKYMÄ ============ */
+function renderRows() {
+  $("#rows").innerHTML = state.rows.map((r, i) => {
+    const u = used(r), free = Math.max(0, r.modules - u), over = u > r.modules;
+    const bars = r.devices.map(d => `<i class="mb ${tint(d.key)}" style="flex:${d.w}" data-dev="${d.id}"></i>`).join("") +
+      (free ? `<i class="mb free" style="flex:${free}"></i>` : "");
+    const list = r.devices.length ? r.devices.map((d, k) => {
+      const c = CAT[d.key], txt = [c.name, label(d)].filter(Boolean).join(" ");
+      const extra = d.ma && d.ma !== "-" ? " · " + d.ma : "";
+      return `<div class="devrow">
+        <button class="devmain" data-edit="${d.id}">
+          <span class="gnum ${d.group ? "has" : ""}">${d.group ? esc(d.group) : d.w + "M"}</span>
+          <span class="devtx"><b>${esc(txt)}${extra}</b>
+            <small class="${d.desc ? "" : "none"}">${d.desc ? esc(d.desc) : "ei merkintätekstiä"}</small></span>
+        </button>
+        <button class="arr" data-mv="${d.id}" data-dir="-1" ${k === 0 ? "disabled" : ""} aria-label="Siirrä ylös">↑</button>
+        <button class="arr last" data-mv="${d.id}" data-dir="1" ${k === r.devices.length - 1 ? "disabled" : ""} aria-label="Siirrä alas">↓</button>
+      </div>`;
+    }).join("") : `<div class="emptyrow">Rivi on tyhjä.</div>`;
+    return `<div class="card">
+      <div class="cardhead">
+        <span class="badge">${i + 1}</span>
+        <span class="t"><b>${esc(r.name)}</b>
+          <small class="${over ? "over" : ""}">${r.kind === "din" ? "DIN-kisko" : "Tulppasulakkeet"} · ${u}/${r.modules} mod${over ? " — ei mahdu!" : ""}</small></span>
+        <button class="more" data-rowmenu="${r.id}" aria-label="Rivin asetukset">⋯</button>
       </div>
-      <div class="cfg">
-        <select data-rf="kind">
-          <option value="din"${r.kind === "din" ? " selected" : ""}>DIN-kisko</option>
-          <option value="tulppa"${r.kind === "tulppa" ? " selected" : ""}>Tulppasulake</option>
-        </select>
-        <input type="number" min="1" max="60" data-rf="modules" value="${r.modules}"><span>mod</span>
-        <span class="usage ${u > r.modules ? "over" : ""}">${u}/${r.modules}</span>
-      </div>
+      <div class="modbar ${over ? "over" : ""}">${bars || '<i class="mb free" style="flex:1"></i>'}</div>
+      ${list}
+      <button class="addbtn" data-addto="${r.id}">+ Lisää koje</button>
     </div>`;
   }).join("");
-}
-function renderPalette() {
-  const r = rowById(sel.row) || state.rows[0];
-  const kind = r ? r.kind : "din";
-  const items = CATALOG.filter(c => c.kinds.includes(kind));
-  const cats = [...new Set(items.map(c => c.cat))];
-  $("#palette").innerHTML = cats.map(cat => `<div class="palgroup"><h4>${cat}</h4>` +
-    items.filter(c => c.cat === cat).map(c =>
-      `<button class="palbtn" data-add="${c.key}" draggable="true"><span class="w">${c.w}M</span>${esc(c.name)}</button>`).join("") +
-    `</div>`).join("");
-}
-function renderInspector() {
-  const box = $("#inspector"), found = sel.dev ? findDev(sel.dev) : null;
-  if (!found) {
-    const r = rowById(sel.row);
-    box.innerHTML = `<div class="empty">${r ? "Aktiivinen rivi <b>" + esc(r.name) + "</b>.<br><br>Lisää kojeita vasemmalta tai napsauta piirustuksesta kojetta, niin sen tiedot avautuvat tähän." : "Lisää ensin rivi."}</div>`;
-    return;
-  }
-  const { row, dev } = found, c = CAT[dev.key], f = c.fields;
-  const alts = CATALOG.filter(x => x.kinds.includes(row.kind));
-  box.innerHTML = `
-    <div class="insphead"><h3>${esc(c.name)}</h3><span>${esc(row.name)} · ${dev.w} M</span></div>
-    <div class="secbody">
-      <div class="field"><label>Kojetyyppi</label>
-        <select id="iKey">${alts.map(x => `<option value="${x.key}"${x.key === dev.key ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</select></div>
-      <div class="field"><label>Leveys</label>
-        <div class="wbtns">${[1,2,3,4,6,8].map(n => `<button data-w="${n}" class="${dev.w === n ? "on" : ""}">${n}M</button>`).join("")}</div></div>
-      ${f.includes("curve") ? `<div class="field"><label>Laukaisukäyrä</label><select id="iCurve">${["B","C","D","-"].map(x => `<option${x === (dev.curve || "-") ? " selected" : ""}>${x}</option>`).join("")}</select></div>` : ""}
-      ${f.includes("rating") ? `<div class="field"><label>Nimellisvirta</label><input type="text" id="iRating" list="dlRating" value="${esc(dev.rating || "")}"></div>` : ""}
-      ${f.includes("ma") ? `<div class="field"><label>Vikavirta</label><select id="iMa">${["10mA","30mA","100mA","300mA","-"].map(x => `<option${x === (dev.ma || "-") ? " selected" : ""}>${x}</option>`).join("")}</select></div>` : ""}
-      <div class="field"><label>Ryhmänumero</label><input type="text" id="iGroup" value="${esc(dev.group || "")}"></div>
-      <div class="field"><label>Merkintäteksti</label><input type="text" id="iDesc" list="dlDesc" value="${esc(dev.desc || "")}"></div>
-      ${f.includes("cable") ? `<div class="field"><label>Kaapeli</label><input type="text" id="iCable" list="dlCable" value="${esc(dev.cable || "")}"></div>` : ""}
-      <div class="grid2" style="margin-top:14px">
-        <button class="btn sm" id="iLeft">← Siirrä</button><button class="btn sm" id="iRight">Siirrä →</button>
-      </div>
-      <div class="grid2" style="margin-top:6px">
-        <button class="btn sm" id="iDup">Monista</button><button class="btn sm danger" id="iDel">Poista</button>
-      </div>
-    </div>`;
+  $("#idName").textContent = state.meta.tunnus || "Keskus";
+  $("#idSub").textContent = state.meta.kohde || "Lisää keskuksen tiedot";
 }
 
-/* ---------- kojeen kuva ---------- */
+/* ============ TIEDOT-VÄLILEHTI ============ */
+function renderInfo() {
+  $("#infoWrap").innerHTML = `
+    <div class="sectitle">Keskus</div>
+    <button class="linkbtn" data-open="info" style="margin-top:0">Keskuksen tiedot ja nimiö</button>
+    <button class="linkbtn" data-open="paper">Arkki, malli ja liuskat</button>
+    <div class="sectitle">Työ</div>
+    <button class="linkbtn" style="margin-top:0" id="iSave">Tallenna työ tiedostoksi</button>
+    <button class="linkbtn" id="iOpen">Avaa tallennettu työ</button>
+    <div class="sectitle">Aloita pohjalla</div>
+    <button class="linkbtn" style="margin-top:0" data-tpl="asunto">Asunnon ryhmäkeskus</button>
+    <button class="linkbtn" data-tpl="tulppa">Tulppasulakekeskus</button>
+    <button class="linkbtn" data-tpl="tyhja">Tyhjä pohja</button>
+    <p class="note"><b>Tulostus:</b> avaa Kuva-välilehti, valitse näkymä ja paina Tulosta / PDF. Puhelimessa valitse jakovalikosta “Tulosta” ja sieltä PDF. Merkintäliuskat pitää tulostaa mittakaavassa 100 %, jotta mitat täsmäävät.</p>`;
+}
+
+/* ============ PAPERI ============ */
 function devInner(d) {
-  const c = CAT[d.key];
-  const rate = esc([d.curve && d.curve !== "-" ? d.curve : "", d.rating || ""].join(""));
-  const poles = Math.max(1, Math.round(d.w));
+  const c = CAT[d.key], rate = esc(label(d)), poles = Math.max(1, Math.round(d.w));
   switch (c.form) {
     case "breaker": return `<div class="term"></div><div class="face"><div class="lever${d.w > 1 ? " wide" : ""}"></div><div class="rate">${rate || "&nbsp;"}</div></div><div class="term b"></div>`;
     case "rcbo": return `<div class="term"></div><div class="face"><div class="tbtn">T</div><div class="lever"></div><div class="rate">${rate}</div><div class="sub">${esc(d.ma || "")}</div></div><div class="term b"></div>`;
@@ -559,9 +533,8 @@ function devInner(d) {
   }
 }
 function devHTML(d) {
-  const c = CAT[d.key];
-  const cls = ["dev", "form-" + c.form, d.w > 1 ? "multi" : "", d.id === sel.dev ? "sel" : ""].filter(Boolean).join(" ");
-  return `<div class="${cls}" data-dev="${d.id}" draggable="true" style="width:${(d.w * MOD()).toFixed(3)}mm">${devInner(d)}</div>`;
+  const cls = ["dev", "form-" + CAT[d.key].form, d.w > 1 ? "multi" : "", d.id === selDev ? "sel" : ""].filter(Boolean).join(" ");
+  return `<div class="${cls}" data-dev="${d.id}" style="width:${(d.w * MOD()).toFixed(3)}mm">${devInner(d)}</div>`;
 }
 function stripHTML(row, dashed) {
   const o = state.opts, m = MOD(), cells = [];
@@ -570,52 +543,41 @@ function stripHTML(row, dashed) {
     const t = d.desc ? `<div class="d">${esc(d.desc)}</div>` : "";
     cells.push(`<div class="cell" style="width:${(d.w * m).toFixed(3)}mm">${g}${t}</div>`);
   }
-  const free = Math.max(0, row.modules - used(row));
-  for (let i = 0; i < free; i++) cells.push(`<div class="cell" style="width:${m.toFixed(3)}mm"></div>`);
+  for (let i = 0; i < Math.max(0, row.modules - used(row)); i++) cells.push(`<div class="cell" style="width:${m.toFixed(3)}mm"></div>`);
   const w = Math.max(row.modules, used(row)) * m;
   return `<div class="strip${dashed ? " cut" : ""}${o.vert ? " vert" : ""}" style="width:${w.toFixed(3)}mm;height:${o.stripH}mm;--fs:${o.fs}mm">${cells.join("")}</div>`;
 }
 function rowBlockHTML(row, i) {
-  const m = MOD(), u = used(row), total = Math.max(row.modules, u), railW = total * m;
+  const m = MOD(), u = used(row), total = Math.max(row.modules, u);
   let slots = "";
   if (state.opts.showEmpty) for (let k = 0; k < Math.max(0, row.modules - u); k++) slots += `<div class="slot" style="width:${m.toFixed(3)}mm"></div>`;
-  return `<div class="rowblock" data-rowblock="${row.id}">
+  return `<div class="rowblock">
     <div class="rowhead"><span class="no">${i + 1}</span><span class="nm">${esc(row.name)}</span></div>
-    <div class="rail" data-rail="${row.id}" style="width:${railW.toFixed(3)}mm">${row.devices.map(devHTML).join("")}${slots}</div>
+    <div class="rail" style="width:${(total * m).toFixed(3)}mm">${row.devices.map(devHTML).join("")}${slots}</div>
     ${stripHTML(row, false)}</div>`;
 }
-
-/* ---------- arkit ---------- */
-function pageDims() {
-  const p = PAPER[state.paper], land = state.orient === "landscape";
-  return { w: land ? p.h : p.w, h: land ? p.w : p.h };
-}
+function pageDims() { const p = PAPER[state.paper], l = state.orient === "landscape"; return { w: l ? p.h : p.w, h: l ? p.w : p.h }; }
 function titleBlockHTML() {
   const m = state.meta, rows = [];
-  const pair = (k1, v1, k2, v2) => rows.push({ k1, v1, k2, v2 });
   if (m.kohde) rows.push({ k1: "Kohde", v1: m.kohde, wide: 1 });
   if (m.osoite) rows.push({ k1: "Osoite", v1: m.osoite, wide: 1 });
-  if (m.tunnus || m.pno) pair("Keskus", m.tunnus, "Piir.nro", m.pno);
-  if (m.tekija || m.pvm) pair("Suunn.", m.tekija, "Päiväys", m.pvm);
-  if (m.ivirta || m.ip) pair("Nim.virta", m.ivirta, "Kotelointi", m.ip);
-  rows.push({ k1: "Mittakaava", v1: "1:1", id: "scaleCell", k2: "", v2: "" });
+  if (m.tunnus || m.pno) rows.push({ k1: "Keskus", v1: m.tunnus, k2: "Piir.nro", v2: m.pno });
+  if (m.tekija || m.pvm) rows.push({ k1: "Suunn.", v1: m.tekija, k2: "Päiväys", v2: m.pvm });
+  if (m.ivirta || m.ip) rows.push({ k1: "Nim.virta", v1: m.ivirta, k2: "Kotelointi", v2: m.ip });
+  rows.push({ k1: "Mittakaava", v1: "1:1", id: "scaleCell" });
   const html = rows.map((r, i) => {
-    const last = i === rows.length - 1, b = last ? " b" : "";
-    if (r.wide) return `<div class="c k${b}">${esc(r.k1)}</div><div class="c v r${b}" style="grid-column:2/-1">${esc(r.v1)}</div>`;
-    if (r.id) return `<div class="c k${b}">${esc(r.k1)}</div><div class="c v r${b}" style="grid-column:2/-1" id="${r.id}">${esc(r.v1)}</div>`;
+    const b = i === rows.length - 1 ? " b" : "";
+    if (r.wide || r.id) return `<div class="c k${b}">${esc(r.k1)}</div><div class="c v r${b}" style="grid-column:2/-1"${r.id ? ` id="${r.id}"` : ""}>${esc(r.v1 || "")}</div>`;
     return `<div class="c k${b}">${esc(r.k1)}</div><div class="c v${b}">${esc(r.v1 || "")}</div><div class="c k${b}">${esc(r.k2)}</div><div class="c v r${b}">${esc(r.v2 || "")}</div>`;
   }).join("");
-  const notes = m.huom ? `<div class="notesbox"><h6>Huomautukset</h6><p>${esc(m.huom)}</p></div>` : "";
-  return notes + `<div class="titleblock">${html}</div>`;
+  return (m.huom ? `<div class="notesbox"><h6>Huomautukset</h6><p>${esc(m.huom)}</p></div>` : "") + `<div class="titleblock">${html}</div>`;
 }
 function renderDrawing() {
-  const { w, h } = pageDims(), sheet = $("#sheetDrawing");
-  sheet.style.width = w + "mm"; sheet.style.height = h + "mm";
-  sheet.innerHTML = `<div class="frame">
-    <div class="drawarea"><div class="panelwrap"><div id="panel"><div id="rot"><div class="cabinet">
-      ${state.rows.map(rowBlockHTML).join("") || '<div style="padding:20mm;font-size:4mm;color:#8a919b">Lisää rivi vasemmalta.</div>'}
-    </div></div></div></div></div>
-    ${titleBlockHTML()}</div>`;
+  const { w, h } = pageDims(), p = $("#paperDrawing");
+  p.style.width = w + "mm"; p.style.height = h + "mm";
+  p.innerHTML = `<div class="frame"><div class="drawarea"><div class="panelwrap"><div id="panel"><div id="rot"><div class="cabinet">
+    ${state.rows.map(rowBlockHTML).join("") || '<div style="padding:20mm;font-size:4mm;color:#8a919b">Ei rivejä.</div>'}
+    </div></div></div></div></div>${titleBlockHTML()}</div>`;
   fitPanel();
 }
 function fitPanel() {
@@ -623,277 +585,386 @@ function fitPanel() {
   const rot = $("#rot"), cab = rot.firstElementChild, wrap = panel.parentElement, area = wrap.parentElement;
   rot.style.transform = "none"; panel.style.transform = "none";
   const nw = cab.offsetWidth / PXMM, nh = cab.offsetHeight / PXMM;
+  if (!nw || !nh) return;
   const vert = state.form === "pysty";
   if (vert) rot.style.transform = "translateY(" + nw.toFixed(3) + "mm) rotate(-90deg)";
   const bw = vert ? nh : nw, bh = vert ? nw : nh;
   panel.style.width = bw + "mm"; panel.style.height = bh + "mm";
   const aw = area.clientWidth / PXMM, ah = area.clientHeight / PXMM;
-  const s = state.scaleMode === "fit" ? Math.min(aw / bw, ah / bh, 1) : (parseFloat(state.scaleMode) || 1);
+  let s = 1;
+  if (aw > 0 && ah > 0) s = state.scaleMode === "fit" ? Math.min(aw / bw, ah / bh, 1) : (parseFloat(state.scaleMode) || 1);
   panel.style.transform = "scale(" + s + ")";
   wrap.style.width = (bw * s) + "mm"; wrap.style.height = (bh * s) + "mm";
   const cell = $("#scaleCell");
-  if (cell) cell.textContent = s >= 0.999 ? "1:1" : "1:" + (1 / s).toFixed(2).replace(/0+$/, "").replace(/\.$/, "").replace(".", ",");
+  if (cell) cell.textContent = s >= .999 ? "1:1" : "1:" + (1 / s).toFixed(2).replace(/0+$/, "").replace(/\.$/, "").replace(".", ",");
 }
 function renderLabels() {
-  const { w, h } = pageDims(), sheet = $("#sheetLabels"), o = state.opts, blocks = [];
-  sheet.style.width = w + "mm"; sheet.style.minHeight = h + "mm";
+  const { w, h } = pageDims(), p = $("#paperLabels"), o = state.opts, blocks = [];
+  p.style.width = w + "mm"; p.style.minHeight = h + "mm";
   state.rows.forEach((r, i) => {
-    for (let c = 0; c < (o.copies || 1); c++) {
-      blocks.push(`<div class="stripblock"><div class="stripcap no-print"><b>${i + 1}. ${esc(r.name)}</b> — ${Math.max(r.modules, used(r))} mod · ${(Math.max(r.modules, used(r)) * MOD()).toFixed(1).replace(".", ",")} × ${String(o.stripH).replace(".", ",")} mm${(o.copies || 1) > 1 ? " · kopio " + (c + 1) : ""}</div>${stripHTML(r, true)}</div>`);
-    }
+    for (let c = 0; c < (o.copies || 1); c++)
+      blocks.push(`<div class="stripblock"><div class="stripcap no-print"><b>${i + 1}. ${esc(r.name)}</b> — ${Math.max(r.modules, used(r))} mod · ${(Math.max(r.modules, used(r)) * MOD()).toFixed(1).replace(".", ",")} × ${String(o.stripH).replace(".", ",")} mm</div>${stripHTML(r, true)}</div>`);
   });
-  sheet.innerHTML = `<div class="sheetHead no-print"><h1>Merkintäliuskat</h1>
-    <p>Näkymä on todellisessa koossa. Valitse tulostusikkunassa mittakaava 100 % ja leikkaa liuskat katkoviivoja pitkin.</p></div>
-    ${blocks.join("") || '<p class="no-print">Ei rivejä.</p>'}`;
+  p.innerHTML = `<div class="sheetHead no-print"><h1>Merkintäliuskat</h1><p>Todellinen koko. Tulosta mittakaavassa 100 % ja leikkaa katkoviivoja pitkin.</p></div>${blocks.join("")}`;
 }
 function renderList() {
-  const { w, h } = pageDims(), sheet = $("#sheetList");
-  sheet.style.width = w + "mm"; sheet.style.minHeight = h + "mm";
+  const { w, h } = pageDims(), p = $("#paperList");
+  p.style.width = w + "mm"; p.style.minHeight = h + "mm";
   let body = "";
   state.rows.forEach((r, i) => {
     body += `<tr class="sep"><td colspan="6">${i + 1}. ${esc(r.name)}</td></tr>`;
     r.devices.forEach(d => {
-      const c = CAT[d.key];
-      if (c.form === "blank") return;
-      body += `<tr><td class="n">${esc(d.group || "")}</td><td>${esc(c.name)}</td>
-        <td class="n">${esc([d.curve && d.curve !== "-" ? d.curve : "", d.rating || ""].join(""))}</td>
-        <td class="n">${esc(d.ma && d.ma !== "-" ? d.ma : "")}</td>
-        <td class="n">${esc(d.cable || "")}</td><td>${esc(d.desc || "")}</td></tr>`;
+      if (CAT[d.key].form === "blank") return;
+      body += `<tr><td class="n">${esc(d.group || "")}</td><td>${esc(CAT[d.key].name)}</td><td class="n">${esc(label(d))}</td>
+        <td class="n">${esc(d.ma && d.ma !== "-" ? d.ma : "")}</td><td class="n">${esc(d.cable || "")}</td><td>${esc(d.desc || "")}</td></tr>`;
     });
   });
   const head = [state.meta.tunnus, state.meta.kohde, state.meta.pvm].filter(Boolean).join(" · ");
-  sheet.innerHTML = `<div class="sheetHead"><h1>Ryhmäluettelo</h1>${head ? `<p>${esc(head)}</p>` : ""}</div>
+  p.innerHTML = `<div class="sheetHead"><h1>Ryhmäluettelo</h1>${head ? `<p>${esc(head)}</p>` : ""}</div>
     <table class="glist"><thead><tr><th style="width:16mm">Ryhmä</th><th>Koje</th><th style="width:18mm">Suojaus</th>
     <th style="width:18mm">Vikavirta</th><th style="width:32mm">Kaapeli</th><th>Merkintä</th></tr></thead><tbody>${body}</tbody></table>`;
 }
-
-/* ---------- zoom / näkymä ---------- */
 function applyZoom() {
-  const sheet = $(".sheet.active"); if (!sheet) return;
-  const w = sheet.offsetWidth, h = sheet.offsetHeight;
-  if (zoomAuto) zoom = Math.max(.12, Math.min(1.6, ($("#stage").clientWidth - 64) / w));
+  const p = $(".sheetpaper.on"); if (!p) return;
+  const w = p.offsetWidth, h = p.offsetHeight;
+  if (!w) return;
+  if (zoomAuto) zoom = Math.max(.1, Math.min(1.5, ($("#stage").clientWidth - 28) / w));
   $("#scaler").style.transform = "scale(" + zoom + ")";
   $("#holder").style.width = (w * zoom) + "px";
   $("#holder").style.height = (h * zoom) + "px";
   $("#zVal").textContent = Math.round(zoom * 100) + " %";
 }
-function setView(v) {
-  view = v;
-  $$("#tabs button").forEach(b => b.classList.toggle("active", b.dataset.view === v));
-  $$(".sheet").forEach(s => s.classList.toggle("active", s.dataset.view === v));
-  updatePageStyle(); applyZoom();
-}
+function renderPaper() { renderDrawing(); renderLabels(); renderList(); applyZoom(); }
+function renderAll() { renderRows(); renderPaper(); }
 function updatePageStyle() {
   let st = $("#pagestyle");
   if (!st) { st = document.createElement("style"); st.id = "pagestyle"; document.head.appendChild(st); }
-  st.textContent = "@page{size:" + state.paper + " " + (state.orient === "landscape" ? "landscape" : "portrait") +
-    ";margin:" + (view === "drawing" ? "0" : "10mm") + "}";
-}
-function renderSheets() { renderDrawing(); renderLabels(); renderList(); applyZoom(); }
-function renderAll() { renderRowList(); renderPalette(); renderInspector(); renderSheets(); }
-
-/* ---------- toiminnot ---------- */
-function setActiveRow(id) {
-  sel.row = id; sel.dev = null;
-  $$("#rowlist .rowitem").forEach(el => {
-    const on = el.dataset.row === id;
-    el.classList.toggle("active", on);
-  });
-  renderPalette(); renderInspector();
-  $$("#sheetDrawing .dev").forEach(el => el.classList.remove("sel"));
-}
-function addDevice(key, rowId, index) {
-  const row = rowById(rowId || sel.row) || state.rows[0]; if (!row) return;
-  const d = newDev(key);
-  if (typeof index === "number") row.devices.splice(index, 0, d); else row.devices.push(d);
-  sel.row = row.id; sel.dev = d.id; renderAll();
-}
-function deleteDev(id) {
-  const f = findDev(id); if (!f) return;
-  f.row.devices = f.row.devices.filter(x => x.id !== id);
-  if (sel.dev === id) sel.dev = null;
-  renderAll();
-}
-function moveDev(id, dir) {
-  const f = findDev(id); if (!f) return;
-  const arr = f.row.devices, i = arr.indexOf(f.dev), j = i + dir;
-  if (j < 0 || j >= arr.length) return;
-  arr.splice(i, 1); arr.splice(j, 0, f.dev); renderAll();
+  st.textContent = "@page{size:" + state.paper + " " + (state.orient === "landscape" ? "landscape" : "portrait") + ";margin:" + (view === "drawing" ? "0" : "10mm") + "}";
 }
 
-/* ---------- tapahtumat ---------- */
-$("#tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setView(b.dataset.view); });
-$("#paper").addEventListener("change", e => { state.paper = e.target.value; updatePageStyle(); renderSheets(); });
-$("#orient").addEventListener("change", e => { state.orient = e.target.value; updatePageStyle(); renderSheets(); });
-$("#scalemode").addEventListener("change", e => { state.scaleMode = e.target.value; renderSheets(); });
-$("#form").addEventListener("change", e => { state.form = e.target.value; renderSheets(); });
+/* ============ SHEET ============ */
+let sheetKind = null;
+function openSheet(title, html, kind) {
+  sheetKind = kind || null;
+  $("#shTitle").textContent = title;
+  $("#shBody").innerHTML = html;
+  $("#shBody").scrollTop = 0;
+  $("#scrim").hidden = false; $("#sheet").hidden = false;
+  requestAnimationFrame(() => { $("#scrim").classList.add("on"); $("#sheet").classList.add("on"); });
+}
+function closeSheet() {
+  $("#scrim").classList.remove("on"); $("#sheet").classList.remove("on");
+  setTimeout(() => { $("#scrim").hidden = true; $("#sheet").hidden = true; }, 220);
+  sheetKind = null; selDev = null;
+  renderPaper();
+}
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), 1600);
+}
+
+/* ---- rivin asetukset ---- */
+function sheetRow(id) {
+  const r = rowById(id); if (!r) return;
+  openSheet("Rivin asetukset", `
+    <div class="f"><label>Rivin nimi</label><input type="text" id="rName" value="${esc(r.name)}"></div>
+    <div class="f"><label>Rivin tyyppi</label><div class="chips" id="rKind">
+      <button class="chip wide ${r.kind === "din" ? "on" : ""}" data-k="din">DIN-kisko</button>
+      <button class="chip wide ${r.kind === "tulppa" ? "on" : ""}" data-k="tulppa">Tulppasulakkeet</button></div></div>
+    <div class="f"><label>Moduulipaikkoja</label><div class="stepper">
+      <button data-mod="-1">−</button><span id="rMod">${r.modules}</span><button data-mod="1">+</button></div></div>
+    <button class="rowbtn" data-ract="dup">Monista rivi</button>
+    <button class="rowbtn" data-ract="clear">Tyhjennä kojeet</button>
+    <button class="rowbtn warn" data-ract="del">Poista rivi</button>`, "row:" + id);
+}
+/* ---- kojeen valinta ---- */
+let pickCat = null;
+function sheetPicker(rowId) {
+  const r = rowById(rowId); if (!r) return;
+  const items = CATALOG.filter(c => c.kinds.includes(r.kind));
+  const cats = [...new Set(items.map(c => c.cat))];
+  if (!cats.includes(pickCat)) pickCat = cats[0];
+  const list = items.filter(c => c.cat === pickCat).map(c =>
+    `<button class="rowbtn" data-pick="${c.key}">${esc(c.name)}<span class="w">${c.w} M</span></button>`).join("");
+  openSheet("Lisää koje", `
+    <div class="pickhead">${cats.map(c => `<button data-cat="${esc(c)}" class="${c === pickCat ? "on" : ""}">${esc(c)}</button>`).join("")}</div>
+    <div id="pickList">${list}</div>
+    <p class="note">Koje lisätään rivin loppuun. Voit lisätä useita peräkkäin.</p>`, "pick:" + rowId);
+}
+/* ---- kojeen tiedot ---- */
+function sheetDevice(id) {
+  const f = findDev(id); if (!f) return;
+  selDev = id;
+  const { row, dev } = f, c = CAT[dev.key], fl = c.fields;
+  const i = row.devices.indexOf(dev);
+  const chips = (name, vals, cur) => `<div class="chips" data-set="${name}">${vals.map(v =>
+    `<button class="chip ${String(cur) === String(v) ? "on" : ""}" data-v="${esc(v)}">${esc(v)}</button>`).join("")}</div>`;
+  openSheet(c.name, `
+    <div class="f"><label>Ryhmänumero</label><input type="text" id="dGroup" inputmode="numeric" value="${esc(dev.group || "")}" placeholder="esim. 3"></div>
+    <div class="f"><label>Merkintäteksti liuskaan</label><input type="text" id="dDesc" value="${esc(dev.desc || "")}" placeholder="esim. Keittiön pistorasiat"></div>
+    ${fl.includes("curve") ? `<div class="f"><label>Laukaisukäyrä</label>${chips("curve", ["B","C","D"], dev.curve)}</div>` : ""}
+    ${fl.includes("rating") ? `<div class="f"><label>Nimellisvirta</label>${chips("rating", RATINGS, dev.rating)}
+      <input type="text" id="dRating" value="${esc(dev.rating || "")}" style="margin-top:9px" placeholder="muu merkintä"></div>` : ""}
+    ${fl.includes("ma") ? `<div class="f"><label>Vikavirta</label>${chips("ma", ["10mA","30mA","100mA","300mA"], dev.ma)}</div>` : ""}
+    ${fl.includes("cable") ? `<div class="f"><label>Kaapeli</label><input type="text" id="dCable" value="${esc(dev.cable || "")}" placeholder="MMJ 3x2,5S"></div>` : ""}
+    <div class="f"><label>Leveys moduuleina</label>${chips("w", [1,2,3,4,6,8], dev.w)}</div>
+    <div class="two" style="margin-bottom:8px">
+      <button class="rowbtn" style="margin:0" data-dact="up" ${i === 0 ? "disabled" : ""}>↑ Aiemmaksi</button>
+      <button class="rowbtn" style="margin:0" data-dact="down" ${i === row.devices.length - 1 ? "disabled" : ""}>↓ Myöhemmäksi</button>
+    </div>
+    <button class="rowbtn" data-dact="type">Vaihda kojetyyppi<span class="w">${esc(c.short || "")}</span></button>
+    <button class="rowbtn" data-dact="dup">Monista koje</button>
+    <button class="rowbtn warn" data-dact="del">Poista koje</button>`, "dev:" + id);
+}
+function sheetTypeChange(id) {
+  const f = findDev(id); if (!f) return;
+  const items = CATALOG.filter(c => c.kinds.includes(f.row.kind));
+  const cats = [...new Set(items.map(c => c.cat))];
+  openSheet("Vaihda kojetyyppi", cats.map(cat =>
+    `<div class="sectitle">${esc(cat)}</div>` + items.filter(c => c.cat === cat).map(c =>
+      `<button class="rowbtn" data-newtype="${c.key}">${esc(c.name)}<span class="w">${c.w} M</span></button>`).join("")).join(""), "type:" + id);
+}
+/* ---- keskuksen tiedot ---- */
+function sheetInfo() {
+  const m = state.meta;
+  const t = (k, lab, ph) => `<div class="f"><label>${lab}</label><input type="text" data-meta="${k}" value="${esc(m[k] || "")}" placeholder="${ph || ""}"></div>`;
+  openSheet("Keskuksen tiedot", t("tunnus", "Keskustunnus", "JK1") + t("kohde", "Kohde") + t("osoite", "Osoite") +
+    `<div class="two">${t("tekija", "Suunnittelija")}${t("pvm", "Päiväys")}</div>` +
+    `<div class="two">${t("pno", "Piirustusnro")}${t("ivirta", "Nimellisvirta", "3x25 A")}</div>` +
+    t("ip", "Kotelointiluokka", "IP34") +
+    `<div class="f"><label>Huomautukset</label><textarea data-meta="huom" rows="3"></textarea></div>
+     <p class="note">Tyhjät kentät jätetään pois piirustuksen nimiöstä.</p>`, "info");
+  $("#shBody textarea[data-meta=huom]").value = m.huom || "";
+}
+/* ---- arkki, malli ja liuskat ---- */
+function sheetPaper() {
+  const o = state.opts;
+  const seg = (id, vals, cur) => `<div class="chips" data-seg="${id}">${vals.map(v =>
+    `<button class="chip wide ${cur === v[0] ? "on" : ""}" data-v="${v[0]}">${v[1]}</button>`).join("")}</div>`;
+  openSheet("Arkki ja liuskat", `
+    <div class="f"><label>Keskuksen malli</label>${seg("form", [["vaaka", "Vaakamalli"], ["pysty", "Pystymalli"]], state.form)}</div>
+    <div class="two">
+      <div class="f"><label>Paperikoko</label>${seg("paper", [["A4", "A4"], ["A3", "A3"]], state.paper)}</div>
+      <div class="f"><label>Suunta</label>${seg("orient", [["landscape", "Vaaka"], ["portrait", "Pysty"]], state.orient)}</div>
+    </div>
+    <div class="f"><label>Piirustuksen mittakaava</label>${seg("scaleMode", [["fit", "Sovita"], ["1", "1:1"], ["0.5", "50 %"]], state.scaleMode)}</div>
+    <div class="sectitle">Merkintäliuskat</div>
+    <div class="two">
+      <div class="f"><label>Korkeus mm</label><div class="stepper"><button data-opt="stripH" data-d="-1">−</button><span id="oH">${o.stripH}</span><button data-opt="stripH" data-d="1">+</button></div></div>
+      <div class="f"><label>Teksti mm</label><div class="stepper"><button data-opt="fs" data-d="-1">−</button><span id="oF">${o.fs}</span><button data-opt="fs" data-d="1">+</button></div></div>
+    </div>
+    <div class="two">
+      <div class="f"><label>Moduuli mm</label><div class="stepper"><button data-opt="mod" data-d="-1">−</button><span id="oM">${o.mod}</span><button data-opt="mod" data-d="1">+</button></div></div>
+      <div class="f"><label>Kopioita</label><div class="stepper"><button data-opt="copies" data-d="-1">−</button><span id="oC">${o.copies}</span><button data-opt="copies" data-d="1">+</button></div></div>
+    </div>
+    <div class="swrow"><span>Ryhmänumero liuskaan</span><button class="sw ${o.showGroup ? "on" : ""}" data-sw="showGroup"></button></div>
+    <div class="swrow"><span>Pystysuora teksti</span><button class="sw ${o.vert ? "on" : ""}" data-sw="vert"></button></div>
+    <div class="swrow"><span>Näytä vapaat moduulit</span><button class="sw ${o.showEmpty ? "on" : ""}" data-sw="showEmpty"></button></div>`, "paper");
+}
+
+/* ============ TAPAHTUMAT ============ */
+$("#tabbar").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  showPane(b.dataset.pane);
+});
+function showPane(id) {
+  $$(".pane").forEach(p => p.classList.toggle("on", p.id === id));
+  $$("#tabbar button").forEach(b => b.classList.toggle("on", b.dataset.pane === id));
+  if (id === "panePreview") { fitPanel(); applyZoom(); }
+}
+$("#viewSeg").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  view = b.dataset.view;
+  $$("#viewSeg button").forEach(x => x.classList.toggle("on", x === b));
+  $$(".sheetpaper").forEach(p => p.classList.toggle("on", p.dataset.view === view));
+  updatePageStyle(); applyZoom();
+});
 $("#btnPrint").addEventListener("click", () => { updatePageStyle(); window.print(); });
+$("#btnPrint2").addEventListener("click", () => { updatePageStyle(); window.print(); });
+$("#btnPaper").addEventListener("click", sheetPaper);
+$("#btnInfo").addEventListener("click", sheetInfo);
+$("#btnMore2").addEventListener("click", () => openSheet("Työ", `
+  <button class="rowbtn" data-open="save">Tallenna työ tiedostoksi</button>
+  <button class="rowbtn" data-open="load">Avaa tallennettu työ</button>
+  <div class="sectitle">Aloita pohjalla</div>
+  <button class="rowbtn" data-tpl="asunto">Asunnon ryhmäkeskus</button>
+  <button class="rowbtn" data-tpl="tulppa">Tulppasulakekeskus</button>
+  <button class="rowbtn" data-tpl="tyhja">Tyhjä pohja</button>`, "more"));
+$("#zIn").addEventListener("click", () => { zoomAuto = false; zoom = Math.min(2, zoom * 1.2); applyZoom(); });
+$("#zOut").addEventListener("click", () => { zoomAuto = false; zoom = Math.max(.08, zoom / 1.2); applyZoom(); });
+$("#zFit").addEventListener("click", () => { zoomAuto = true; applyZoom(); });
+$("#addDin").addEventListener("click", () => { state.rows.push(newRow("din", "Kiskorivi " + (state.rows.length + 1), 12)); renderAll(); });
+$("#addTulppa").addEventListener("click", () => { state.rows.push(newRow("tulppa", "Sulakerivi " + (state.rows.length + 1), 12)); renderAll(); });
 $("#autoNum").addEventListener("click", () => {
   let n = 1; state.rows.forEach(r => r.devices.forEach(d => { if (CAT[d.key].prot) d.group = String(n++); }));
-  renderAll();
-});
-$("#zIn").addEventListener("click", () => { zoomAuto = false; zoom = Math.min(2, zoom * 1.15); applyZoom(); });
-$("#zOut").addEventListener("click", () => { zoomAuto = false; zoom = Math.max(.1, zoom / 1.15); applyZoom(); });
-$("#zFit").addEventListener("click", () => { zoomAuto = true; applyZoom(); });
-$("#addDin").addEventListener("click", () => { const r = newRow("din", "Kiskorivi " + (state.rows.length + 1), 12); state.rows.push(r); sel.row = r.id; sel.dev = null; renderAll(); });
-$("#addTulppa").addEventListener("click", () => { const r = newRow("tulppa", "Sulakerivi " + (state.rows.length + 1), 12); state.rows.push(r); sel.row = r.id; sel.dev = null; renderAll(); });
-
-$("#metaForm").addEventListener("input", e => { const k = e.target.dataset.meta; if (k) { state.meta[k] = e.target.value; renderSheets(); } });
-$("#optForm").addEventListener("input", e => {
-  const k = e.target.dataset.opt; if (!k) return;
-  state.opts[k] = e.target.type === "checkbox" ? e.target.checked : (parseFloat(e.target.value) || 0);
-  renderSheets();
+  renderAll(); toast("Ryhmät numeroitu");
 });
 
-/* rivilista: valinta ei koskaan piirrä listaa uudelleen -> alasvetovalikot toimivat */
-$("#rowlist").addEventListener("mousedown", e => {
-  const item = e.target.closest(".rowitem"); if (!item) return;
-  if (e.target.closest("[data-ract]")) return;
-  if (item.dataset.row !== sel.row) setActiveRow(item.dataset.row);
-});
-$("#rowlist").addEventListener("click", e => {
-  const act = e.target.closest("[data-ract]"); if (!act) return;
-  const row = rowById(act.closest(".rowitem").dataset.row); if (!row) return;
-  const i = state.rows.indexOf(row), a = act.dataset.ract;
-  if (a === "up" && i > 0) state.rows.splice(i - 1, 0, state.rows.splice(i, 1)[0]);
-  if (a === "down" && i < state.rows.length - 1) state.rows.splice(i + 1, 0, state.rows.splice(i, 1)[0]);
-  if (a === "dup") { const cp = JSON.parse(JSON.stringify(row)); cp.id = uid(); cp.name = row.name + " (kopio)"; cp.devices.forEach(d => d.id = uid()); state.rows.splice(i + 1, 0, cp); }
-  if (a === "del") {
-    if (state.rows.length === 1) row.devices = [];
-    else { state.rows.splice(i, 1); if (sel.row === row.id) sel.row = state.rows[0].id; }
-  }
-  sel.dev = null; renderAll();
-});
-$("#rowlist").addEventListener("input", e => {
-  const f = e.target.dataset.rf, item = e.target.closest(".rowitem"); if (!f || !item) return;
-  const row = rowById(item.dataset.row); if (!row) return;
-  if (f === "name") row.name = e.target.value;
-  if (f === "modules") row.modules = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
-  const u = used(row), tag = item.querySelector(".usage");
-  if (tag) { tag.textContent = u + "/" + row.modules; tag.classList.toggle("over", u > row.modules); }
-  renderSheets();
-});
-$("#rowlist").addEventListener("change", e => {
-  if (e.target.dataset.rf !== "kind") return;
-  const item = e.target.closest(".rowitem"), row = rowById(item.dataset.row);
-  if (row.devices.length && !confirm("Rivityypin vaihto tyhjentää rivin kojeet. Jatketaanko?")) { e.target.value = row.kind; return; }
-  row.kind = e.target.value; row.devices = []; sel.row = row.id; sel.dev = null; renderAll();
-});
-
-$("#palette").addEventListener("click", e => { const b = e.target.closest("[data-add]"); if (b) addDevice(b.dataset.add); });
-$("#palette").addEventListener("dragstart", e => {
-  const b = e.target.closest("[data-add]"); if (!b) return;
-  e.dataTransfer.setData("text/plain", "new:" + b.dataset.add); e.dataTransfer.effectAllowed = "copy";
-});
-$$("[data-tpl]").forEach(b => b.addEventListener("click", () => {
-  state = template(b.dataset.tpl); sel = { row: state.rows[0].id, dev: null };
-  syncForms(); updatePageStyle(); renderAll();
-}));
-
-$("#sheetDrawing").addEventListener("click", e => {
-  const dev = e.target.closest("[data-dev]"), rb = e.target.closest("[data-rowblock]");
-  if (rb) sel.row = rb.dataset.rowblock;
-  sel.dev = dev ? dev.dataset.dev : null;
-  renderRowList(); renderPalette(); renderInspector();
-  $$("#sheetDrawing .dev").forEach(el => el.classList.toggle("sel", el.dataset.dev === sel.dev));
-});
-$("#inspector").addEventListener("click", e => {
-  const f = sel.dev && findDev(sel.dev); if (!f) return;
-  const wb = e.target.closest("[data-w]");
-  if (wb) { f.dev.w = parseInt(wb.dataset.w); renderAll(); return; }
-  const id = e.target.id;
-  if (id === "iDel") deleteDev(f.dev.id);
-  else if (id === "iLeft") moveDev(f.dev.id, -1);
-  else if (id === "iRight") moveDev(f.dev.id, 1);
-  else if (id === "iDup") {
-    const cp = JSON.parse(JSON.stringify(f.dev)); cp.id = uid();
-    f.row.devices.splice(f.row.devices.indexOf(f.dev) + 1, 0, cp); sel.dev = cp.id; renderAll();
+/* rivilista */
+$("#rows").addEventListener("click", e => {
+  const menu = e.target.closest("[data-rowmenu]"); if (menu) return sheetRow(menu.dataset.rowmenu);
+  const add = e.target.closest("[data-addto]"); if (add) return sheetPicker(add.dataset.addto);
+  const ed = e.target.closest("[data-edit]"); if (ed) return sheetDevice(ed.dataset.edit);
+  const bar = e.target.closest(".mb[data-dev]"); if (bar) return sheetDevice(bar.dataset.dev);
+  const mv = e.target.closest("[data-mv]");
+  if (mv) {
+    const f = findDev(mv.dataset.mv); if (!f) return;
+    const arr = f.row.devices, i = arr.indexOf(f.dev), j = i + parseInt(mv.dataset.dir);
+    if (j < 0 || j >= arr.length) return;
+    arr.splice(i, 1); arr.splice(j, 0, f.dev); renderAll();
   }
 });
-$("#inspector").addEventListener("input", e => {
-  const f = sel.dev && findDev(sel.dev); if (!f) return;
-  const map = { iRating: "rating", iGroup: "group", iDesc: "desc", iCable: "cable" }, k = map[e.target.id];
-  if (k) { f.dev[k] = e.target.value; renderSheets(); }
+/* paperi: napautus kojeeseen avaa muokkauksen */
+$("#paperDrawing").addEventListener("click", e => {
+  const d = e.target.closest("[data-dev]"); if (d) sheetDevice(d.dataset.dev);
 });
-$("#inspector").addEventListener("change", e => {
-  const f = sel.dev && findDev(sel.dev); if (!f) return;
-  if (e.target.id === "iCurve") { f.dev.curve = e.target.value; renderSheets(); }
-  if (e.target.id === "iMa") { f.dev.ma = e.target.value; renderSheets(); }
-  if (e.target.id === "iKey") {
-    const c = CAT[e.target.value];
+
+/* sheet-toiminnot */
+$("#shClose").addEventListener("click", closeSheet);
+$("#scrim").addEventListener("click", closeSheet);
+$("#shBody").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const kind = (sheetKind || "").split(":")[0], id = (sheetKind || "").split(":")[1];
+
+  if (b.dataset.open === "save") { doSave(); return; }
+  if (b.dataset.open === "load") { $("#fileIn").click(); return; }
+  if (b.dataset.open === "info") { sheetInfo(); return; }
+  if (b.dataset.open === "paper") { sheetPaper(); return; }
+  if (b.dataset.tpl) { loadTemplate(b.dataset.tpl); return; }
+
+  if (kind === "row") {
+    const r = rowById(id); if (!r) return;
+    if (b.dataset.k) {
+      if (b.dataset.k !== r.kind) {
+        if (r.devices.length && !confirm("Tyypin vaihto tyhjentää rivin kojeet. Jatketaanko?")) return;
+        r.kind = b.dataset.k; r.devices = [];
+      }
+      $$("#shBody #rKind .chip").forEach(c => c.classList.toggle("on", c.dataset.k === r.kind));
+      renderAll(); return;
+    }
+    if (b.dataset.mod) {
+      r.modules = Math.max(1, Math.min(60, r.modules + parseInt(b.dataset.mod)));
+      $("#rMod").textContent = r.modules; renderAll(); return;
+    }
+    const a = b.dataset.ract, i = state.rows.indexOf(r);
+    if (a === "dup") { const cp = JSON.parse(JSON.stringify(r)); cp.id = uid(); cp.name = r.name + " (kopio)"; cp.devices.forEach(d => d.id = uid()); state.rows.splice(i + 1, 0, cp); closeSheet(); renderAll(); toast("Rivi monistettu"); }
+    if (a === "clear") { r.devices = []; renderAll(); toast("Kojeet poistettu"); }
+    if (a === "del") {
+      if (state.rows.length === 1) { r.devices = []; toast("Viimeistä riviä ei poisteta"); }
+      else { state.rows.splice(i, 1); closeSheet(); toast("Rivi poistettu"); }
+      renderAll();
+    }
+    return;
+  }
+  if (kind === "pick") {
+    if (b.dataset.cat) { pickCat = b.dataset.cat; sheetPicker(id); return; }
+    if (b.dataset.pick) {
+      const r = rowById(id); r.devices.push(newDev(b.dataset.pick));
+      renderAll(); toast(CAT[b.dataset.pick].name + " lisätty"); return;
+    }
+    return;
+  }
+  if (kind === "type") {
+    if (!b.dataset.newtype) return;
+    const f = findDev(id), c = CAT[b.dataset.newtype];
     f.dev.key = c.key; f.dev.w = c.w;
     Object.entries(c.def).forEach(([k, v]) => { if (!f.dev[k]) f.dev[k] = v; });
-    renderAll();
+    renderAll(); sheetDevice(id); return;
+  }
+  if (kind === "dev") {
+    const f = findDev(id); if (!f) return;
+    const set = b.closest("[data-set]");
+    if (set) {
+      const k = set.dataset.set, v = b.dataset.v;
+      f.dev[k] = k === "w" ? parseInt(v) : (f.dev[k] === v ? "" : v);
+      set.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", String(f.dev[k]) === c.dataset.v));
+      if (k === "rating" && $("#dRating")) $("#dRating").value = f.dev.rating || "";
+      renderRows(); schedulePaper(); return;
+    }
+    const a = b.dataset.dact;
+    if (a === "type") { sheetTypeChange(id); return; }
+    if (a === "up" || a === "down") {
+      const arr = f.row.devices, i = arr.indexOf(f.dev), j = i + (a === "up" ? -1 : 1);
+      if (j < 0 || j >= arr.length) return;
+      arr.splice(i, 1); arr.splice(j, 0, f.dev); renderAll(); sheetDevice(id); return;
+    }
+    if (a === "dup") {
+      const cp = JSON.parse(JSON.stringify(f.dev)); cp.id = uid();
+      f.row.devices.splice(f.row.devices.indexOf(f.dev) + 1, 0, cp);
+      renderAll(); closeSheet(); toast("Koje monistettu"); return;
+    }
+    if (a === "del") {
+      f.row.devices = f.row.devices.filter(x => x.id !== f.dev.id);
+      renderAll(); closeSheet(); toast("Koje poistettu"); return;
+    }
+    return;
+  }
+  if (kind === "paper") {
+    const seg = b.closest("[data-seg]");
+    if (seg) {
+      const k = seg.dataset.seg;
+      if (k === "form") state.form = b.dataset.v;
+      else if (k === "paper") state.paper = b.dataset.v;
+      else if (k === "orient") state.orient = b.dataset.v;
+      else if (k === "scaleMode") state.scaleMode = b.dataset.v;
+      seg.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c === b));
+      updatePageStyle(); renderPaper(); return;
+    }
+    if (b.dataset.opt) {
+      const k = b.dataset.opt, d = parseInt(b.dataset.d);
+      const step = { stripH: .5, fs: .1, mod: .5, copies: 1 }[k];
+      const min = { stripH: 4, fs: 1.5, mod: 8, copies: 1 }[k];
+      const max = { stripH: 40, fs: 8, mod: 40, copies: 4 }[k];
+      state.opts[k] = Math.round(Math.min(max, Math.max(min, state.opts[k] + d * step)) * 10) / 10;
+      const el = { stripH: "#oH", fs: "#oF", mod: "#oM", copies: "#oC" }[k];
+      $(el).textContent = state.opts[k]; renderPaper(); return;
+    }
+    if (b.dataset.sw) {
+      const k = b.dataset.sw;
+      state.opts[k] = !state.opts[k];
+      b.classList.toggle("on", state.opts[k]); renderPaper(); return;
+    }
   }
 });
-document.addEventListener("keydown", e => {
-  if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
-  if (e.key === "Escape") { sel.dev = null; renderAll(); }
-  if (!sel.dev) return;
-  if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteDev(sel.dev); }
-  if (e.key === "ArrowLeft") { e.preventDefault(); moveDev(sel.dev, -1); }
-  if (e.key === "ArrowRight") { e.preventDefault(); moveDev(sel.dev, 1); }
+$("#shBody").addEventListener("input", e => {
+  const el = e.target, kind = (sheetKind || "").split(":")[0], id = (sheetKind || "").split(":")[1];
+  if (el.dataset.meta) { state.meta[el.dataset.meta] = el.value; renderRows(); schedulePaper(); return; }
+  if (kind === "row" && el.id === "rName") { rowById(id).name = el.value; renderRows(); schedulePaper(); return; }
+  if (kind === "dev") {
+    const f = findDev(id); if (!f) return;
+    const map = { dGroup: "group", dDesc: "desc", dCable: "cable", dRating: "rating" };
+    const k = map[el.id]; if (!k) return;
+    f.dev[k] = el.value;
+    if (k === "rating") $$("#shBody [data-set=rating] .chip").forEach(c => c.classList.toggle("on", c.dataset.v === el.value));
+    renderRows(); schedulePaper();
+  }
 });
+let pt; function schedulePaper() { clearTimeout(pt); pt = setTimeout(renderPaper, 200); }
 
-/* ---------- raahaus ---------- */
-let dragId = null, marker = null;
-$("#sheetDrawing").addEventListener("dragstart", e => {
-  const d = e.target.closest("[data-dev]"); if (!d) return;
-  dragId = d.dataset.dev; d.classList.add("dragging");
-  e.dataTransfer.setData("text/plain", "move:" + dragId); e.dataTransfer.effectAllowed = "move";
+/* tiedot-välilehti */
+$("#infoWrap").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "iSave") return doSave();
+  if (b.id === "iOpen") return $("#fileIn").click();
+  if (b.dataset.open === "info") return sheetInfo();
+  if (b.dataset.open === "paper") return sheetPaper();
+  if (b.dataset.tpl) return loadTemplate(b.dataset.tpl);
 });
-$("#sheetDrawing").addEventListener("dragend", () => {
-  dragId = null; if (marker) { marker.remove(); marker = null; }
-  $$("#sheetDrawing .dev").forEach(el => el.classList.remove("dragging"));
-});
-function insertIndex(rail, clientX, clientY) {
-  const row = rowById(rail.dataset.rail), r = rail.getBoundingClientRect();
-  const total = Math.max(row.modules, used(row));
-  const along = state.form === "pysty"
-    ? ((clientY - r.top) / (r.height || 1))
-    : ((clientX - r.left) / (r.width || 1));
-  const pos = along * total;
-  let acc = 0, i = 0;
-  for (; i < row.devices.length; i++) { const w = row.devices[i].w; if (pos < acc + w / 2) break; acc += w; }
-  return { row, index: i, mm: acc * MOD() };
+function loadTemplate(t) {
+  if (!confirm("Nykyinen työ korvataan pohjalla. Jatketaanko?")) return;
+  state = template(t); view = "drawing"; selDev = null;
+  $$("#viewSeg button").forEach(x => x.classList.toggle("on", x.dataset.view === "drawing"));
+  $$(".sheetpaper").forEach(p => p.classList.toggle("on", p.dataset.view === "drawing"));
+  closeSheet(); updatePageStyle(); renderAll(); showPane("paneEdit"); toast("Pohja ladattu");
 }
-$("#sheetDrawing").addEventListener("dragover", e => {
-  const rail = e.target.closest("[data-rail]"); if (!rail) return;
-  e.preventDefault(); e.dataTransfer.dropEffect = dragId ? "move" : "copy";
-  const { mm } = insertIndex(rail, e.clientX, e.clientY);
-  if (!marker) { marker = document.createElement("div"); marker.className = "dropmark"; }
-  marker.style.left = mm.toFixed(2) + "mm";
-  if (marker.parentElement !== rail) rail.appendChild(marker);
-});
-$("#sheetDrawing").addEventListener("drop", e => {
-  const rail = e.target.closest("[data-rail]"); if (!rail) return;
-  e.preventDefault();
-  const data = e.dataTransfer.getData("text/plain") || "";
-  const { row, index } = insertIndex(rail, e.clientX, e.clientY);
-  if (marker) { marker.remove(); marker = null; }
-  if (data.startsWith("new:")) {
-    const key = data.slice(4);
-    if (!CAT[key].kinds.includes(row.kind)) return;
-    addDevice(key, row.id, index);
-  } else if (dragId) {
-    const f = findDev(dragId); if (!f) return;
-    const same = f.row === row, from = f.row.devices.indexOf(f.dev);
-    f.row.devices.splice(from, 1);
-    let idx = index; if (same && from < index) idx--;
-    row.devices.splice(Math.max(0, idx), 0, f.dev);
-    sel.row = row.id; sel.dev = f.dev.id; dragId = null; renderAll();
-  }
-});
-
-/* ---------- tallennus ---------- */
-$("#btnSave").addEventListener("click", () => {
+function doSave() {
   const blob = new Blob([JSON.stringify(state, null, 1)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "keskus_" + (state.meta.tunnus || "kuva").replace(/[^\w\-]+/g, "_") + ".json";
   a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-});
-$("#btnOpen").addEventListener("click", () => $("#fileIn").click());
+  toast("Tallennettu");
+}
 $("#fileIn").addEventListener("change", e => {
   const file = e.target.files[0]; if (!file) return;
   const fr = new FileReader();
@@ -906,25 +977,16 @@ $("#fileIn").addEventListener("change", e => {
       state.opts = Object.assign(base.opts, o.opts || {});
       state.meta = Object.assign(base.meta, o.meta || {});
       if (!state.form) state.form = "vaaka";
-      sel = { row: state.rows[0].id, dev: null };
-      syncForms(); updatePageStyle(); renderAll();
+      closeSheet(); updatePageStyle(); renderAll(); showPane("paneEdit"); toast("Työ avattu");
     } catch (err) { alert("Tiedostoa ei voitu lukea. Valitse tällä työkalulla tallennettu .json-tiedosto."); }
   };
   fr.readAsText(file); e.target.value = "";
 });
-function syncForms() {
-  $$("[data-meta]").forEach(el => el.value = state.meta[el.dataset.meta] || "");
-  $$("[data-opt]").forEach(el => {
-    const v = state.opts[el.dataset.opt];
-    if (el.type === "checkbox") el.checked = !!v; else el.value = v;
-  });
-  $("#paper").value = state.paper; $("#orient").value = state.orient;
-  $("#scalemode").value = state.scaleMode; $("#form").value = state.form;
-}
-let rt;
-window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { fitPanel(); applyZoom(); }, 120); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#sheet").hidden) closeSheet(); });
+let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { fitPanel(); applyZoom(); }, 150); });
 
-syncForms(); updatePageStyle(); renderAll();
+renderInfo(); updatePageStyle(); renderAll();
+setTimeout(() => { fitPanel(); applyZoom(); }, 60);
 </script>
 </body>
 </html>
