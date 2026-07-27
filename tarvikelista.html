@@ -124,14 +124,14 @@
             box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); display: flex; 
             flex-direction: column; gap: 1rem; transition: var(--transition);
         }
-        .group-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .group-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; width: 100%; }
         .group-card:hover { border-color: var(--primary-border); }
-        .group-details h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
+        .group-details h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;}
         .group-details p { font-size: 0.85rem; color: var(--text-muted); }
         .group-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .hidden-badge { font-size: 0.75rem; background: var(--primary-light); color: var(--primary-color); padding: 0.2rem 0.6rem; border-radius: 99px; }
         
-        .shared-users-list { margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border-color); }
+        .shared-users-list { margin-top: 0.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border-color); }
         .shared-user-item { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
         .shared-user-item:last-child { border-bottom: none; }
 
@@ -190,7 +190,7 @@
         }
         .footer-logo span { color: var(--primary-color); }
 
-        /* PUHELIMEN RUUDUKKONÄKYMÄN KORJAUS (Media Query) */
+        /* PUHELIMEN RUUDUKKONÄKYMÄN KORJAUS */
         @media (max-width: 600px) {
             .product-container.grid-view { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
             .grid-view .img-wrapper { height: 130px; }
@@ -211,12 +211,11 @@
         <h2 style="margin-bottom: 0.5rem;">Tuotekirjasto</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Kirjaudu sisään sähköpostillasi.</p>
         
-        <form id="loginForm" onsubmit="event.preventDefault(); if(window.submitLogin) window.submitLogin(); return false;">
+        <form id="loginForm" onsubmit="event.preventDefault(); window.submitLogin(); return false;">
             <div class="login-input-group">
                 <input type="email" id="emailInput" placeholder="nimi@esimerkki.fi" required oninput="window.checkEmail(this.value)">
             </div>
             
-            <!-- UUSI: Dynaaminen salasanakenttä -->
             <div id="passwordFieldContainer" class="login-input-group hidden">
                 <input type="password" id="passwordInput" placeholder="Salasana (Vain pääkäyttäjä)">
             </div>
@@ -251,11 +250,9 @@
             </select>
             <div class="view-toggles">
                 <button id="btnGrid" onclick="window.setView('grid')" title="Ruudukko">⊞</button>
-                <!-- OLETUS: Listanäkymä active -->
                 <button id="btnList" class="active" onclick="window.setView('list')" title="Lista">☰</button>
             </div>
         </div>
-        <!-- OLETUS: list-view luokka asennettuna -->
         <div id="productGrid" class="product-container list-view"></div>
         <button class="fab" onclick="window.openProductModal()" title="Lisää tuote">+</button>
     </main>
@@ -273,7 +270,7 @@
             <h2 style="margin-bottom: 1.5rem;">Käyttöoikeuksien hallinta</h2>
             <div style="background: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 2rem;">
                 <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Salli pääsy uudelle tilille</h3>
-                <form id="addUserForm" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <form id="addUserForm" onsubmit="event.preventDefault(); window.submitAddUser(); return false;" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <input type="email" id="newAllowedEmail" placeholder="esim. tyontekija@rentola.fi" required style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; min-width: 200px;">
                     <button type="submit">Salli pääsy</button>
                 </form>
@@ -293,7 +290,7 @@
                 <h2 id="productModalTitle">Lisää tuote</h2>
                 <button class="modal-close" onclick="window.closeModal('productModal')">×</button>
             </div>
-            <form id="productForm">
+            <form id="productForm" onsubmit="event.preventDefault(); window.submitProductForm(); return false;">
                 <input type="hidden" id="pId">
                 <div class="form-group">
                     <label>Tuotteen nimi *</label>
@@ -327,7 +324,7 @@
                 <h2>Uusi ryhmä</h2>
                 <button class="modal-close" onclick="window.closeModal('groupModal')">×</button>
             </div>
-            <form id="addGroupForm">
+            <form id="addGroupForm" onsubmit="event.preventDefault(); window.submitGroupForm(); return false;">
                 <div class="form-group">
                     <label>Ryhmän nimi *</label>
                     <input type="text" id="gName" required placeholder="Esim. Kaapelit">
@@ -343,7 +340,7 @@
                 <h2>Jaa ryhmä</h2>
                 <button class="modal-close" onclick="window.closeModal('shareModal')">×</button>
             </div>
-            <form id="shareGroupForm">
+            <form id="shareGroupForm" onsubmit="event.preventDefault(); window.submitShareForm(); return false;">
                 <input type="hidden" id="shareGroupId">
                 <p id="shareGroupName" style="margin-bottom: 1.5rem; font-weight: 600; color: var(--primary-color); background: var(--primary-light); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--primary-border);"></p>
                 <div class="form-group">
@@ -402,7 +399,6 @@
 
         const defaultImageStr = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpolyline points='3.27 6.96 12 12.01 20.73 6.96'/%3E%3Cline x1='12' y1='22.08' x2='12' y2='12'/%3E%3C/svg%3E";
 
-        // Näytä tai piilota salasanakenttä sähköpostin perusteella
         window.checkEmail = function(email) {
             const pwdContainer = document.getElementById('passwordFieldContainer');
             const pwdInput = document.getElementById('passwordInput');
@@ -421,7 +417,7 @@
             
             if(email) {
                 if (email === ADMIN_EMAIL) {
-                    window.tempAdminPassword = pwd; // Tallennetaan syötetty salasana tarkistusta varten
+                    window.tempAdminPassword = pwd; 
                 }
                 window.login(email);
             }
@@ -431,9 +427,8 @@
             const lastEmail = localStorage.getItem('lastEmail');
             if(lastEmail) {
                 document.getElementById('emailInput').value = lastEmail;
-                window.checkEmail(lastEmail); // Tarkista heti, onko admin
+                window.checkEmail(lastEmail);
             }
-
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) window.login(savedUser);
         }
@@ -466,7 +461,6 @@
                         }
                         checkAuthAndFinalize();
                     }, (error) => {
-                        console.warn("Pilven lukuvirhe:", error);
                         window.isSafeToWriteToCloud = false;
                         fallbackToLocal();
                     });
@@ -496,21 +490,18 @@
 
         function checkAuthAndFinalize() {
             if (!window.appData.allowedUsers) window.appData.allowedUsers = [];
-            
             const isAdmin = (window.currentUser === ADMIN_EMAIL);
 
             if (isAdmin) {
-                // Pääkäyttäjän salasanan asetus tai tarkistus kentästä
                 if (!window.appData.adminPassword) {
                     if (!window.tempAdminPassword) {
-                        alert("Salasana on pakollinen ensimmäisellä kerralla.");
+                        alert("Kirjoita uusi salasana salasanakenttään.");
                         window.logout(true);
                         return;
                     }
                     window.appData.adminPassword = window.tempAdminPassword;
                     window.saveData();
                 } else {
-                    // Jos salasana on jo asetettu, tarkistetaan se syöttökentästä (paitsi jos selain jo muistaa)
                     if (window.tempAdminPassword && window.tempAdminPassword !== window.appData.adminPassword) {
                         alert("Väärä salasana!");
                         window.tempAdminPassword = null;
@@ -518,7 +509,7 @@
                         return;
                     }
                 }
-                window.tempAdminPassword = null; // Tyhjennetään turvallisuussyistä
+                window.tempAdminPassword = null; 
             } else {
                 if (!window.appData.allowedUsers.includes(window.currentUser)) {
                     alert(`Pääsy evätty!\n\nSähköpostiosoitettasi ei ole sallittu järjestelmässä.\nPyydä ylläpitäjää (${ADMIN_EMAIL}) lisäämään sinut.`);
@@ -617,16 +608,15 @@
             });
         });
 
-        // PARANNETTU KUVAN PAKKAUS (Max 500px pitkä sivu, WebP)
-        function compressImage(file, maxDimension = 500) {
+        // KORJATTU JA TEHOKAS KUVAN PAKKAUS 
+        window.compressImage = function(file, maxDimension = 600) {
             return new Promise((resolve, reject) => {
                 if (!file) return resolve(null);
-                if (!file.type.match(/image.*/)) return reject(new Error("Ei ole kuva"));
+                if (!file.type.match(/image.*/)) return reject(new Error("Valittu tiedosto ei ole kuva."));
+                
                 const reader = new FileReader();
-                reader.readAsDataURL(file);
                 reader.onload = event => {
                     const img = new Image();
-                    img.src = event.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let width = img.width, height = img.height;
@@ -644,13 +634,18 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // Tallennetaan moderniin ja kevyeen WebP-muotoon vahvalla kompressiolla
+                        // Tallennus WebP-muodossa tiukalla pakkauksella varmistaa todella pienen koon
                         resolve(canvas.toDataURL('image/webp', 0.6));
                     };
+                    img.onerror = () => reject(new Error("Kuvan prosessointi epäonnistui."));
+                    img.src = event.target.result;
                 };
+                reader.onerror = () => reject(new Error("Tiedoston luku epäonnistui."));
+                reader.readAsDataURL(file);
             });
         }
 
+        // KORJATTU LOMAKKEEN KÄSITTELY: Täysin idioottivarma ja sidottu HTML onsubmit-tapahtumaan
         window.openProductModal = function(productId = null) {
             const form = document.getElementById('productForm');
             const title = document.getElementById('productModalTitle');
@@ -658,7 +653,7 @@
             const btn = document.getElementById('saveProductBtn');
             form.reset();
 
-            if (productId) {
+            if (productId && typeof productId === 'string') {
                 const p = window.appData.products.find(x => x.id === productId);
                 if(p) {
                     title.textContent = "Muokkaa tuotetta"; btn.textContent = "Tallenna muutokset";
@@ -677,38 +672,58 @@
             window.openModal('productModal');
         }
 
-        document.getElementById('productForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        window.submitProductForm = async function() {
             const submitBtn = document.getElementById('saveProductBtn');
-            submitBtn.disabled = true; submitBtn.textContent = "Tallennetaan...";
+            submitBtn.disabled = true; 
+            submitBtn.textContent = "Tallennetaan...";
 
             try {
-                const file = document.getElementById('pFile').files[0];
-                const imageData = await compressImage(file);
+                const fileInput = document.getElementById('pFile');
+                const file = fileInput.files ? fileInput.files[0] : null;
+                let imageData = null;
+                
+                if(file) {
+                    imageData = await window.compressImage(file);
+                }
+                
                 const pId = document.getElementById('pId').value;
+                const pName = document.getElementById('pName').value;
+                const pNum = document.getElementById('pNumber').value;
+                const pKey = document.getElementById('pKeywords').value;
+                const pGrp = document.getElementById('pGroup').value;
 
                 if (pId) {
                     const pIndex = window.appData.products.findIndex(x => x.id === pId);
                     if (pIndex > -1) {
-                        window.appData.products[pIndex].name = document.getElementById('pName').value;
-                        window.appData.products[pIndex].number = document.getElementById('pNumber').value;
-                        window.appData.products[pIndex].keywords = document.getElementById('pKeywords').value;
-                        window.appData.products[pIndex].groupId = document.getElementById('pGroup').value;
+                        window.appData.products[pIndex].name = pName;
+                        window.appData.products[pIndex].number = pNum;
+                        window.appData.products[pIndex].keywords = pKey;
+                        window.appData.products[pIndex].groupId = pGrp;
                         if (imageData) window.appData.products[pIndex].image = imageData;
                     }
                 } else {
                     window.appData.products.unshift({
-                        id: Date.now().toString(), name: document.getElementById('pName').value,
-                        number: document.getElementById('pNumber').value, keywords: document.getElementById('pKeywords').value,
-                        groupId: document.getElementById('pGroup').value, image: imageData,
-                        owner: window.currentUser, favorites: []
+                        id: Date.now().toString(), 
+                        name: pName,
+                        number: pNum, 
+                        keywords: pKey,
+                        groupId: pGrp, 
+                        image: imageData,
+                        owner: window.currentUser, 
+                        favorites: []
                     });
                 }
-                window.saveData(); window.closeModal('productModal'); window.renderProducts();
+                
+                await window.saveData(); 
+                window.closeModal('productModal'); 
+                window.renderProducts();
+            } catch (err) {
+                alert("Virhe tallennettaessa: " + err.message);
             } finally {
-                submitBtn.disabled = false; submitBtn.textContent = "Tallenna tuote";
+                submitBtn.disabled = false; 
+                submitBtn.textContent = "Tallenna tuote";
             }
-        });
+        };
 
         window.renderProducts = function() {
             const grid = document.getElementById('productGrid');
@@ -720,7 +735,6 @@
             const visibleGroups = getVisibleGroups().map(g => g.id);
 
             grid.innerHTML = '';
-            
             if(!window.appData || !window.appData.products) return;
 
             const filtered = window.appData.products.filter(p => {
@@ -752,16 +766,16 @@
                 const card = document.createElement('div'); card.className = 'product-card';
                 card.innerHTML = `
                     <div class="card-actions">
-                        <button class="icon-btn ${isFav ? 'fav-active' : ''}" onclick="window.toggleFavorite('${p.id}')" title="Suosikki"> ${isFav ? '⭐' : '☆'} </button>
+                        <button class="icon-btn ${isFav ? 'fav-active' : ''}" onclick="event.stopPropagation(); window.toggleFavorite('${p.id}')" title="Suosikki"> ${isFav ? '⭐' : '☆'} </button>
                         ${p.owner === window.currentUser || window.currentUser === ADMIN_EMAIL ? `
-                            <button class="icon-btn" onclick="window.openProductModal('${p.id}')" title="Muokkaa">✏️</button>
-                            <button class="icon-btn" onclick="window.deleteProduct('${p.id}')" title="Poista" style="color: var(--danger-color)">🗑️</button>
+                            <button class="icon-btn" onclick="event.stopPropagation(); window.openProductModal('${p.id}')" title="Muokkaa">✏️</button>
+                            <button class="icon-btn" onclick="event.stopPropagation(); window.deleteProduct('${p.id}')" title="Poista" style="color: var(--danger-color)">🗑️</button>
                         ` : ''}
                     </div>
-                    <div class="img-wrapper" onclick="window.copyNum('${p.number}')">
+                    <div class="img-wrapper" onclick="window.copyNum(event, '${p.number}')">
                         <img src="${imgSrc}" class="${imgClass}" loading="lazy" title="Kopioi numero: ${p.number}">
                     </div>
-                    <div class="product-info" onclick="window.copyNum('${p.number}')" title="Kopioi numero: ${p.number}">
+                    <div class="product-info" onclick="window.copyNum(event, '${p.number}')" title="Kopioi numero: ${p.number}">
                         <div class="product-name">${p.name}</div>
                         <div class="product-number">${p.number}</div>
                         <div class="keywords">
@@ -809,7 +823,6 @@
                 if(isOwner && g.sharedWith && g.sharedWith.length > 0) detailsHTML += ` • Jaettu ${g.sharedWith.length} hlö`;
                 if(!isOwner) detailsHTML += ` • Omistaja: ${g.owner}`; detailsHTML += `</p>`;
 
-                // ADMIN JAON HALLINTA
                 let shareManagerHTML = '';
                 if ((isOwner || isAdmin) && g.sharedWith && g.sharedWith.length > 0) {
                     shareManagerHTML = `
@@ -827,7 +840,7 @@
 
                 list.innerHTML += `
                     <div class="group-card" style="${isHidden ? 'opacity: 0.6; background: #f8fafc;' : ''}">
-                        <div class="group-card-header" style="width: 100%;">
+                        <div class="group-card-header">
                             <div class="group-details">
                                 <h3>${g.name} ${!isOwner ? '🤝' : ''} ${isHidden ? '<span class="hidden-badge">Piilotettu</span>' : ''}</h3>
                                 ${detailsHTML}
@@ -852,10 +865,7 @@
                 const group = window.appData.groups.find(g => g.id === groupId);
                 if(group) {
                     group.sharedWith = group.sharedWith.filter(e => e !== email);
-                    window.saveData();
-                    window.renderGroups();
-                    window.updateSelects();
-                    window.renderProducts();
+                    window.saveData(); window.renderGroups(); window.updateSelects(); window.renderProducts();
                 }
             }
         }
@@ -886,21 +896,17 @@
             });
         }
 
-        document.getElementById('addUserForm').addEventListener('submit', (e) => {
-            e.preventDefault();
+        window.submitAddUser = function() {
             const email = document.getElementById('newAllowedEmail').value.trim().toLowerCase();
             if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
             
             if(email === ADMIN_EMAIL) { alert("Tämä sähköposti on jo pääkäyttäjänä."); return; }
             if(!window.appData.allowedUsers.includes(email)) {
                 window.appData.allowedUsers.push(email);
-                window.saveData();
-                window.renderUsers();
-                e.target.reset();
-            } else {
-                alert("Tämä sähköposti on jo listalla.");
-            }
-        });
+                window.saveData(); window.renderUsers();
+                document.getElementById('addUserForm').reset();
+            } else { alert("Tämä sähköposti on jo listalla."); }
+        }
 
         window.removeAllowedUser = function(email) {
             if(confirm(`Haluatko varmasti poistaa koko käyttöoikeuden sovellukseen tililtä:\n${email}?`)) {
@@ -908,16 +914,19 @@
                 window.appData.groups.forEach(g => {
                     if(g.sharedWith.includes(email)) g.sharedWith = g.sharedWith.filter(e => e !== email);
                 });
-                window.saveData();
-                window.renderUsers();
+                window.saveData(); window.renderUsers();
             }
         }
 
-        document.getElementById('addGroupForm').addEventListener('submit', (e) => {
-            e.preventDefault(); const name = document.getElementById('gName').value.trim();
-            if(name) { window.appData.groups.push({ id: Date.now().toString(), name: name, owner: window.currentUser, sharedWith: [], hiddenBy: [] });
-            window.saveData(); e.target.reset(); window.updateSelects(); window.renderGroups(); window.closeModal('groupModal'); }
-        });
+        window.submitGroupForm = function() {
+            const name = document.getElementById('gName').value.trim();
+            if(name) { 
+                window.appData.groups.push({ id: Date.now().toString(), name: name, owner: window.currentUser, sharedWith: [], hiddenBy: [] });
+                window.saveData(); 
+                document.getElementById('addGroupForm').reset(); 
+                window.updateSelects(); window.renderGroups(); window.closeModal('groupModal'); 
+            }
+        }
 
         window.openShareModal = function(id, name) {
             document.getElementById('shareGroupId').value = id;
@@ -926,18 +935,19 @@
             window.openModal('shareModal');
         }
 
-        document.getElementById('shareGroupForm').addEventListener('submit', (e) => {
-            e.preventDefault(); const groupId = document.getElementById('shareGroupId').value;
+        window.submitShareForm = function() {
+            const groupId = document.getElementById('shareGroupId').value;
             const group = window.appData.groups.find(g => g.id === groupId);
             const email = document.getElementById('shareEmail').value.trim().toLowerCase();
             
             if (email === window.currentUser) { alert("Et voi jakaa itsellesi."); return; }
             if (email !== ADMIN_EMAIL && !window.appData.allowedUsers.includes(email)) { alert("Käyttäjää ei löydy järjestelmästä. Lisää hänet ensin 'Käyttäjät' -välilehdeltä."); return; }
             
-            if (group && !group.sharedWith.includes(email)) { group.sharedWith.push(email); window.saveData(); window.renderGroups(); } 
-            else { alert("Kansio on jo jaettu tälle käyttäjälle."); }
+            if (group && !group.sharedWith.includes(email)) { 
+                group.sharedWith.push(email); window.saveData(); window.renderGroups(); 
+            } else { alert("Kansio on jo jaettu tälle käyttäjälle."); }
             window.closeModal('shareModal');
-        });
+        }
 
         window.renameGroup = function(id) {
             const group = window.appData.groups.find(g => g.id === id);
@@ -979,8 +989,9 @@
             window.saveData(); window.renderProducts();
         }
 
-        // KORJATTU KOPIOINTI - Ohitetaan eventit klikkauksella
-        window.copyNum = function(text) {
+        window.copyNum = function(e, text) {
+            if(e) { e.stopPropagation(); e.preventDefault(); }
+
             const showToast = (copiedText) => {
                 const t = document.getElementById('toast'); 
                 t.textContent = `Kopioitu: ${copiedText}`;
@@ -1011,13 +1022,7 @@
             }
         }
 
-        // Estää eventin kuplan kun painetaan nappeja
-        document.addEventListener('click', function(e) {
-            if(e.target.closest('.icon-btn')) {
-                e.stopPropagation();
-            }
-        }, true);
-
+        // Takaa sen, että moduulin käynnistyessä sovellus on valmis
         window.init();
     </script>
 </body>
