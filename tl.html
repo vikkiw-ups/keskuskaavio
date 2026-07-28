@@ -166,7 +166,7 @@
         .form-group input:not([type="file"]), .form-group select { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; }
         .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1); }
 
-        /* UUSI: Kuvan Drop Zone */
+        /* KUVAN DROP ZONE */
         .drop-zone {
             border: 2px dashed var(--border-color);
             border-radius: 8px;
@@ -332,7 +332,6 @@
                     <select id="pGroup"></select>
                 </div>
                 
-                <!-- UUSI KUVAN DROP ZONE -->
                 <div class="form-group">
                     <label>Kuva (Vapaaehtoinen)</label>
                     <div id="imageDropZone" class="drop-zone">
@@ -385,7 +384,7 @@
 
     <footer>
         <div class="footer-logo">Sähkötyö <span>Rentola</span></div>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.7;">Tuotekirjasto &copy; 2026</p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.7;">Tuotekirjasto &copy; Jere 2026</p>
     </footer>
 
     <script type="module">
@@ -458,11 +457,13 @@
                 document.getElementById('emailInput').value = lastEmail;
                 window.checkEmail(lastEmail);
             }
+            
+            // Kytketään drag & drop sekä liittäminen
+            window.setupDragAndDrop();
+            window.setupPasteImage();
+
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) window.login(savedUser);
-            
-            setupDragAndDrop();
-            setupPasteImage();
         }
 
         window.login = function(email) {
@@ -640,13 +641,12 @@
             });
         });
 
-        // ==========================================
-        // KUVAN KÄSITTELY: DRAG & DROP + PASTE + PAKKAUS
-        // ==========================================
-        
-        function setupDragAndDrop() {
+
+        // --- KUVAN KÄSITTELY: DRAG & DROP SEKÄ LIIITTÄMINEN ---
+        window.setupDragAndDrop = function() {
             const dropZone = document.getElementById('imageDropZone');
             const fileInput = document.getElementById('pFile');
+            if(!dropZone || !fileInput) return;
 
             dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
             dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
@@ -662,9 +662,9 @@
             fileInput.addEventListener('change', function() {
                 if (this.files && this.files[0]) window.showPreview(this.files[0]);
             });
-        }
+        };
 
-        function setupPasteImage() {
+        window.setupPasteImage = function() {
             window.addEventListener('paste', e => {
                 if (!document.getElementById('productModal').classList.contains('active')) return;
                 const items = (e.clipboardData || e.originalEvent.clipboardData).items;
@@ -681,17 +681,17 @@
                     }
                 }
             });
-        }
+        };
 
         window.showPreview = function(fileOrUrl) {
             const imgPreview = document.getElementById('imagePreview');
             const text = document.getElementById('dropZoneText');
             
-            if (fileOrUrl instanceof File) {
+            if (fileOrUrl instanceof File || fileOrUrl instanceof Blob) {
                 imgPreview.src = URL.createObjectURL(fileOrUrl);
                 imgPreview.classList.remove('hidden');
                 text.classList.add('hidden');
-            } else if (typeof fileOrUrl === 'string') {
+            } else if (typeof fileOrUrl === 'string' && fileOrUrl.trim() !== '') {
                 imgPreview.src = fileOrUrl;
                 imgPreview.classList.remove('hidden');
                 text.classList.add('hidden');
@@ -700,19 +700,19 @@
                 imgPreview.classList.add('hidden');
                 text.classList.remove('hidden');
             }
-        }
+        };
 
+        // --- TEHOKAS KUVAN PAKKAUS ---
         window.compressImage = function(file, maxDimension = 600) {
             return new Promise((resolve, reject) => {
                 if (!file) return resolve(null);
                 if (!file.type.match(/image.*/)) return reject(new Error("Valittu tiedosto ei ole kuva."));
                 
-                // UUSI TEKNIIKKA ISOILLE KUVILLE: createObjectURL estää selaimen kaatumisen!
                 const objectUrl = URL.createObjectURL(file);
                 const img = new Image();
                 
                 img.onload = () => {
-                    URL.revokeObjectURL(objectUrl); // Vapautetaan muistia
+                    URL.revokeObjectURL(objectUrl);
                     const canvas = document.createElement('canvas');
                     let width = img.width, height = img.height;
                     
@@ -733,23 +733,19 @@
                 };
                 img.onerror = () => {
                     URL.revokeObjectURL(objectUrl);
-                    reject(new Error("Kuvan lataus kankaalle epäonnistui."));
+                    reject(new Error("Kuvan prosessointi epäonnistui."));
                 };
                 img.src = objectUrl;
             });
-        }
+        };
 
-        // ==========================================
-        // LOMAKKEEN KÄSITTELY
-        // ==========================================
-
-        window.openProductModal = function(e, productId = null) {
-            if(e) e.stopPropagation();
+        // --- LOMAKKEEN KÄSITTELY ---
+        window.openProductModal = function(productId = null) {
             const form = document.getElementById('productForm');
             const title = document.getElementById('productModalTitle');
             const btn = document.getElementById('saveProductBtn');
             form.reset();
-            window.showPreview(null); // Nollaa esikatselu
+            window.showPreview(null); // Nollaa esikatselu aina kun ikkuna aukeaa
 
             if (productId && typeof productId === 'string') {
                 const p = window.appData.products.find(x => x.id === productId);
@@ -769,7 +765,7 @@
                 document.getElementById('pId').value = "";
             }
             window.openModal('productModal');
-        }
+        };
 
         window.submitProductForm = async function() {
             const submitBtn = document.getElementById('saveProductBtn');
@@ -865,10 +861,10 @@
                 const card = document.createElement('div'); card.className = 'product-card';
                 card.innerHTML = `
                     <div class="card-actions">
-                        <button class="icon-btn ${isFav ? 'fav-active' : ''}" onclick="event.stopPropagation(); window.toggleFavorite('${p.id}')" title="Suosikki"> ${isFav ? '⭐' : '☆'} </button>
+                        <button class="icon-btn ${isFav ? 'fav-active' : ''}" onclick="window.toggleFavorite(event, '${p.id}')" title="Suosikki"> ${isFav ? '⭐' : '☆'} </button>
                         ${p.owner === window.currentUser || window.currentUser === ADMIN_EMAIL ? `
-                            <button class="icon-btn" onclick="event.stopPropagation(); window.openProductModal(event, '${p.id}')" title="Muokkaa">✏️</button>
-                            <button class="icon-btn" onclick="event.stopPropagation(); window.deleteProduct('${p.id}')" title="Poista" style="color: var(--danger-color)">🗑️</button>
+                            <button class="icon-btn" onclick="window.openProductModal('${p.id}')" title="Muokkaa">✏️</button>
+                            <button class="icon-btn" onclick="window.deleteProduct(event, '${p.id}')" title="Poista" style="color: var(--danger-color)">🗑️</button>
                         ` : ''}
                     </div>
                     <div class="img-wrapper" onclick="window.copyNum(event, '${p.number}')">
@@ -885,7 +881,7 @@
                 `;
                 grid.appendChild(card);
             });
-        }
+        };
 
         function getVisibleGroups() {
             if(window.currentUser === ADMIN_EMAIL) return window.appData.groups || [];
@@ -904,7 +900,7 @@
             if(writableGroups.length === 0) pGroup.innerHTML = `<option value="" disabled selected>Luo ensin ryhmä</option>`;
             else writableGroups.forEach(g => pGroup.innerHTML += `<option value="${g.id}">${g.name}</option>`);
             visible.forEach(g => filterGroup.innerHTML += `<option value="${g.id}">${g.name}${g.owner !== window.currentUser ? ` (Omistaja: ${g.owner})` : ''}</option>`);
-        }
+        };
 
         window.renderGroups = function() {
             const list = document.getElementById('groupsList'); 
@@ -957,7 +953,7 @@
                     </div>
                 `;
             });
-        }
+        };
 
         window.removeShare = function(groupId, email) {
             if(confirm(`Poistetaanko käyttöoikeus ryhmään käyttäjältä:\n${email}?`)) {
@@ -967,7 +963,7 @@
                     window.saveData(); window.renderGroups(); window.updateSelects(); window.renderProducts();
                 }
             }
-        }
+        };
 
         window.renderUsers = function() {
             const list = document.getElementById('allowedUsersList');
@@ -993,7 +989,7 @@
                     </div>
                 `;
             });
-        }
+        };
 
         window.submitAddUser = function() {
             const email = document.getElementById('newAllowedEmail').value.trim().toLowerCase();
@@ -1005,7 +1001,7 @@
                 window.saveData(); window.renderUsers();
                 document.getElementById('addUserForm').reset();
             } else { alert("Tämä sähköposti on jo listalla."); }
-        }
+        };
 
         window.removeAllowedUser = function(email) {
             if(confirm(`Haluatko varmasti poistaa koko käyttöoikeuden sovellukseen tililtä:\n${email}?`)) {
@@ -1015,7 +1011,7 @@
                 });
                 window.saveData(); window.renderUsers();
             }
-        }
+        };
 
         window.submitGroupForm = function() {
             const name = document.getElementById('gName').value.trim();
@@ -1025,14 +1021,14 @@
                 document.getElementById('addGroupForm').reset(); 
                 window.updateSelects(); window.renderGroups(); window.closeModal('groupModal'); 
             }
-        }
+        };
 
         window.openShareModal = function(id, name) {
             document.getElementById('shareGroupId').value = id;
             document.getElementById('shareGroupName').textContent = name;
             document.getElementById('shareEmail').value = '';
             window.openModal('shareModal');
-        }
+        };
 
         window.submitShareForm = function() {
             const groupId = document.getElementById('shareGroupId').value;
@@ -1046,7 +1042,7 @@
                 group.sharedWith.push(email); window.saveData(); window.renderGroups(); 
             } else { alert("Kansio on jo jaettu tälle käyttäjälle."); }
             window.closeModal('shareModal');
-        }
+        };
 
         window.renameGroup = function(id) {
             const group = window.appData.groups.find(g => g.id === id);
@@ -1054,18 +1050,18 @@
                 const newName = prompt("Anna uusi nimi:", group.name);
                 if (newName && newName.trim()) { group.name = newName.trim(); window.saveData(); window.renderGroups(); window.updateSelects(); window.renderProducts(); }
             }
-        }
+        };
         
         window.deleteGroup = function(id) {
             if(confirm("Poistetaanko ryhmä? Tuotteet jäävät ilman ryhmää.")) { window.appData.groups = window.appData.groups.filter(g => g.id !== id); window.saveData(); window.renderGroups(); window.updateSelects(); window.renderProducts(); }
-        }
+        };
         
         window.leaveGroup = function(id) {
             if(confirm("Poistutko jaetusta ryhmästä?")) {
                 const group = window.appData.groups.find(g => g.id === id);
                 if(group) { group.sharedWith = group.sharedWith.filter(e => e !== window.currentUser); window.saveData(); window.renderGroups(); window.updateSelects(); window.renderProducts(); }
             }
-        }
+        };
         
         window.toggleHideGroup = function(id) {
             const group = window.appData.groups.find(g => g.id === id);
@@ -1075,18 +1071,20 @@
                 else group.hiddenBy.push(window.currentUser);
                 window.saveData(); window.renderGroups(); window.renderProducts();
             }
-        }
+        };
 
-        window.deleteProduct = function(id) { 
+        window.deleteProduct = function(e, id) { 
+            if(e) e.stopPropagation();
             if(confirm("Poistetaanko tuote pysyvästi?")) { window.appData.products = window.appData.products.filter(p => p.id !== id); window.saveData(); window.renderProducts(); } 
-        }
+        };
         
-        window.toggleFavorite = function(id) {
+        window.toggleFavorite = function(e, id) {
+            if(e) e.stopPropagation();
             const p = window.appData.products.find(x => x.id === id); p.favorites = p.favorites || [];
             if (p.favorites.includes(window.currentUser)) p.favorites = p.favorites.filter(e => e !== window.currentUser);
             else p.favorites.push(window.currentUser);
             window.saveData(); window.renderProducts();
-        }
+        };
 
         window.copyNum = function(e, text) {
             if(e) { e.stopPropagation(); e.preventDefault(); }
@@ -1119,14 +1117,16 @@
             } else {
                 fallbackCopy(text);
             }
-        }
+        };
 
+        // Estää eventin kuplan kun painetaan nappeja (Varmistaa ettei kopiointi laukea vahingossa muokatessa)
         document.addEventListener('click', function(e) {
             if(e.target.closest('.icon-btn')) {
                 e.stopPropagation();
             }
         }, true);
 
+        // KÄYNNISTYS
         window.init();
     </script>
 </body>
