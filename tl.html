@@ -190,6 +190,7 @@
         #cloudStatus { text-align: center; font-size: 0.85rem; margin-top: 1.5rem; padding: 0.5rem; border-radius: 6px; }
         .status-cloud { background: #dcfce7; color: #166534; }
         .status-local { background: #fee2e2; color: #991b1b; }
+        .status-warn { background: #fef9c3; color: #854d0e; }
 
         footer {
             background: #0f172a; color: #94a3b8; text-align: center; padding: 1.5rem;
@@ -285,6 +286,7 @@
                     <button type="submit">Salli pääsy</button>
                 </form>
             </div>
+            
             <div style="background: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
                 <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Sallitut tilit</h3>
                 <div id="allowedUsersList" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
@@ -292,6 +294,7 @@
         </div>
     </main>
 
+    <!-- Modaalit -->
     <div id="productModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -377,7 +380,6 @@
 
     <!-- LOGIIKKA -->
     <script type="module">
-        // Käytetään erillisiä kokoelmia Firebase dokumenttien koon minimoimiseksi
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, doc, setDoc, deleteDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -393,7 +395,6 @@
         const ADMIN_EMAIL = "jere.vikki@srentola.fi";
         const defaultImageStr = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'/%3E%3Cpolyline points='3.27 6.96 12 12.01 20.73 6.96'/%3E%3Cline x1='12' y1='22.08' x2='12' y2='12'/%3E%3C/svg%3E";
 
-        // TILA MUUTTUJAT
         window.currentUser = null;
         window.appData = { products: [], groups: [], allowedUsers: [], adminPassword: null };
         
@@ -408,7 +409,7 @@
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             window.isCloudActive = true;
-            document.getElementById('cloudStatus').innerHTML = "☁️ Pilvitietokanta yhdistetty (Moniasiakirja-tila)";
+            document.getElementById('cloudStatus').innerHTML = "☁️ Pilvitietokanta yhdistetty";
             document.getElementById('cloudStatus').className = "status-cloud";
         } catch (error) {
             console.error("Firebase alustus epäonnistui:", error);
@@ -455,7 +456,7 @@
             if (savedUser) window.login(savedUser);
         }
 
-        // --- AUTENTIKOINTI ---
+        // --- AUTENTIKOINTI JA MIGRAATIO ---
         window.login = async function(email) {
             window.currentUser = email;
             localStorage.setItem('currentUser', email);
@@ -476,7 +477,27 @@
                     
                     if (!checkAuth()) return; 
 
-                    // Käynnistetään kuuntelijat Kokoelmille
+                    // KADONNEEN DATAN PALAUTUS (Migraatio):
+                    // Palautetaan data vanhasta "rentola/kirjasto" -tiedostosta uusiin kokoelmiin, jos ei jo tehty.
+                    try {
+                        const oldRef = doc(db, "rentola", "kirjasto");
+                        const oldSnap = await getDoc(oldRef);
+                        if (oldSnap.exists()) {
+                            const oldData = oldSnap.data();
+                            if (!oldData.migrated) {
+                                console.log("Palautetaan vanhaa dataa...");
+                                if (oldData.products) {
+                                    for (const p of oldData.products) { await setDoc(doc(db, "tuotteet", p.id), p); }
+                                }
+                                if (oldData.groups) {
+                                    for (const g of oldData.groups) { await setDoc(doc(db, "ryhmat", g.id), g); }
+                                }
+                                await setDoc(oldRef, { migrated: true }, { merge: true });
+                            }
+                        }
+                    } catch(e) { console.error("Datan palautus epäonnistui", e); }
+
+                    // Käynnistetään kuuntelijat
                     startCloudListeners();
 
                 } catch (error) {
@@ -534,13 +555,6 @@
         }
 
         function finalizeLoginUI() {
-            // Varmista oletusryhmä lokaalisti
-            if (window.appData.groups.filter(g => g.owner === window.currentUser).length === 0) {
-                const defGroup = { id: Date.now().toString(), name: "Oletus", owner: window.currentUser, sharedWith: [], hiddenBy: [] };
-                window.appData.groups.push(defGroup);
-                window.saveGroupToCloud(defGroup); 
-            }
-
             document.getElementById('loginView').classList.add('hidden');
             document.getElementById('appHeader').classList.remove('hidden');
             
@@ -559,7 +573,7 @@
             }
         }
 
-        // --- CLOUD LISTENERS (MONIDOKUMENTTI) ---
+        // --- CLOUD LISTENERS ---
         function startCloudListeners() {
             if(unsubProducts) unsubProducts();
             if(unsubGroups) unsubGroups();
@@ -567,13 +581,30 @@
 
             unsubProducts = onSnapshot(collection(db, "tuotteet"), (snap) => {
                 window.appData.products = snap.docs.map(d => d.data());
-                window.appData.products.sort((a, b) => Number(b.id) - Number(a.id)); // Uusin ensin
+                window.appData.products.sort((a, b) => Number(b.id) - Number(a.id)); 
                 window.renderProducts();
                 backupLocal();
             });
 
+            // Ryhmät ja oletuskansion suoja
+            let hasCheckedDefaultGroup = false;
+
             unsubGroups = onSnapshot(collection(db, "ryhmat"), (snap) => {
                 window.appData.groups = snap.docs.map(d => d.data());
+                
+                // Oletuskansion luonti vain kerran, kun oikea serveridata on varmasti saapunut
+                if (!hasCheckedDefaultGroup && !snap.metadata.fromCache && window.currentUser) {
+                    hasCheckedDefaultGroup = true;
+                    const myGroups = window.appData.groups.filter(g => g.owner === window.currentUser);
+                    if (myGroups.length === 0) {
+                        let userName = window.currentUser.split('@')[0];
+                        userName = userName.charAt(0).toUpperCase() + userName.slice(1);
+                        const defGroup = { id: Date.now().toString(), name: userName, owner: window.currentUser, sharedWith: [], hiddenBy: [] };
+                        window.appData.groups.push(defGroup);
+                        window.saveGroupToCloud(defGroup);
+                    }
+                }
+
                 window.updateSelects();
                 window.renderGroups();
                 backupLocal();
@@ -770,7 +801,7 @@
 
         // --- TUOTTEIDEN MUOKKAUS JA LISÄYS ---
         window.openProductModal = function(e, productId = null) {
-            if(e) e.stopPropagation();
+            if(e) { e.stopPropagation(); e.preventDefault(); }
             const form = document.getElementById('productForm');
             const title = document.getElementById('productModalTitle');
             const btn = document.getElementById('saveProductBtn');
@@ -816,7 +847,7 @@
                 const pGrp = document.getElementById('pGroup').value;
 
                 if (!pGrp) {
-                    alert("Tuotteella täytyy olla valittuna ryhmä!");
+                    alert("Tuotteella täytyy olla valittuna ryhmä! Luo ryhmä ryhmät-välilehdeltä.");
                     submitBtn.disabled = false; submitBtn.textContent = "Tallenna tuote";
                     return;
                 }
@@ -840,10 +871,12 @@
                     window.appData.products.unshift(productToSave);
                 }
                 
-                // Lokaali päivitys ja tallennus pilveen
                 window.closeModal('productModal'); 
                 window.renderProducts();
-                if(productToSave) window.saveProductToCloud(productToSave);
+                
+                if(productToSave) {
+                    window.saveProductToCloud(productToSave);
+                }
                 
             } catch (err) {
                 alert("Virhe tallennettaessa: " + err.message);
@@ -877,7 +910,7 @@
                 return true;
             });
 
-            if(filtered.length === 0) { grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">Ei tuotteita näillä hakuehdoilla.</div>`; return; }
+            if(filtered.length === 0) { grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">Ei tuotteita.</div>`; return; }
 
             filtered.forEach(p => {
                 const groupName = window.appData.groups.find(g => g.id === p.groupId)?.name || 'Ei ryhmää';
@@ -1123,6 +1156,7 @@
             }
         };
 
+        // --- PAINIKKEET JA LOMAKKEET ---
         window.deleteProduct = function(e, id) { 
             if(e) { e.stopPropagation(); e.preventDefault(); }
             if(confirm("Poistetaanko tuote pysyvästi?")) { 
