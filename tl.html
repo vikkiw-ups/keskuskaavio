@@ -126,16 +126,15 @@
         }
         .group-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; width: 100%; }
         .group-card:hover { border-color: var(--primary-border); }
-        .group-details h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
+        .group-details h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;}
         .group-details p { font-size: 0.85rem; color: var(--text-muted); }
         .group-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .hidden-badge { font-size: 0.75rem; background: var(--primary-light); color: var(--primary-color); padding: 0.2rem 0.6rem; border-radius: 99px; }
         
-        .shared-users-list { margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border-color); }
+        .shared-users-list { margin-top: 0.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border-color); }
         .shared-user-item { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
         .shared-user-item:last-child { border-bottom: none; }
 
-        /* TYÖMAAN SISÄLLÖN TYYLIT */
         .worksite-item { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.5rem; }
         .worksite-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; background: #f1f5f9; }
         .worksite-item-info { flex: 1; }
@@ -289,7 +288,6 @@
 
     <!-- TYÖMAAT -->
     <main id="worksitesTab" class="container hidden">
-        <!-- Lista -->
         <div id="worksitesListView">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; max-width: 800px; margin-left: auto; margin-right: auto;">
                 <h2>Työmaat</h2>
@@ -298,7 +296,6 @@
             <div id="worksitesList" class="groups-layout"></div>
         </div>
         
-        <!-- Yksittäisen työmaan näkymä -->
         <div id="worksiteDetailView" class="hidden" style="max-width: 800px; margin: 0 auto;">
             <button class="btn-outline btn-small" onclick="window.closeWorksiteView()" style="margin-bottom: 1.5rem; width: auto;">< Takaisin listaan</button>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
@@ -419,6 +416,7 @@
         </div>
     </div>
 
+    <!-- JAA KOHDE MODAL -->
     <div id="shareModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -429,11 +427,15 @@
                 <input type="hidden" id="shareTargetId">
                 <input type="hidden" id="shareTargetType">
                 <p id="shareTargetName" style="margin-bottom: 1.5rem; font-weight: 600; color: var(--primary-color); background: var(--primary-light); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--primary-border);"></p>
+                
+                <!-- UUSI ALASVETOVALIKKO SÄHKÖPOSTILLE -->
                 <div class="form-group">
-                    <label>Käyttäjän sähköposti</label>
-                    <input type="email" id="shareEmail" placeholder="esim. kollega@firma.fi" required>
+                    <label>Valitse käyttäjä</label>
+                    <select id="shareEmailSelect" required>
+                        <!-- JavaScript täyttää -->
+                    </select>
                 </div>
-                <!-- Oikeuksien valinta vain työmaille -->
+
                 <div class="form-group hidden" id="sharePermContainer">
                     <label>Oikeustaso</label>
                     <select id="sharePerm">
@@ -559,8 +561,23 @@
                     }
                     
                     if (!checkAuth()) return; 
+
+                    try {
+                        const oldRef = doc(db, "rentola", "kirjasto");
+                        const oldSnap = await getDoc(oldRef);
+                        if (oldSnap.exists()) {
+                            const oldData = oldSnap.data();
+                            if (!oldData.migrated_v2) {
+                                if (oldData.products) { for (const p of oldData.products) { await setDoc(doc(db, "tuotteet", p.id), p); } }
+                                if (oldData.groups) { for (const g of oldData.groups) { await setDoc(doc(db, "ryhmat", g.id), g); } }
+                                await setDoc(oldRef, { migrated_v2: true }, { merge: true });
+                            }
+                        }
+                    } catch(e) {}
+
                     startCloudListeners();
                 } catch (error) {
+                    console.warn("Pilvikirjautuminen epäonnistui", error);
                     fallbackToLocal();
                 }
             } else {
@@ -707,10 +724,10 @@
         }
 
         window.logout = function(force = false) {
-            if (unsubProducts) { unsubProducts(); unsubProducts = null; }
-            if (unsubGroups) { unsubGroups(); unsubGroups = null; }
-            if (unsubSettings) { unsubSettings(); unsubSettings = null; }
-            if (unsubWorksites) { unsubWorksites(); unsubWorksites = null; }
+            if (unsubProducts) unsubProducts();
+            if (unsubGroups) unsubGroups();
+            if (unsubWorksites) unsubWorksites();
+            if (unsubSettings) unsubSettings();
             window.currentUser = null;
             localStorage.removeItem('currentUser');
             document.getElementById('passwordInput').value = ''; 
@@ -765,6 +782,7 @@
             });
         });
 
+        // --- KUVAN KÄSITTELY ---
         window.setupDragAndDrop = function() {
             const dropZone = document.getElementById('imageDropZone');
             const fileInput = document.getElementById('pFile');
@@ -859,6 +877,7 @@
             });
         };
 
+        // --- TUOTTEIDEN MUOKKAUS JA LISÄYS ---
         window.openProductModal = function(e, productId = null) {
             if(e) { e.stopPropagation(); e.preventDefault(); }
             const form = document.getElementById('productForm');
@@ -1386,14 +1405,25 @@
             originalOpenModal(id);
         };
 
-
         // --- JAKAMINEN (YHTEINEN) ---
         window.openShareModal = function(id, name, type) {
             document.getElementById('shareTargetId').value = id;
             document.getElementById('shareTargetType').value = type;
             document.getElementById('shareGroupName').textContent = name;
-            document.getElementById('shareEmail').value = '';
             
+            // Täytetään alasvetovalikko käyttäjistä
+            const emailSelect = document.getElementById('shareEmailSelect');
+            emailSelect.innerHTML = '<option value="" disabled selected>Valitse käyttäjä listasta</option>';
+            
+            const allUsers = [ADMIN_EMAIL, ...(window.appData.allowedUsers ? window.appData.allowedUsers.map(u => u.email) : [])];
+            const uniqueUsers = [...new Set(allUsers)];
+            
+            uniqueUsers.forEach(email => {
+                if (email !== window.currentUser) {
+                    emailSelect.innerHTML += `<option value="${window.escapeHtml(email)}">${window.escapeHtml(email)}</option>`;
+                }
+            });
+
             const permContainer = document.getElementById('sharePermContainer');
             if(permContainer) {
                 if(type === 'worksite') {
@@ -1409,13 +1439,12 @@
         window.submitShareForm = function() {
             const targetId = document.getElementById('shareTargetId').value;
             const type = document.getElementById('shareTargetType').value;
-            const email = document.getElementById('shareEmail').value.trim().toLowerCase();
+            const emailSelect = document.getElementById('shareEmailSelect');
+            const email = emailSelect.value;
             const perm = document.getElementById('sharePerm') ? document.getElementById('sharePerm').value : 'view';
             
+            if (!email) { alert("Valitse käyttäjä listasta."); return; }
             if (email === window.currentUser) { alert("Et voi jakaa itsellesi."); return; }
-            if (email !== ADMIN_EMAIL && !window.appData.allowedUsers.some(u => u.email === email)) { 
-                alert("Käyttäjää ei löydy järjestelmästä. Lisää hänet ensin 'Käyttäjät' -välilehdeltä."); return; 
-            }
             
             if (type === 'group') {
                 const group = window.appData.groups.find(g => g.id === targetId);
@@ -1432,80 +1461,7 @@
             window.closeModal('shareModal');
         };
 
-        // --- KÄYTTÄJIEN HALLINTA ---
-        window.renderUsers = function() {
-            const list = document.getElementById('allowedUsersList');
-            if(!list) return;
-            list.innerHTML = '';
-            
-            const isMeAdmin = window.currentUser === ADMIN_EMAIL;
-            list.innerHTML += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: var(--primary-light); border-radius: 8px; border: 1px solid var(--primary-border);">
-                    <span style="font-weight: 700; color: var(--primary-hover);">${ADMIN_EMAIL} <span style="font-size:0.8rem; margin-left: 5px;">(Pääkäyttäjä${isMeAdmin ? ' / Sinä' : ''})</span></span>
-                </div>
-            `;
-
-            if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
-            
-            window.appData.allowedUsers.forEach(u => {
-                if(u.email === ADMIN_EMAIL) return; 
-                const isMe = u.email === window.currentUser;
-                
-                list.innerHTML += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap:wrap; gap: 0.5rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 0.5rem;">
-                        <span style="font-weight: 500;">${window.escapeHtml(u.email)} ${isMe ? '<span style="color:var(--text-muted); font-size:0.8rem; margin-left: 5px;">(Sinä)</span>' : ''}</span>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <select onchange="window.changeUserRole('${window.escapeHtml(u.email)}', this.value)" style="padding:0.4rem; border-radius:4px; font-size:0.85rem;" ${isMe ? 'disabled' : ''}>
-                                <option value="1" ${u.role === 1 ? 'selected' : ''}>Taso 1</option>
-                                <option value="2" ${u.role === 2 ? 'selected' : ''}>Taso 2</option>
-                                <option value="3" ${u.role === 3 ? 'selected' : ''}>Taso 3</option>
-                            </select>
-                            ${!isMe ? `<button class="btn-danger btn-small" onclick="window.removeAllowedUser('${window.escapeHtml(u.email)}')">Poista</button>` : ''}
-                        </div>
-                    </div>
-                `;
-            });
-        };
-
-        window.submitAddUser = function() {
-            const email = document.getElementById('newAllowedEmail').value.trim().toLowerCase();
-            const role = parseInt(document.getElementById('newUserRole').value);
-            
-            if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
-            
-            if(email === ADMIN_EMAIL) { alert("Tämä sähköposti on jo pääkäyttäjänä."); return; }
-            if(!window.appData.allowedUsers.find(u => u.email === email)) {
-                window.appData.allowedUsers.push({ email, role });
-                window.renderUsers();
-                window.saveSettingsToCloud();
-                document.getElementById('addUserForm').reset();
-            } else { alert("Tämä sähköposti on jo listalla."); }
-        };
-
-        window.changeUserRole = function(email, newRole) {
-            const u = window.appData.allowedUsers.find(x => x.email === email);
-            if(u) {
-                u.role = parseInt(newRole);
-                window.saveSettingsToCloud();
-                const showToast = (txt) => { const t = document.getElementById('toast'); t.textContent=txt; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); };
-                showToast("Oikeudet päivitetty");
-            }
-        };
-
-        window.removeAllowedUser = function(email) {
-            if(confirm(`Haluatko varmasti poistaa koko käyttöoikeuden sovellukseen tililtä:\n${email}?`)) {
-                window.appData.allowedUsers = window.appData.allowedUsers.filter(e => e.email !== email);
-                window.appData.groups.forEach(g => {
-                    if(g.sharedWith.includes(email)) { g.sharedWith = g.sharedWith.filter(e => e !== email); window.saveGroupToCloud(g); }
-                });
-                window.appData.worksites.forEach(w => {
-                    if(w.sharedWith.some(s => s.email === email)) { w.sharedWith = w.sharedWith.filter(s => s.email !== email); window.saveWorksiteToCloud(w); }
-                });
-                window.renderUsers();
-                window.saveSettingsToCloud();
-            }
-        };
-
+        // --- PAINIKKEET JA LOMAKKEET ---
         window.deleteProduct = function(e, id) { 
             if(e) { e.stopPropagation(); e.preventDefault(); }
             if(confirm("Poistetaanko tuote pysyvästi?")) { 
@@ -1522,7 +1478,7 @@
                 if(window.currentOpenWorksiteId) window.renderWorksiteDetails(window.currentOpenWorksiteId);
             } 
         };
-
+        
         window.toggleFavorite = function(e, id) {
             if(e) { e.stopPropagation(); e.preventDefault(); }
             const p = window.appData.products.find(x => x.id === id); 
@@ -1567,6 +1523,13 @@
                 fallbackCopy(text);
             }
         };
+
+        // Estää eventin kuplan kun painetaan nappeja
+        document.addEventListener('click', function(e) {
+            if(e.target.closest('.icon-btn')) {
+                e.stopPropagation();
+            }
+        }, true);
 
         window.init();
     </script>
