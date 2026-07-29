@@ -135,6 +135,7 @@
         .shared-user-item { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
         .shared-user-item:last-child { border-bottom: none; }
 
+        /* TYÖMAAN SISÄLLÖN TYYLIT */
         .worksite-item { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0.5rem; }
         .worksite-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; background: #f1f5f9; }
         .worksite-item-info { flex: 1; }
@@ -428,7 +429,6 @@
                 <input type="hidden" id="shareTargetType">
                 <p id="shareTargetName" style="margin-bottom: 1.5rem; font-weight: 600; color: var(--primary-color); background: var(--primary-light); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--primary-border);"></p>
                 
-                <!-- UUSI ALASVETOVALIKKO SÄHKÖPOSTILLE -->
                 <div class="form-group">
                     <label>Valitse käyttäjä</label>
                     <select id="shareEmailSelect" required>
@@ -437,7 +437,7 @@
                 </div>
 
                 <div class="form-group hidden" id="sharePermContainer">
-                    <label>Oikeustaso</label>
+                    <label>Oikeustaso (Vain työmaat)</label>
                     <select id="sharePerm">
                         <option value="view">Katseluoikeus</option>
                         <option value="edit">Muokkausoikeus</option>
@@ -724,10 +724,10 @@
         }
 
         window.logout = function(force = false) {
-            if (unsubProducts) unsubProducts();
-            if (unsubGroups) unsubGroups();
-            if (unsubWorksites) unsubWorksites();
-            if (unsubSettings) unsubSettings();
+            if (unsubProducts) { unsubProducts(); unsubProducts = null; }
+            if (unsubGroups) { unsubGroups(); unsubGroups = null; }
+            if (unsubSettings) { unsubSettings(); unsubSettings = null; }
+            if (unsubWorksites) { unsubWorksites(); unsubWorksites = null; }
             window.currentUser = null;
             localStorage.removeItem('currentUser');
             document.getElementById('passwordInput').value = ''; 
@@ -1026,23 +1026,22 @@
             });
         };
 
+        function getVisibleGroups() {
+            if(window.currentUser === ADMIN_EMAIL) return window.appData.groups || [];
+            return (window.appData.groups || []).filter(g => g.owner === window.currentUser || (g.sharedWith && g.sharedWith.includes(window.currentUser)));
+        }
+
         window.updateSelects = function() {
             const pGroup = document.getElementById('pGroup');
             const filterGroup = document.getElementById('filterGroup');
             if(!pGroup || !filterGroup) return;
             
             pGroup.innerHTML = ''; filterGroup.innerHTML = '<option value="all">Kaikki ryhmät</option>';
+            const visible = getVisibleGroups();
+            const writableGroups = visible.filter(g => g.owner === window.currentUser || window.currentUser === ADMIN_EMAIL);
             
-            const role = window.getUserRole();
-            const visible = window.appData.groups.filter(g => g.owner === window.currentUser || role >= 3 || (g.sharedWith && g.sharedWith.includes(window.currentUser)));
-            
-            let writableGroups = [];
-            if(role >= 3) writableGroups = visible; 
-            else if(role === 2) writableGroups = visible.filter(g => g.owner === window.currentUser); 
-
             if(writableGroups.length === 0) pGroup.innerHTML = `<option value="" disabled selected>Luo ensin ryhmä</option>`;
             else writableGroups.forEach(g => pGroup.innerHTML += `<option value="${g.id}">${window.escapeHtml(g.name)}</option>`);
-            
             visible.forEach(g => filterGroup.innerHTML += `<option value="${g.id}">${window.escapeHtml(g.name)}${g.owner !== window.currentUser ? ` (Omistaja: ${window.escapeHtml(g.owner)})` : ''}</option>`);
         };
 
@@ -1405,7 +1404,7 @@
             originalOpenModal(id);
         };
 
-        // --- JAKAMINEN (YHTEINEN) ---
+        // --- JAKAMINEN (YHTEINEN) ALASVETOVALIKOLLA ---
         window.openShareModal = function(id, name, type) {
             document.getElementById('shareTargetId').value = id;
             document.getElementById('shareTargetType').value = type;
@@ -1413,16 +1412,19 @@
             
             // Täytetään alasvetovalikko käyttäjistä
             const emailSelect = document.getElementById('shareEmailSelect');
-            emailSelect.innerHTML = '<option value="" disabled selected>Valitse käyttäjä listasta</option>';
-            
-            const allUsers = [ADMIN_EMAIL, ...(window.appData.allowedUsers ? window.appData.allowedUsers.map(u => u.email) : [])];
-            const uniqueUsers = [...new Set(allUsers)];
-            
-            uniqueUsers.forEach(email => {
-                if (email !== window.currentUser) {
-                    emailSelect.innerHTML += `<option value="${window.escapeHtml(email)}">${window.escapeHtml(email)}</option>`;
-                }
-            });
+            if(emailSelect) {
+                emailSelect.innerHTML = '<option value="" disabled selected>Valitse käyttäjä listasta</option>';
+                
+                const allowedEmails = window.appData.allowedUsers ? window.appData.allowedUsers.map(u => u.email) : [];
+                const allUsers = [ADMIN_EMAIL, ...allowedEmails];
+                const uniqueUsers = [...new Set(allUsers)];
+                
+                uniqueUsers.forEach(email => {
+                    if (email !== window.currentUser) {
+                        emailSelect.innerHTML += `<option value="${window.escapeHtml(email)}">${window.escapeHtml(email)}</option>`;
+                    }
+                });
+            }
 
             const permContainer = document.getElementById('sharePermContainer');
             if(permContainer) {
@@ -1439,8 +1441,10 @@
         window.submitShareForm = function() {
             const targetId = document.getElementById('shareTargetId').value;
             const type = document.getElementById('shareTargetType').value;
+            
             const emailSelect = document.getElementById('shareEmailSelect');
-            const email = emailSelect.value;
+            const email = emailSelect ? emailSelect.value : null;
+            
             const perm = document.getElementById('sharePerm') ? document.getElementById('sharePerm').value : 'view';
             
             if (!email) { alert("Valitse käyttäjä listasta."); return; }
@@ -1461,7 +1465,80 @@
             window.closeModal('shareModal');
         };
 
-        // --- PAINIKKEET JA LOMAKKEET ---
+        // --- KÄYTTÄJIEN HALLINTA ---
+        window.renderUsers = function() {
+            const list = document.getElementById('allowedUsersList');
+            if(!list) return;
+            list.innerHTML = '';
+            
+            const isMeAdmin = window.currentUser === ADMIN_EMAIL;
+            list.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: var(--primary-light); border-radius: 8px; border: 1px solid var(--primary-border);">
+                    <span style="font-weight: 700; color: var(--primary-hover);">${ADMIN_EMAIL} <span style="font-size:0.8rem; margin-left: 5px;">(Pääkäyttäjä${isMeAdmin ? ' / Sinä' : ''})</span></span>
+                </div>
+            `;
+
+            if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
+            
+            window.appData.allowedUsers.forEach(u => {
+                if(u.email === ADMIN_EMAIL) return; 
+                const isMe = u.email === window.currentUser;
+                
+                list.innerHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap:wrap; gap: 0.5rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 0.5rem;">
+                        <span style="font-weight: 500;">${window.escapeHtml(u.email)} ${isMe ? '<span style="color:var(--text-muted); font-size:0.8rem; margin-left: 5px;">(Sinä)</span>' : ''}</span>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <select onchange="window.changeUserRole('${window.escapeHtml(u.email)}', this.value)" style="padding:0.4rem; border-radius:4px; font-size:0.85rem;" ${isMe ? 'disabled' : ''}>
+                                <option value="1" ${u.role === 1 ? 'selected' : ''}>Taso 1: Katselu</option>
+                                <option value="2" ${u.role === 2 ? 'selected' : ''}>Taso 2: Asentaja</option>
+                                <option value="3" ${u.role === 3 ? 'selected' : ''}>Taso 3: Johtaja</option>
+                            </select>
+                            ${!isMe ? `<button class="btn-danger btn-small" onclick="window.removeAllowedUser('${window.escapeHtml(u.email)}')">Poista</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        window.submitAddUser = function() {
+            const email = document.getElementById('newAllowedEmail').value.trim().toLowerCase();
+            const role = parseInt(document.getElementById('newUserRole').value);
+            
+            if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
+            
+            if(email === ADMIN_EMAIL) { alert("Tämä sähköposti on jo pääkäyttäjänä."); return; }
+            if(!window.appData.allowedUsers.find(u => u.email === email)) {
+                window.appData.allowedUsers.push({ email, role });
+                window.renderUsers();
+                window.saveSettingsToCloud();
+                document.getElementById('addUserForm').reset();
+            } else { alert("Tämä sähköposti on jo listalla."); }
+        };
+
+        window.changeUserRole = function(email, newRole) {
+            const u = window.appData.allowedUsers.find(x => x.email === email);
+            if(u) {
+                u.role = parseInt(newRole);
+                window.saveSettingsToCloud();
+                const showToast = (txt) => { const t = document.getElementById('toast'); t.textContent=txt; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); };
+                showToast("Oikeudet päivitetty");
+            }
+        };
+
+        window.removeAllowedUser = function(email) {
+            if(confirm(`Haluatko varmasti poistaa koko käyttöoikeuden sovellukseen tililtä:\n${email}?`)) {
+                window.appData.allowedUsers = window.appData.allowedUsers.filter(e => e.email !== email);
+                window.appData.groups.forEach(g => {
+                    if(g.sharedWith.includes(email)) { g.sharedWith = g.sharedWith.filter(e => e !== email); window.saveGroupToCloud(g); }
+                });
+                window.appData.worksites.forEach(w => {
+                    if(w.sharedWith.some(s => s.email === email)) { w.sharedWith = w.sharedWith.filter(s => s.email !== email); window.saveWorksiteToCloud(w); }
+                });
+                window.renderUsers();
+                window.saveSettingsToCloud();
+            }
+        };
+
         window.deleteProduct = function(e, id) { 
             if(e) { e.stopPropagation(); e.preventDefault(); }
             if(confirm("Poistetaanko tuote pysyvästi?")) { 
@@ -1478,7 +1555,7 @@
                 if(window.currentOpenWorksiteId) window.renderWorksiteDetails(window.currentOpenWorksiteId);
             } 
         };
-        
+
         window.toggleFavorite = function(e, id) {
             if(e) { e.stopPropagation(); e.preventDefault(); }
             const p = window.appData.products.find(x => x.id === id); 
@@ -1524,11 +1601,8 @@
             }
         };
 
-        // Estää eventin kuplan kun painetaan nappeja
         document.addEventListener('click', function(e) {
-            if(e.target.closest('.icon-btn')) {
-                e.stopPropagation();
-            }
+            if(e.target.closest('.icon-btn')) { e.stopPropagation(); }
         }, true);
 
         window.init();
