@@ -6,10 +6,12 @@
     <title>Rentola Kirjasto</title>
     <style>
         :root {
+            /* SÄHKÖTYÖ RENTOLA PUNAINEN TEEMA */
             --primary-color: #dc2626; 
             --primary-hover: #b91c1c;
             --primary-light: #fee2e2;
             --primary-border: #fecaca;
+            
             --bg-color: #f8fafc;
             --text-color: #0f172a;
             --text-muted: #64748b;
@@ -124,12 +126,12 @@
         }
         .group-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; width: 100%; }
         .group-card:hover { border-color: var(--primary-border); }
-        .group-details h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;}
+        .group-details h3 { font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
         .group-details p { font-size: 0.85rem; color: var(--text-muted); }
         .group-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .hidden-badge { font-size: 0.75rem; background: var(--primary-light); color: var(--primary-color); padding: 0.2rem 0.6rem; border-radius: 99px; }
         
-        .shared-users-list { margin-top: 0.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border-color); }
+        .shared-users-list { margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px dashed var(--border-color); }
         .shared-user-item { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; }
         .shared-user-item:last-child { border-bottom: none; }
 
@@ -273,7 +275,7 @@
             </div>
         </div>
         <div id="productGrid" class="product-container list-view"></div>
-        <button id="fabAddProduct" class="fab hidden" onclick="window.openProductModal()" title="Lisää tuote">+</button>
+        <button id="fabAddProduct" class="fab hidden" onclick="window.openProductModal(event)" title="Lisää tuote">+</button>
     </main>
 
     <!-- RYHMÄT -->
@@ -425,13 +427,13 @@
             </div>
             <form id="shareGroupForm" onsubmit="event.preventDefault(); window.submitShareForm(); return false;">
                 <input type="hidden" id="shareTargetId">
-                <input type="hidden" id="shareTargetType"> <!-- 'group' tai 'worksite' -->
+                <input type="hidden" id="shareTargetType">
                 <p id="shareTargetName" style="margin-bottom: 1.5rem; font-weight: 600; color: var(--primary-color); background: var(--primary-light); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--primary-border);"></p>
                 <div class="form-group">
                     <label>Käyttäjän sähköposti</label>
                     <input type="email" id="shareEmail" placeholder="esim. kollega@firma.fi" required>
                 </div>
-                <!-- Oikeuksien valinta vain työmaille (näytetään JS:llä tarvittaessa) -->
+                <!-- Oikeuksien valinta vain työmaille -->
                 <div class="form-group hidden" id="sharePermContainer">
                     <label>Oikeustaso</label>
                     <select id="sharePerm">
@@ -476,7 +478,6 @@
         let unsubProducts = null, unsubGroups = null, unsubSettings = null, unsubWorksites = null;
         window.currentOpenWorksiteId = null;
 
-        // ALUSTUS
         try {
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
@@ -494,8 +495,6 @@
             return str.toString().replace(/'/g, "&#39;").replace(/"/g, "&quot;");
         };
 
-        // --- ROOLIT ---
-        // 1=Perus (Katselu), 2=Asentaja (Omat), 3=Johtaja (Kaikki paitsi Adminin käyttäjähallinta), 4=Admin
         window.getUserRole = function() {
             if (window.currentUser === ADMIN_EMAIL) return 4;
             if (!window.appData.allowedUsers) return 0;
@@ -537,7 +536,6 @@
             if (savedUser) window.login(savedUser);
         }
 
-        // --- AUTENTIKOINTI & MIGRAATIO ---
         window.login = async function(email) {
             window.currentUser = email;
             localStorage.setItem('currentUser', email);
@@ -550,7 +548,6 @@
                     const snap = await getDoc(settingsRef);
                     if (snap.exists()) {
                         const data = snap.data();
-                        // Migraatio: Varmistetaan että vanhat tekstimuotoiset käyttäjät muutetaan objekteiksi
                         let users = data.allowedUsers || [];
                         if (users.length > 0 && typeof users[0] === 'string') {
                             users = users.map(u => ({ email: u, role: (u === ADMIN_EMAIL ? 4 : 1) }));
@@ -562,23 +559,8 @@
                     }
                     
                     if (!checkAuth()) return; 
-
-                    try {
-                        const oldRef = doc(db, "rentola", "kirjasto");
-                        const oldSnap = await getDoc(oldRef);
-                        if (oldSnap.exists()) {
-                            const oldData = oldSnap.data();
-                            if (!oldData.migrated_v2) {
-                                if (oldData.products) { for (const p of oldData.products) { await setDoc(doc(db, "tuotteet", p.id), p); } }
-                                if (oldData.groups) { for (const g of oldData.groups) { await setDoc(doc(db, "ryhmat", g.id), g); } }
-                                await setDoc(oldRef, { migrated_v2: true }, { merge: true });
-                            }
-                        }
-                    } catch(e) {}
-
                     startCloudListeners();
                 } catch (error) {
-                    console.warn("Pilvikirjautuminen epäonnistui", error);
                     fallbackToLocal();
                 }
             } else {
@@ -596,7 +578,6 @@
             if(!window.appData.worksites) window.appData.worksites = [];
             if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
             
-            // Migraatio lokaalisti
             if(window.appData.allowedUsers.length > 0 && typeof window.appData.allowedUsers[0] === 'string') {
                 window.appData.allowedUsers = window.appData.allowedUsers.map(u => ({ email: u, role: 1 }));
             }
@@ -626,7 +607,7 @@
                 window.tempAdminPassword = null; 
             } else {
                 if (role === 0) {
-                    alert(`Pääsy evätty!\n\nSähköpostiosoitettasi ei ole sallittu järjestelmässä.\nPyydä ylläpitäjää (${ADMIN_EMAIL}) lisäämään sinut.`);
+                    alert(`Pääsy evätty!\n\nSähköpostiosoitettasi ei ole sallittu järjestelmässä.`);
                     window.logout(true);
                     return false;
                 }
@@ -637,7 +618,6 @@
         function finalizeLoginUI() {
             const role = window.getUserRole();
 
-            // Säädetään UI roolin mukaan
             document.getElementById('navUsers').classList.toggle('hidden', role < 3);
             document.getElementById('fabAddProduct').classList.toggle('hidden', role < 2);
             document.getElementById('btnCreateGroup').classList.toggle('hidden', role < 2);
@@ -660,7 +640,6 @@
             }
         }
 
-        // --- CLOUD LISTENERS ---
         function startCloudListeners() {
             if(unsubProducts) unsubProducts();
             if(unsubGroups) unsubGroups();
@@ -679,7 +658,7 @@
                 window.appData.groups = snap.docs.map(d => d.data());
                 window.updateSelects();
                 window.renderGroups();
-                window.renderProducts(); // TÄMÄ KORJAA ALOITUSLATAUKSEN BUGIN!
+                window.renderProducts(); 
                 backupLocal();
             });
 
@@ -728,10 +707,10 @@
         }
 
         window.logout = function(force = false) {
-            if (unsubProducts) unsubProducts();
-            if (unsubGroups) unsubGroups();
-            if (unsubWorksites) unsubWorksites();
-            if (unsubSettings) unsubSettings();
+            if (unsubProducts) { unsubProducts(); unsubProducts = null; }
+            if (unsubGroups) { unsubGroups(); unsubGroups = null; }
+            if (unsubSettings) { unsubSettings(); unsubSettings = null; }
+            if (unsubWorksites) { unsubWorksites(); unsubWorksites = null; }
             window.currentUser = null;
             localStorage.removeItem('currentUser');
             document.getElementById('passwordInput').value = ''; 
@@ -786,7 +765,6 @@
             });
         });
 
-        // --- KUVAN KÄSITTELY ---
         window.setupDragAndDrop = function() {
             const dropZone = document.getElementById('imageDropZone');
             const fileInput = document.getElementById('pFile');
@@ -881,8 +859,8 @@
             });
         };
 
-        // --- TUOTTEET ---
-        window.openProductModal = function(productId = null) {
+        window.openProductModal = function(e, productId = null) {
+            if(e) { e.stopPropagation(); e.preventDefault(); }
             const form = document.getElementById('productForm');
             const title = document.getElementById('productModalTitle');
             const btn = document.getElementById('saveProductBtn');
@@ -928,7 +906,7 @@
                 const pGrp = document.getElementById('pGroup').value;
 
                 if (!pGrp) {
-                    alert("Tuotteella täytyy olla valittuna ryhmä!");
+                    alert("Tuotteella täytyy olla valittuna ryhmä! Luo ryhmä ryhmät-välilehdeltä.");
                     submitBtn.disabled = false; submitBtn.textContent = "Tallenna tuote";
                     return;
                 }
@@ -971,11 +949,10 @@
             const selectedGroup = document.getElementById('filterGroup').value || 'all';
             const favFilter = document.getElementById('filterFav').value || 'all';
             
-            // Mitkä ryhmät käyttäjä näkee
             const role = window.getUserRole();
             let visibleGroups = [];
             if (role >= 3) {
-                visibleGroups = window.appData.groups.map(g => g.id); // Johtaja/Admin näkee kaikki
+                visibleGroups = window.appData.groups.map(g => g.id); 
             } else {
                 visibleGroups = window.appData.groups.filter(g => g.owner === window.currentUser || (g.sharedWith && g.sharedWith.includes(window.currentUser))).map(g => g.id);
             }
@@ -1010,7 +987,7 @@
                     <div class="card-actions">
                         <button type="button" class="icon-btn ${isFav ? 'fav-active' : ''}" onclick="window.toggleFavorite(event, '${p.id}')" title="Suosikki"> ${isFav ? '⭐' : '☆'} </button>
                         ${p.owner === window.currentUser || role >= 3 ? `
-                            <button type="button" class="icon-btn" onclick="window.openProductModal('${p.id}')" title="Muokkaa">✏️</button>
+                            <button type="button" class="icon-btn" onclick="window.openProductModal(event, '${p.id}')" title="Muokkaa">✏️</button>
                             <button type="button" class="icon-btn" onclick="window.deleteProduct(event, '${p.id}')" title="Poista" style="color: var(--danger-color)">🗑️</button>
                         ` : ''}
                     </div>
@@ -1041,8 +1018,8 @@
             const visible = window.appData.groups.filter(g => g.owner === window.currentUser || role >= 3 || (g.sharedWith && g.sharedWith.includes(window.currentUser)));
             
             let writableGroups = [];
-            if(role >= 3) writableGroups = visible; // Johtaja saa lisätä mihin vain
-            else if(role === 2) writableGroups = visible.filter(g => g.owner === window.currentUser); // Asentaja vain omiin
+            if(role >= 3) writableGroups = visible; 
+            else if(role === 2) writableGroups = visible.filter(g => g.owner === window.currentUser); 
 
             if(writableGroups.length === 0) pGroup.innerHTML = `<option value="" disabled selected>Luo ensin ryhmä</option>`;
             else writableGroups.forEach(g => pGroup.innerHTML += `<option value="${g.id}">${window.escapeHtml(g.name)}</option>`);
@@ -1050,7 +1027,6 @@
             visible.forEach(g => filterGroup.innerHTML += `<option value="${g.id}">${window.escapeHtml(g.name)}${g.owner !== window.currentUser ? ` (Omistaja: ${window.escapeHtml(g.owner)})` : ''}</option>`);
         };
 
-        // --- RYHMÄT ---
         window.renderGroups = function() {
             const list = document.getElementById('groupsList'); 
             if(!list) return;
@@ -1273,7 +1249,6 @@
             }
         };
 
-        // TYÖMAAN SISÄLLÖN HALLINTA
         window.openWorksiteView = function(id) {
             window.currentOpenWorksiteId = id;
             document.getElementById('worksitesListView').classList.add('hidden');
@@ -1346,15 +1321,16 @@
         };
 
         window.removeWsItem = function(wsId, pId) {
-            const ws = window.appData.worksites.find(w => w.id === wsId);
-            if(ws && window.canEditWorksite(ws)) {
-                ws.items = ws.items.filter(i => i.productId !== pId);
-                window.renderWorksiteDetails(wsId);
-                window.saveWorksiteToCloud(ws);
+            if(confirm("Haluatko varmasti poistaa tämän tuotteen työmaalta?")) {
+                const ws = window.appData.worksites.find(w => w.id === wsId);
+                if(ws && window.canEditWorksite(ws)) {
+                    ws.items = ws.items.filter(i => i.productId !== pId);
+                    window.renderWorksiteDetails(wsId);
+                    window.saveWorksiteToCloud(ws);
+                }
             }
         };
 
-        // Tuotteiden valinta työmaalle
         window.renderWsProductSelect = function() {
             const list = document.getElementById('wsProductSelectList');
             const searchTerm = (document.getElementById('wsProductSearch').value || '').toLowerCase();
@@ -1401,7 +1377,6 @@
             }
         };
 
-        // Hakukentän esityhjennys kun modaali aukeaa
         const originalOpenModal = window.openModal;
         window.openModal = function(id) {
             if(id === 'selectProductModal') {
@@ -1412,17 +1387,20 @@
         };
 
 
-        // --- YHTEINEN JAKAMINEN (RYHMÄT JA TYÖMAAT) ---
+        // --- JAKAMINEN (YHTEINEN) ---
         window.openShareModal = function(id, name, type) {
             document.getElementById('shareTargetId').value = id;
             document.getElementById('shareTargetType').value = type;
             document.getElementById('shareGroupName').textContent = name;
             document.getElementById('shareEmail').value = '';
             
-            if(type === 'worksite') {
-                document.getElementById('sharePermContainer').classList.remove('hidden');
-            } else {
-                document.getElementById('sharePermContainer').classList.add('hidden');
+            const permContainer = document.getElementById('sharePermContainer');
+            if(permContainer) {
+                if(type === 'worksite') {
+                    permContainer.classList.remove('hidden');
+                } else {
+                    permContainer.classList.add('hidden');
+                }
             }
             
             window.openModal('shareModal');
@@ -1432,10 +1410,10 @@
             const targetId = document.getElementById('shareTargetId').value;
             const type = document.getElementById('shareTargetType').value;
             const email = document.getElementById('shareEmail').value.trim().toLowerCase();
-            const perm = document.getElementById('sharePerm').value;
+            const perm = document.getElementById('sharePerm') ? document.getElementById('sharePerm').value : 'view';
             
             if (email === window.currentUser) { alert("Et voi jakaa itsellesi."); return; }
-            if (email !== ADMIN_EMAIL && !window.appData.allowedUsers.map(u=>u.email).includes(email)) { 
+            if (email !== ADMIN_EMAIL && !window.appData.allowedUsers.some(u => u.email === email)) { 
                 alert("Käyttäjää ei löydy järjestelmästä. Lisää hänet ensin 'Käyttäjät' -välilehdeltä."); return; 
             }
             
@@ -1472,10 +1450,7 @@
             window.appData.allowedUsers.forEach(u => {
                 if(u.email === ADMIN_EMAIL) return; 
                 const isMe = u.email === window.currentUser;
-                let roleText = "Katselu";
-                if(u.role === 2) roleText = "Asentaja";
-                if(u.role === 3) roleText = "Johtaja";
-
+                
                 list.innerHTML += `
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap:wrap; gap: 0.5rem; padding: 0.8rem; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 0.5rem;">
                         <span style="font-weight: 500;">${window.escapeHtml(u.email)} ${isMe ? '<span style="color:var(--text-muted); font-size:0.8rem; margin-left: 5px;">(Sinä)</span>' : ''}</span>
@@ -1538,7 +1513,6 @@
                 window.renderProducts(); 
                 window.deleteProductCloud(id); 
                 
-                // Poistetaan tuote myös työmailta
                 window.appData.worksites.forEach(w => {
                     if(w.items.some(i => i.productId === id)) {
                         w.items = w.items.filter(i => i.productId !== id);
@@ -1549,9 +1523,50 @@
             } 
         };
 
-        document.addEventListener('click', function(e) {
-            if(e.target.closest('.icon-btn')) { e.stopPropagation(); }
-        }, true);
+        window.toggleFavorite = function(e, id) {
+            if(e) { e.stopPropagation(); e.preventDefault(); }
+            const p = window.appData.products.find(x => x.id === id); 
+            if(p) {
+                p.favorites = p.favorites || [];
+                if (p.favorites.includes(window.currentUser)) p.favorites = p.favorites.filter(e => e !== window.currentUser);
+                else p.favorites.push(window.currentUser);
+                window.renderProducts();
+                window.saveProductToCloud(p);
+            }
+        };
+
+        window.copyNum = function(e, text) {
+            if(e) { e.stopPropagation(); e.preventDefault(); }
+
+            const showToast = (copiedText) => {
+                const t = document.getElementById('toast'); 
+                t.textContent = `Kopioitu: ${copiedText}`;
+                t.classList.add('show'); 
+                setTimeout(() => t.classList.remove('show'), 2000);
+            };
+
+            const fallbackCopy = (textToCopy) => {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.top = "0"; textArea.style.left = "0"; textArea.style.position = "fixed"; textArea.style.opacity = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(textToCopy);
+                } catch (err) {
+                    alert(`Tuotenumero: ${textToCopy}`);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => showToast(text)).catch(() => fallbackCopy(text));
+            } else {
+                fallbackCopy(text);
+            }
+        };
 
         window.init();
     </script>
