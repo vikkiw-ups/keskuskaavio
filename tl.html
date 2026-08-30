@@ -380,13 +380,14 @@
             <h2 style="margin-bottom: 1.5rem;">Käyttöoikeuksien hallinta</h2>
             <div style="background: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); margin-bottom: 2rem;">
                 <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Salli pääsy uudelle tilille</h3>
-                <form id="addUserForm" onsubmit="event.preventDefault(); window.submitAddUser(); return false;" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <form id="addUserForm" onsubmit="event.preventDefault(); window.submitAddUser(); return false;" style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
                     <input type="email" id="newAllowedEmail" placeholder="esim. tyontekija@rentola.fi" required style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; min-width: 200px;">
-                    <select id="newUserRole" style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
+                    <select id="newUserRole" onchange="window.toggleNewUserPassword()" style="padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px;">
                         <option value="1">Taso 1: Katselu</option>
                         <option value="2">Taso 2: Asentaja</option>
                         <option value="3">Taso 3: Johtaja</option>
                     </select>
+                    <input type="password" id="newUserPassword" placeholder="Aseta salasana johtajalle" class="hidden" style="flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; min-width: 150px;">
                     <button type="submit">Salli pääsy</button>
                 </form>
             </div>
@@ -569,26 +570,36 @@
             return u ? (u.role || 1) : 0;
         }
 
-        window.checkEmail = function(email) {
-            const pwdContainer = document.getElementById('passwordFieldContainer');
-            const pwdInput = document.getElementById('passwordInput');
-            if (email.trim().toLowerCase() === ADMIN_EMAIL) {
-                pwdContainer.classList.remove('hidden');
-                pwdInput.required = true;
-            } else {
-                pwdContainer.classList.add('hidden');
-                pwdInput.required = false;
-            }
-        }
+      window.checkEmail = function(email) {
+    const pwdContainer = document.getElementById('passwordFieldContainer');
+    const pwdInput = document.getElementById('passwordInput');
+    const emailLower = email.trim().toLowerCase();
+    
+    // Tarkistetaan paikallisesta datasta, onko kyseessä johtaja
+    let isLeader = false;
+    if (window.appData && window.appData.allowedUsers) {
+        const user = window.appData.allowedUsers.find(u => u.email === emailLower);
+        if (user && user.role === 3) isLeader = true;
+    }
 
-        window.submitLogin = function() {
-            const email = document.getElementById('emailInput').value.trim().toLowerCase();
-            const pwd = document.getElementById('passwordInput').value;
-            if(email) {
-                if (email === ADMIN_EMAIL) window.tempAdminPassword = pwd; 
-                window.login(email);
-            }
-        }
+    if (emailLower === ADMIN_EMAIL || isLeader) {
+        pwdContainer.classList.remove('hidden');
+        pwdInput.required = true;
+        pwdInput.placeholder = emailLower === ADMIN_EMAIL ? "Salasana (Pääkäyttäjä)" : "Salasana (Johtaja)";
+    } else {
+        pwdContainer.classList.add('hidden');
+        pwdInput.required = false;
+    }
+}
+
+       window.submitLogin = function() {
+    const email = document.getElementById('emailInput').value.trim().toLowerCase();
+    const pwd = document.getElementById('passwordInput').value;
+    if(email) {
+        window.tempAdminPassword = pwd; // Tallennetaan väliaikaisesti kaikkia rooleja varten
+        window.login(email);
+    }
+}
 
         window.init = function() {
             const lastEmail = localStorage.getItem('lastEmail');
@@ -667,36 +678,58 @@
             if(checkAuth()) finalizeLoginUI();
         }
 
-        function checkAuth() {
-            const role = window.getUserRole();
-            if (role === 4) {
-                if (!window.appData.adminPassword) {
-                    if (!window.tempAdminPassword) {
-                        alert("Kirjoita uusi salasana salasanakenttään.");
-                        window.logout(true);
-                        return false;
+            function checkAuth() {
+                const role = window.getUserRole();
+                const email = window.currentUser;
+            
+                if (role === 4) {
+                    if (!window.appData.adminPassword) {
+                        if (!window.tempAdminPassword) {
+                            alert("Kirjoita uusi salasana salasanakenttään.");
+                            window.logout(true);
+                            return false;
+                        }
+                        window.appData.adminPassword = window.tempAdminPassword;
+                        window.saveSettingsToCloud(); 
+                    } else {
+                        let pwd = window.tempAdminPassword;
+                        if (!pwd) pwd = prompt("Syötä pääkäyttäjän salasana:");
+                        
+                        if (pwd !== window.appData.adminPassword) {
+                            alert("Väärä salasana!");
+                            window.tempAdminPassword = null;
+                            window.logout(true);
+                            return false;
+                        }
                     }
-                    window.appData.adminPassword = window.tempAdminPassword;
-                    window.saveSettingsToCloud(); 
+                    window.tempAdminPassword = null; 
+                    
+                } else if (role === 3) {
+                    const user = window.appData.allowedUsers.find(u => u.email === email);
+                    if (user && user.password) {
+                        let pwd = window.tempAdminPassword;
+                        
+                        // Uusilla laitteilla salasanaa ei välttämättä hoksattu kysyä etusivulla ennen tietojen latausta, kysytään se tässä
+                        if (!pwd) pwd = prompt(`Syötä salasana johtaja-tilille (${email}):`);
+                        
+                        if (pwd !== user.password) {
+                            alert("Väärä salasana johtaja-tilille!");
+                            window.tempAdminPassword = null;
+                            window.logout(true);
+                            return false;
+                        }
+                    }
+                    window.tempAdminPassword = null;
+                    
                 } else {
-                    if (window.tempAdminPassword && window.tempAdminPassword !== window.appData.adminPassword) {
-                        alert("Väärä salasana!");
-                        window.tempAdminPassword = null;
+                    if (role === 0) {
+                        alert(`Pääsy evätty!\n\nSähköpostiosoitettasi ei ole sallittu järjestelmässä.`);
                         window.logout(true);
                         return false;
                     }
                 }
-                window.tempAdminPassword = null; 
-            } else {
-                if (role === 0) {
-                    alert(`Pääsy evätty!\n\nSähköpostiosoitettasi ei ole sallittu järjestelmässä.`);
-                    window.logout(true);
-                    return false;
-                }
+                return true;
             }
-            return true;
-        }
-
         function finalizeLoginUI() {
             const role = window.getUserRole();
 
@@ -1577,30 +1610,74 @@ window.confirmShare = function() {
             });
         };
 
-        window.submitAddUser = function() {
-            const email = document.getElementById('newAllowedEmail').value.trim().toLowerCase();
-            const role = parseInt(document.getElementById('newUserRole').value);
-            
-            if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
-            
-            if(email === ADMIN_EMAIL) { alert("Tämä sähköposti on jo pääkäyttäjänä."); return; }
-            if(!window.appData.allowedUsers.find(u => u.email === email)) {
-                window.appData.allowedUsers.push({ email, role });
-                window.renderUsers();
-                window.saveSettingsToCloud();
-                document.getElementById('addUserForm').reset();
-            } else { alert("Tämä sähköposti on jo listalla."); }
-        };
+        window.toggleNewUserPassword = function() {
+    const role = document.getElementById('newUserRole').value;
+    const pwdInput = document.getElementById('newUserPassword');
+    if (role === "3") {
+        pwdInput.classList.remove('hidden');
+        pwdInput.required = true;
+    } else {
+        pwdInput.classList.add('hidden');
+        pwdInput.required = false;
+        pwdInput.value = '';
+    }
+};
 
-        window.changeUserRole = function(email, newRole) {
-            const u = window.appData.allowedUsers.find(x => x.email === email);
-            if(u) {
-                u.role = parseInt(newRole);
-                window.saveSettingsToCloud();
-                const showToast = (txt) => { const t = document.getElementById('toast'); t.textContent=txt; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); };
-                showToast("Oikeudet päivitetty");
-            }
-        };
+            window.submitAddUser = function() {
+                const email = document.getElementById('newAllowedEmail').value.trim().toLowerCase();
+                const role = parseInt(document.getElementById('newUserRole').value);
+                const pwdInput = document.getElementById('newUserPassword');
+                const password = pwdInput.value.trim();
+                
+                if(!window.appData.allowedUsers) window.appData.allowedUsers = [];
+                
+                if(email === ADMIN_EMAIL) { alert("Tämä sähköposti on jo pääkäyttäjänä."); return; }
+                
+                // Tarkistetaan, että johtajalle on annettu salasana
+                if(role === 3 && !password) {
+                    alert("Johtajalle täytyy asettaa salasana.");
+                    return;
+                }
+            
+                if(!window.appData.allowedUsers.find(u => u.email === email)) {
+                    const newUser = { email, role };
+                    if (role === 3) newUser.password = password;
+                    
+                    window.appData.allowedUsers.push(newUser);
+                    window.renderUsers();
+                    window.saveSettingsToCloud();
+                    document.getElementById('addUserForm').reset();
+                    window.toggleNewUserPassword(); // Piilotetaan salasanakenttä onnistuneen lisäyksen jälkeen
+                } else { alert("Tämä sähköposti on jo listalla."); }
+            };
+            
+            window.changeUserRole = function(email, newRole) {
+                const u = window.appData.allowedUsers.find(x => x.email === email);
+                if(u) {
+                    const parsedRole = parseInt(newRole);
+                    
+                    // Kysytään uusi salasana popupilla, jos asennetaan johtajaksi eikä salasanaa vielä ole
+                    if (parsedRole === 3 && !u.password) {
+                        const pwd = prompt(`Aseta salasana johtajalle (${email}):`);
+                        if (!pwd || pwd.trim() === '') {
+                            alert("Salasana on pakollinen johtaja-roolille. Roolia ei muutettu.");
+                            window.renderUsers(); // Palauttaa select-valikon ennalleen
+                            return;
+                        }
+                        u.password = pwd.trim();
+                    }
+                    
+                    // Poistetaan salasana, jos oikeuksia pienennetään johtajasta alaspäin
+                    if (parsedRole !== 3 && u.password) {
+                        delete u.password; 
+                    }
+            
+                    u.role = parsedRole;
+                    window.saveSettingsToCloud();
+                    const showToast = (txt) => { const t = document.getElementById('toast'); t.textContent=txt; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); };
+                    showToast("Oikeudet päivitetty");
+                }
+            };
 
         window.removeAllowedUser = function(email) {
             if(confirm(`Haluatko varmasti poistaa koko käyttöoikeuden sovellukseen tililtä:\n${email}?`)) {
