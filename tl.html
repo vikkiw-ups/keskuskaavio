@@ -269,6 +269,12 @@
                 <option value="all">Kaikki</option>
                 <option value="fav">⭐ Suosikit</option>
             </select>
+            <!-- Koon säätö -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0 0.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+                <span style="font-size: 1.1rem; color: var(--text-muted);" title="Pienennä">🔍-</span>
+                <input type="range" id="sizeSlider" min="150" max="400" value="280" oninput="window.updateLayoutSize(this.value)" style="width: 80px; cursor: pointer; accent-color: var(--primary-color);">
+                <span style="font-size: 1.1rem; color: var(--text-muted);" title="Suurenna">🔍+</span>
+            </div>
             <div class="view-toggles">
                 <button id="btnGrid" onclick="window.setView('grid')" title="Ruudukko">⊞</button>
                 <button id="btnList" class="active" onclick="window.setView('list')" title="Lista">☰</button>
@@ -1600,11 +1606,10 @@
                 fallbackCopy(text);
             }
         };
-
-        document.addEventListener('click', function(e) {
-            if(e.target.closest('.icon-btn')) { e.stopPropagation(); }
-        }, true);
-
+window.updateLayoutSize = function(val) {
+    document.documentElement.style.setProperty('--grid-item-size', val + 'px');
+    document.documentElement.style.setProperty('--list-img-size', (val / 2) + 'px');
+};
         window.init();
     </script>
 </body>
