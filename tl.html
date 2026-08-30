@@ -480,7 +480,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Jaa kohde</h2>
-               <button class="icon-btn" onclick="window.openShareModal('tyomaa', 'TYOMAAN_TARKKA_ID')">Jaa</button>
+                <button class="modal-close" onclick="window.closeModal('shareModal')">×</button>
             </div>
             <form id="shareGroupForm" onsubmit="event.preventDefault(); window.submitShareForm(); return false;">
                 <input type="hidden" id="shareTargetId">
@@ -489,9 +489,7 @@
                 
                 <div class="form-group">
                     <label>Valitse käyttäjä</label>
-                    <select id="shareEmailSelect" required>
-                        <!-- JavaScript täyttää -->
-                    </select>
+                    <select id="shareEmailSelect" required></select>
                 </div>
 
                 <div class="form-group hidden" id="sharePermContainer">
@@ -1675,91 +1673,74 @@ window.updateLayoutSize = function(val) {
     document.documentElement.style.setProperty('--list-img-size', (val / 2) + 'px');
 };
         window.init();
-    </script>
-<!-- 4. JAVASCRIPT -->
-    <script>
-        // --- Koon säädön logiikka ---
-        window.updateLayoutSize = function(val) {
-            document.documentElement.style.setProperty('--grid-item-size', val + 'px');
-            document.documentElement.style.setProperty('--list-img-size', (val / 2) + 'px');
-        };
-
-        // --- Jakamisen logiikka ---
-        let currentShareTarget = { id: null, type: null };
-
-        // Avaa ikkuna ja lataa käyttäjät (Kutsutaan jakopainikkeesta)
-        window.openShareModal = function(targetId, targetName, targetType) {
-            currentShareTarget = { id: targetId, type: targetType };
+window.openShareModal = function(targetId, targetName, targetType) {
+            document.getElementById('shareTargetId').value = targetId;
+            document.getElementById('shareTargetType').value = targetType;
             document.getElementById('shareTargetName').textContent = targetName;
             
-            // Tässä kohtaa haet oikeat käyttäjät Firebasesta.
-            // Esim: db.collection('users').get().then(...)
+            const select = document.getElementById('shareEmailSelect');
+            select.innerHTML = '';
             
-            // Mallidata testausta varten
-            const usersFromDatabase = [
-                { id: 'user_1', name: 'Jere' },
-                { id: 'user_2', name: 'Eetu' },
-                { id: 'user_3', name: 'Ula' },
-                { id: 'user_4', name: 'Matti Asentaja' }
-            ];
+            // Haetaan sallitut käyttäjät, poissuljetaan oma tili
+            const users = window.appData.allowedUsers.filter(u => u.email !== window.currentUser);
             
-            renderShareUsers(usersFromDatabase);
-            document.getElementById('shareModal').style.display = 'flex';
+            if(users.length === 0) {
+                select.innerHTML = '<option value="" disabled selected>Ei muita käyttäjiä listalla</option>';
+            } else {
+                users.forEach(u => {
+                    select.innerHTML += `<option value="${u.email}">${window.escapeHtml(u.email)}</option>`;
+                });
+            }
+
+            // Näytetään oikeustasot vain työmaita jaettaessa
+            if(targetType === 'worksite') {
+                document.getElementById('sharePermContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('sharePermContainer').classList.add('hidden');
+            }
+
+            window.openModal('shareModal');
         };
 
-        // Piirtää checkbox-listan modaaliin
-        function renderShareUsers(users) {
-            const listContainer = document.getElementById('shareUserList');
-            listContainer.innerHTML = ''; 
-            
-            users.forEach(user => {
-                const label = document.createElement('label');
-                label.style.display = 'flex';
-                label.style.alignItems = 'center';
-                label.style.gap = '0.75rem';
-                label.style.cursor = 'pointer';
-                label.style.fontSize = '1rem';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.value = user.id;
-                checkbox.className = 'share-user-cb';
-                checkbox.style.width = '18px';
-                checkbox.style.height = '18px';
-                checkbox.style.cursor = 'pointer';
-                
-                label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(user.name));
-                listContainer.appendChild(label);
-            });
-        }
+        window.submitShareForm = function() {
+            const targetId = document.getElementById('shareTargetId').value;
+            const targetType = document.getElementById('shareTargetType').value;
+            const email = document.getElementById('shareEmailSelect').value;
+            const perm = document.getElementById('sharePerm').value;
 
-        window.closeShareModal = function() {
-            document.getElementById('shareModal').style.display = 'none';
-            currentShareTarget = { id: null, type: null };
-        };
+            if(!email) return;
 
-        // Vahvistaa ja tallentaa valitut käyttäjät Firebaseen
-        window.confirmShare = function() {
-            const checkboxes = document.querySelectorAll('.share-user-cb:checked');
-            const selectedUserIds = Array.from(checkboxes).map(cb => cb.value);
-            
-            if(selectedUserIds.length === 0) {
-                alert('Valitse vähintään yksi käyttäjä listalta.');
-                return;
+            if(targetType === 'group') {
+                const group = window.appData.groups.find(g => g.id === targetId);
+                if(group) {
+                    group.sharedWith = group.sharedWith || [];
+                    if(!group.sharedWith.includes(email)) {
+                        group.sharedWith.push(email);
+                        window.saveGroupToCloud(group);
+                        window.renderGroups();
+                    }
+                }
+            } else if (targetType === 'worksite') {
+                const ws = window.appData.worksites.find(w => w.id === targetId);
+                if(ws) {
+                    ws.sharedWith = ws.sharedWith || [];
+                    const existing = ws.sharedWith.find(s => s.email === email);
+                    if(existing) {
+                        existing.permission = perm;
+                    } else {
+                        ws.sharedWith.push({ email: email, permission: perm });
+                    }
+                    window.saveWorksiteToCloud(ws);
+                    window.renderWorksites();
+                }
             }
             
-            // Firebase-tallennuslogiikka tulee tähän:
-            // db.collection(currentShareTarget.type).doc(currentShareTarget.id).update({
-            //     sharedWith: firebase.firestore.FieldValue.arrayUnion(...selectedUserIds)
-            // }).then(() => { ... })
+            window.closeModal('shareModal');
             
-            console.log(`Jaetaan ${currentShareTarget.type} (ID: ${currentShareTarget.id}) näille käyttäjille:`, selectedUserIds);
-            
-            // Näytä onnistuminen ja sulje modaali
-            alert('Jaettu onnistuneesti!');
-            closeShareModal();
+            const t = document.getElementById('toast');
+            t.textContent = "Kohde jaettu!";
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
         };
-    </script>
 </body>
 </html>
