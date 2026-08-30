@@ -282,6 +282,46 @@
             .worksite-item { flex-direction: column; align-items: flex-start; }
             .worksite-item-actions { width: 100%; justify-content: space-between; }
         }
+                /* TUMMA TEEMA */
+        :root.dark-mode {
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --primary-light: #450a0a;
+            --primary-border: #7f1d1d;
+        }
+        
+        body.dark-mode {
+            background-color: #0f172a;
+            background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+        }
+        
+        /* Yksittäisten elementtien tumman teeman korjaukset */
+        .dark-mode input, 
+        .dark-mode select, 
+        .dark-mode .drop-zone, 
+        .dark-mode .shared-users-list,
+        .dark-mode .user-checkbox-label:hover {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            border-color: #334155;
+        }
+        
+        .dark-mode .icon-btn {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        
+        .dark-mode .icon-btn:hover {
+            background: #334155;
+            border-color: var(--primary-border);
+        }
+        
+        .dark-mode .tag {
+            background: #0f172a;
+            border-color: #334155;
+        }
     </style>
 </head>
 <body>
@@ -313,10 +353,11 @@
             <button id="navWorksites" class="nav-btn" onclick="window.switchTab('worksites')">Työmaat</button>
             <button id="navUsers" class="nav-btn hidden" onclick="window.switchTab('users')">Käyttäjät</button>
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <span id="userEmailDisplay" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;"></span>
-            <button onclick="window.logout()" class="btn-outline btn-small">Kirjaudu ulos</button>
-        </div>
+       <div style="display: flex; align-items: center; gap: 1rem;">
+    <button id="themeToggleBtn" onclick="window.toggleTheme()" class="btn-outline btn-small" title="Vaihda teema" style="font-size: 1.1rem; padding: 0.2rem 0.5rem; border: none; background: transparent;">🌙</button>
+    <span id="userEmailDisplay" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;"></span>
+    <button onclick="window.logout()" class="btn-outline btn-small">Kirjaudu ulos</button>
+</div>
     </header>
 
     <!-- TUOTTEET -->
@@ -600,8 +641,22 @@
         window.login(email);
     }
 }
-
+        // Teeman vaihto ja tallennus selaimeen
+        window.toggleTheme = function() {
+            const isDark = document.documentElement.classList.toggle('dark-mode');
+            localStorage.setItem('rentola_theme', isDark ? 'dark' : 'light');
+            const themeBtn = document.getElementById('themeToggleBtn');
+            if (themeBtn) themeBtn.textContent = isDark ? '☀️' : '🌙';
+        };
+        
         window.init = function() {
+                // Teeman lataus
+            const savedTheme = localStorage.getItem('rentola_theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+                const themeBtn = document.getElementById('themeToggleBtn');
+                if (themeBtn) themeBtn.textContent = '☀️';
+            }
             const lastEmail = localStorage.getItem('lastEmail');
             if(lastEmail) {
                 document.getElementById('emailInput').value = lastEmail;
